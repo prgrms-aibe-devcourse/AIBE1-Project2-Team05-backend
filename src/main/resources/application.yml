@@ -1,8 +1,6 @@
 server:
   port: 8080 # 충돌 문제 시 수정
 spring:
-  thymeleaf:
-    view-names: thymeleaf/*
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
