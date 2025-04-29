@@ -16,6 +16,7 @@ import lombok.*;
 public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
     @Column(length = 36, updatable = false, nullable = false)
     private String provider;
     @Column(length = 100, nullable = false)
