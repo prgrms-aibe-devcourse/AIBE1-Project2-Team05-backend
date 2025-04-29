@@ -56,7 +56,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 .userNameAttribute(userNameAttribute)
                 .name(name)
                 .nickname(randomNicknameGenerator.generateNickname())
-                .role(Role.TEMP)
+                .role(Role.ROLE_TEMP)
                 .profileImageUrl(profileImage)
                 .build();
 

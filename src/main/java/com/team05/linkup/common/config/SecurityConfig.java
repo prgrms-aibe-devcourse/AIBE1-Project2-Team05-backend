@@ -8,8 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
-import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
-import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -21,6 +19,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -39,7 +38,7 @@ public class SecurityConfig {
     @Bean
     public DefaultMethodSecurityExpressionHandler methodSecurityExpressionHandler() {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
-        expressionHandler.setRoleHierarchy(roleHierarchy());
+//        expressionHandler.setRoleHierarchy(roleHierarchy());
         return expressionHandler;
     }
 
@@ -62,8 +61,8 @@ public class SecurityConfig {
                         .requestMatchers("/login/oauth2/code/google/**").permitAll()
                         .requestMatchers("/login/oauth2/code/naver/**").permitAll()
                         .requestMatchers("/login/oauth2/code/kakao/**").permitAll()
-                        .requestMatchers("/v1/user/**").hasRole("USER")
-                        .requestMatchers("/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/v1/users/**")
+                        .access(new WebExpressionAuthorizationManager("!hasRole('TEMP')"))
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oAuth2AuthenticationSuccessHandler)
@@ -112,14 +111,14 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public RoleHierarchy roleHierarchy() {
-        return RoleHierarchyImpl.fromHierarchy("""
-                    ROLE_ADMIN > ROLE_DB\s
-                    ROLE_DB > ROLE_USER
-                    ROLE_USER > ROLE_ANONYMOUS
-               \s""");
-    }
+//    @Bean
+//    public RoleHierarchy roleHierarchy() {
+//        return RoleHierarchyImpl.fromHierarchy("""
+//                    ROLE_ADMIN > ROLE_DB\s
+//                    ROLE_DB > ROLE_USER
+//                    ROLE_USER > ROLE_ANONYMOUS
+//               \s""");
+//    }
 
 
 }
