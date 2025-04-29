@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -26,6 +27,7 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
     private final static Logger logger = LogManager.getLogger(CustomLogoutSuccessHandler.class);
 
     @Override
+    @Transactional
     public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response,
                                 Authentication authentication) throws IOException {
         try {

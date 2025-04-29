@@ -35,6 +35,7 @@ public class QueryTestService {
         System.out.println("Execution Time: " + (end - start) / 1_000_000 + " ms");
     }
 
+    @Transactional
     public void testNativeUpsert(String providerId, int repeatCount) {
         long start = System.nanoTime();
 
