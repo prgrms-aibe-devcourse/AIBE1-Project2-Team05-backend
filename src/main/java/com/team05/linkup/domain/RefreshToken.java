@@ -1,13 +1,11 @@
 package com.team05.linkup.domain;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.ZonedDateTime;
 
+@Getter
 @Entity
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -19,7 +17,8 @@ public class RefreshToken {
     private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private User userId;
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @Column(nullable = false, updatable = false)
     private ZonedDateTime createdAt = ZonedDateTime.now();
@@ -30,5 +29,12 @@ public class RefreshToken {
     @Column(nullable = false)
     private boolean used = false;
 
+    public boolean isExpired() {
+        return expiredAt.isBefore(ZonedDateTime.now());
+    }
+
+    public void markUsed() {
+        this.used = true;
+    }
 
 }

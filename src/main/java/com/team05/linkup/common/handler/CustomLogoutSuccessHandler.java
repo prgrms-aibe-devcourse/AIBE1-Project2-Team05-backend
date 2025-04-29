@@ -1,6 +1,10 @@
 package com.team05.linkup.common.handler;
 
+
 import com.team05.linkup.common.util.JwtUtils;
+import com.team05.linkup.domain.User;
+import com.team05.linkup.common.repository.RefreshTokenRepository;
+import com.team05.linkup.common.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -11,13 +15,14 @@ import org.springframework.security.web.authentication.logout.LogoutSuccessHandl
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
-    private final RefreshTokenMapper refreshTokenMapper;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtils jwtUtils;
-    private final UserMapper userMapper;
+    private final UserRepository userRepository;
     private final static Logger logger = LogManager.getLogger(CustomLogoutSuccessHandler.class);
 
     @Override
@@ -29,11 +34,11 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
                 // 토큰이 유효한 경우
                 if (jwtUtils.validateToken(token)) {
                     String providerId = jwtUtils.parseToken(token).getSubject();
-                    String userId = userMapper.findByProviderId(providerId);
+                    Optional<User> userId = userRepository.findByProviderId(providerId);
 
                     // 해당 사용자의 모든 리프레시 토큰 무효화
-                    if (userId != null) {
-                        refreshTokenMapper.invalidateAllUserTokens(userId);
+                    if (userId.isPresent()) {
+                        refreshTokenRepository.invalidateAllUserTokens(userId.get());
                         logger.info("All refresh tokens invalidated for user: {}", userId);
                     }
                 }
@@ -47,4 +52,3 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
         }
     }
 }
-

@@ -1,6 +1,7 @@
 package com.team05.linkup.common.oauth.jwtAssistant;
 
 
+import com.team05.linkup.domain.User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +19,6 @@ public class NaverOAuth2Strategy implements OAuth2ProviderStrategy {
     public Map<String, Object> buildUserAttributes(User user) {
         return Map.of("id", user.getProviderId(),
                     "name", user.getName(),
-                    "email", user.getEmail(),
-                    "profile_image", user.getProfile_image_url());
+                    "profile_image", user.getProfileImageUrl());
     }
 }

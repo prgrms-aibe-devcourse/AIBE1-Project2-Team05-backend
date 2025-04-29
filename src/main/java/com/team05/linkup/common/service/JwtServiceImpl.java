@@ -3,6 +3,10 @@ package com.team05.linkup.common.service;
 import com.team05.linkup.common.config.JwtConfig;
 import com.team05.linkup.common.exception.TokenException;
 import com.team05.linkup.common.exception.UserNotfoundException;
+import com.team05.linkup.common.oauth.jwtAssistant.OAuth2ProviderStrategy;
+import com.team05.linkup.common.oauth.jwtAssistant.OAuth2ProviderStrategyFactory;
+import com.team05.linkup.common.repository.UserRepository;
+import com.team05.linkup.domain.User;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -19,17 +23,14 @@ import org.springframework.stereotype.Service;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class JwtServiceImpl implements JwtService {
     private final JwtConfig jwtConfig;
-    private final UserMapper userMapper;
+    private final UserRepository userRepository;
     private static final Logger logger = LogManager.getLogger();
     private final OAuth2ProviderStrategyFactory strategyFactory;
 
@@ -71,24 +72,24 @@ public class JwtServiceImpl implements JwtService {
     public Authentication getAuthentication(String userId) throws UserNotfoundException, TokenException {
         try {
             // Fetch user details from the database using the user ID
-            User user = userMapper.findById(userId);
+            Optional<User> user = userRepository.findById(userId);
 
-            if (user == null) {
+            if (user.isEmpty()) {
                 throw new UserNotfoundException("User not found for ID: " + userId);
             }
 
             // Create authorities based on the user's role
             List<SimpleGrantedAuthority> authorities =
-                    Collections.singletonList(new SimpleGrantedAuthority(user.getRole()));
+                    Collections.singletonList(new SimpleGrantedAuthority(user.get().getRole().toString()));
 
-            OAuth2ProviderStrategy strategy = strategyFactory.getStrategy(user.getProvider());
-            Map<String, Object> attributes = strategy.buildUserAttributes(user);
+            OAuth2ProviderStrategy strategy = strategyFactory.getStrategy(user.get().getProvider());
+            Map<String, Object> attributes = strategy.buildUserAttributes(user.get());
 
             // Create OAuth2User
             OAuth2User oAuth2User = new DefaultOAuth2User(
                     authorities,
                     attributes,
-                    user.getUserNameAttribute()
+                    user.get().getUserNameAttribute()
             );
 
             // Return authentication with OAuth2User as principal

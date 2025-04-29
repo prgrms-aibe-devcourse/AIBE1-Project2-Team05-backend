@@ -1,6 +1,7 @@
 package com.team05.linkup.common.oauth.jwtAssistant;
 
 
+import com.team05.linkup.domain.User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +18,6 @@ public class KakaoOAuth2Strategy implements OAuth2ProviderStrategy {
     public Map<String, Object> buildUserAttributes(User user) {
         return Map.of("미정", user.getProviderId(),
                     "name", user.getName(),
-                    "email", user.getEmail(),
-                    "미정", user.getProfile_image_url());
+                    "미정", user.getProfileImageUrl());
     }
 }

@@ -3,8 +3,10 @@ package com.team05.linkup.common.service;
 
 import com.team05.linkup.common.oauth.userInfoAssistant.OAuth2UserInfoFactory;
 import com.team05.linkup.common.oauth.userInfoAssistant.Oauth2UserInfo;
+import com.team05.linkup.common.repository.UserRepository;
 import com.team05.linkup.domain.User;
 import com.team05.linkup.domain.enums.Role;
+import com.team05.linkup.users.util.RandomNicknameGenerator;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,14 +23,13 @@ import org.springframework.stereotype.Service;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collections;
-import java.util.Objects;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
     private static final Logger logger = LogManager.getLogger();
-    private final UserServiceImpl userServiceImpl;
+    private final UserRepository userRepository;
+    private final RandomNicknameGenerator randomNicknameGenerator;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -43,41 +44,39 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         Oauth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(registrationId, oAuth2User.getAttributes());
 
         String providerId = userInfo.getId();
-        String email = userInfo.getEmail();
         String name = userInfo.getName();
         String profileImage = userInfo.getImageUrl();
 
 
-        if (Objects.requireNonNull(registrationId).isEmpty() || Objects.requireNonNull(providerId).isEmpty()) {
-            logger.error("providerId or registrationId is empty");
+        if (registrationId == null || registrationId.isEmpty() || providerId == null || providerId.isEmpty()) {
+            logger.error("providerId or registrationId is null or empty");
             throw new OAuth2AuthenticationException(new OAuth2Error("Missing essential user info from OAuth provider"));
         }
 
+
         ZonedDateTime utcNow = ZonedDateTime.now(ZoneOffset.UTC);
         User newUser = User.builder()
-                .id(UUID.randomUUID().toString())
                 .provider(registrationId)
                 .providerId(providerId)
                 .userNameAttribute(userNameAttribute)
-                .email(email)
                 .name(name)
-                .role(Role.TEMP.name())
-                .profile_image_url(profileImage)
-                .createdAt(utcNow)
-                .updatedAt(utcNow)
+                .nickname(randomNicknameGenerator.generateNickname())
+                .role(Role.TEMP)
+
+                .profileImageUrl(profileImage)
                 .build();
 
 
 
 
         try {
-            userServiceImpl.updateOrSaveUser(newUser);
+            userRepository.upsertUserByProvider(newUser);
         } catch (Exception e) {
             throw new RuntimeException("유저 저장 중 오류 발생", e);
         }
 
         return new DefaultOAuth2User(
-                Collections.singleton(new SimpleGrantedAuthority(newUser.getRole())),
+                Collections.singleton(new SimpleGrantedAuthority(newUser.getRole().toString())),
                 oAuth2User.getAttributes(),
                 userNameAttribute
         );

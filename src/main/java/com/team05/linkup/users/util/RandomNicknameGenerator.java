@@ -1,7 +1,10 @@
 package com.team05.linkup.users.util;
 
+import org.springframework.stereotype.Component;
+
 import java.util.Random;
 
+@Component
 public class RandomNicknameGenerator {
     private static final String[] ADJECTIVES = {
             "행복한", "용감한", "신나는", "귀여운", "멋진", "우아한", "빛나는", "자유로운"

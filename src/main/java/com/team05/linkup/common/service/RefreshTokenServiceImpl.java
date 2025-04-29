@@ -1,8 +1,13 @@
 package com.team05.linkup.common.service;
 
-import com.team05.linkup.users.dto.RefreshTokenResponseDTO;
 import com.team05.linkup.common.exception.TokenException;
+import com.team05.linkup.common.oauth.jwtAssistant.OAuth2ProviderStrategy;
+import com.team05.linkup.common.oauth.jwtAssistant.OAuth2ProviderStrategyFactory;
 import com.team05.linkup.domain.RefreshToken;
+import com.team05.linkup.domain.User;
+import com.team05.linkup.common.repository.RefreshTokenRepository;
+import com.team05.linkup.common.repository.UserRepository;
+import com.team05.linkup.users.dto.RefreshTokenResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,9 +25,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RefreshTokenServiceImpl implements RefreshTokenService {
     private static final Logger logger = LogManager.getLogger(RefreshTokenService.class);
-    private final RefreshTokenMapper refreshTokenMapper;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final JwtServiceImpl jwtServiceImpl;
-    private final UserMapper userMapper;
+    private final UserRepository userRepository;
     private final OAuth2ProviderStrategyFactory strategyFactory;
 
     @Override
@@ -34,20 +39,21 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
             OAuth2ProviderStrategy strategy = strategyFactory.getStrategy(registrationId);
             String providerId = strategy.extractProviderId(oAuth2User);
-            String userId = userMapper.findByProviderId(providerId);
+            User userId = userRepository.findByProviderId(providerId)
+                    .orElseThrow(() -> new Exception("User not found with providerId: " + providerId));
 
             String refreshTokenId = UUID.randomUUID().toString();
             ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
             ZonedDateTime expiresAt = now.plusDays(1);
             RefreshToken refreshToken = RefreshToken.builder()
                     .id(refreshTokenId)
-                    .userId(userId)
+                    .user(userId)
                     .createdAt(now)
                     .expiredAt(expiresAt)
                     .used(false)
                     .build();
 
-            refreshTokenMapper.save(refreshToken);
+            refreshTokenRepository.save(refreshToken);
             return refreshTokenId;
         } catch (Exception e) {
             logger.error("during create refresh token error {}", e.getMessage());
@@ -59,45 +65,45 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Transactional
     public RefreshTokenResponseDTO regenerateAccessAndRefreshToken(String refreshTokenId) throws Exception {
         try {
-            RefreshToken refreshToken = refreshTokenMapper.findByProviderId(refreshTokenId)
+            RefreshToken refreshToken = refreshTokenRepository.findByProviderId(refreshTokenId)
                     .orElseThrow(() -> new TokenException("refresh token not found"));
 
             if (refreshToken.getExpiredAt() == null) {
                 logger.warn("ExpiredAt is null for token: {}", refreshTokenId);
-                refreshTokenMapper.invalidateAllUserTokens(refreshToken.getUserId());
+                refreshTokenRepository.invalidateAllUserTokens(refreshToken.getUser());
                 throw new TokenException("Invalid token state: expiration date is missing");
             }
 
             ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-            if(!refreshToken.getExpiredAt().isBefore(now)) {
-                logger.warn("not ExpiredAt is before now for token: {}", refreshTokenId);
-                refreshTokenMapper.invalidateAllUserTokens(refreshToken.getUserId());
-                throw new TokenException("Invalid token state: not yet expired token");
+            if(refreshToken.getExpiredAt().isBefore(now)) {
+                logger.warn("Token has expired for token: {}", refreshTokenId);
+                refreshTokenRepository.invalidateAllUserTokens(refreshToken.getUser());
+                throw new TokenException("Invalid token state: token has expired");
             }
 
             // 토큰이 이미 사용됐다면 토큰 탈취 가능성 (RTR 핵심 기능)
             if(refreshToken.isUsed()) {
-                logger.warn("Token reuse detected for user: {}", refreshToken.getUserId());
-                refreshTokenMapper.invalidateAllUserTokens(refreshToken.getUserId());
-                throw new TokenException("Token reuse detected for user: "+ refreshToken.getUserId());
+                logger.warn("Token reuse detected for user: {}", refreshToken.getUser());
+                refreshTokenRepository.invalidateAllUserTokens(refreshToken.getUser());
+                throw new TokenException("Token reuse detected for user: "+ refreshToken.getUser());
             }
 
             if (refreshToken.isExpired()) {
-                logger.warn("Expired token used for user: {}", refreshToken.getUserId());
+                logger.warn("Expired token used for user: {}", refreshToken.getUser());
                 throw new TokenException("refresh token expired");
             }
 
             // 토큰 사용처리
             refreshToken.markUsed();
-            refreshTokenMapper.updateUsedStatus(refreshToken.getId(), true);
+            refreshTokenRepository.updateUsedStatus(refreshToken.getId(), true);
 
             // 새 액세스 토큰 생성
-            Authentication authentication = jwtServiceImpl.getAuthentication(refreshToken.getUserId());
+            Authentication authentication = jwtServiceImpl.getAuthentication(refreshToken.getUser().toString());
             String newAccessToken = jwtServiceImpl.generateAccessToken(authentication);
 
             String newRefreshToken = createRefreshToken(authentication);
 
-            logger.debug("Refreshed tokens for user: {}", refreshToken.getUserId());
+            logger.debug("Refreshed tokens for user: {}", refreshToken.getUser());
             return new RefreshTokenResponseDTO(newAccessToken, newRefreshToken,
                     "Cookie", 60 * 60 * 24 * 7);
 

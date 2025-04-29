@@ -38,3 +38,6 @@ out/
 
 ### dev.yml ###
 application-dev.yml
+
+### index.html ###
+index.html
