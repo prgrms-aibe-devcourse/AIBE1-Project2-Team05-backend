@@ -1,5 +1,6 @@
 package com.team05.linkup.domain;
 
+import com.team05.linkup.domain.baseEntity.BaseEntity;
 import com.team05.linkup.domain.enums.ActivityTime;
 import com.team05.linkup.domain.enums.ActivityType;
 import com.team05.linkup.domain.enums.Interest;
@@ -12,7 +13,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
-public class User {
+public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(length = 36, updatable = false, nullable = false)
