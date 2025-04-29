@@ -1,4 +1,4 @@
-package com.cake7.guestbook.common.exception;
+package com.team05.linkup.common.exception;
 
 public class UserNotfoundException extends RuntimeException {
     public UserNotfoundException(String message) {

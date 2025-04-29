@@ -1,4 +1,4 @@
 package com.team05.linkup.domain;
 
-public class user {
+public class User {
 }
