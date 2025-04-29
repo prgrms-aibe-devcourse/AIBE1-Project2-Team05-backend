@@ -6,12 +6,13 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 public class KakaoOAuth2Strategy implements OAuth2ProviderStrategy {
     @Override
     public String extractProviderId(OAuth2User oAuth2User) {
-        return oAuth2User.getAttribute("id");
+        return Objects.requireNonNull(oAuth2User.getAttribute("id")).toString();
     }
 
     @Override

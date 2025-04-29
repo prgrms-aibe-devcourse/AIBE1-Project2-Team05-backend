@@ -61,8 +61,8 @@ public class JwtServiceImpl implements JwtService {
                     .signWith(jwtConfig.secretKey(), Jwts.SIG.HS256)
                     .compact();
         } catch (Exception e) {
-            logger.error("during generate access token {}", e.getMessage());
-            throw new Exception("during generate access token: "+ e.getCause());
+            logger.error("during generate access token: {}", e.getMessage(), e);
+            throw new Exception("during generate access token: " + e.getMessage(), e);
         }
 
 
