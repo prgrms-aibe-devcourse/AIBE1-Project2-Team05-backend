@@ -53,7 +53,9 @@ public class SecurityConfig {
                         -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/").permitAll()
+                        .requestMatchers("/index.html").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/oauth2/authorization/naver/**").permitAll()
                         .requestMatchers("/login/oauth2/code/google/**").permitAll()
                         .requestMatchers("/login/oauth2/code/naver/**").permitAll()
@@ -68,7 +70,6 @@ public class SecurityConfig {
                         .authenticationEntryPoint(new OAuth2AuthenticationEntryPoint())
                 )
                 .formLogin(form -> form
-                        .loginPage("/")  // 커스텀 로그인 페이지 URL 설정
                         .loginProcessingUrl("/login")  // 로그인 요청 URL
                         .defaultSuccessUrl("/", true)  // 로그인 성공 후 리디렉션할 페이지 설정
                         .failureUrl("/?error=true")  // 로그인 실패 시 리디렉션할 페이지 설정

@@ -3,7 +3,6 @@ package com.team05.linkup.common.service;
 
 import com.team05.linkup.common.oauth.userInfoAssistant.OAuth2UserInfoFactory;
 import com.team05.linkup.common.oauth.userInfoAssistant.Oauth2UserInfo;
-import com.team05.linkup.common.repository.UserRepository;
 import com.team05.linkup.domain.User;
 import com.team05.linkup.domain.enums.Role;
 import com.team05.linkup.users.util.RandomNicknameGenerator;
@@ -20,15 +19,13 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
     private static final Logger logger = LogManager.getLogger();
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final RandomNicknameGenerator randomNicknameGenerator;
 
     @Override
@@ -53,8 +50,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             throw new OAuth2AuthenticationException(new OAuth2Error("Missing essential user info from OAuth provider"));
         }
 
-
-        ZonedDateTime utcNow = ZonedDateTime.now(ZoneOffset.UTC);
         User newUser = User.builder()
                 .provider(registrationId)
                 .providerId(providerId)
@@ -62,23 +57,22 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 .name(name)
                 .nickname(randomNicknameGenerator.generateNickname())
                 .role(Role.TEMP)
-
                 .profileImageUrl(profileImage)
                 .build();
 
-
-
-
         try {
-            userRepository.upsertUserByProvider(newUser);
+            // Use the UserService to save or update the user
+            User savedUser = userService.saveOrUpdateUser(newUser);
+            logger.info("User saved or updated successfully with providerId: {}", providerId);
+
+            return new DefaultOAuth2User(
+                    Collections.singleton(new SimpleGrantedAuthority(savedUser.getRole().toString())),
+                    oAuth2User.getAttributes(),
+                    userNameAttribute
+            );
         } catch (Exception e) {
+            logger.error("Error saving or updating user: {}", e.getMessage());
             throw new RuntimeException("유저 저장 중 오류 발생", e);
         }
-
-        return new DefaultOAuth2User(
-                Collections.singleton(new SimpleGrantedAuthority(newUser.getRole().toString())),
-                oAuth2User.getAttributes(),
-                userNameAttribute
-        );
     }
 }

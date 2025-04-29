@@ -28,11 +28,6 @@ public class NaverOAuth2UserInfo implements Oauth2UserInfo{
     }
 
     @Override
-    public String getEmail() {
-        return (String) attributes.get("email");
-    }
-
-    @Override
     public String getImageUrl() {
         return (String) attributes.get("profile_image");
     }

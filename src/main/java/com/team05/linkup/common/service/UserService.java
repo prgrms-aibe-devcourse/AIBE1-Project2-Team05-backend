@@ -1,5 +1,7 @@
 package com.team05.linkup.common.service;
 
+import com.team05.linkup.domain.User;
+
 public interface UserService {
-    void updateOrSaveUser(String providerId) throws Exception;
+    User saveOrUpdateUser(User user);
 }

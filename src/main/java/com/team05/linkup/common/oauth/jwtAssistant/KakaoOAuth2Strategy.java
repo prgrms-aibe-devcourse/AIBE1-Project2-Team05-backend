@@ -16,8 +16,8 @@ public class KakaoOAuth2Strategy implements OAuth2ProviderStrategy {
 
     @Override
     public Map<String, Object> buildUserAttributes(User user) {
-        return Map.of("미정", user.getProviderId(),
-                    "name", user.getName(),
-                    "미정", user.getProfileImageUrl());
+        return Map.of("id", user.getProviderId(),
+                    "profile_nickname", user.getName(),
+                    "profile_image", user.getProfileImageUrl());
     }
 }
