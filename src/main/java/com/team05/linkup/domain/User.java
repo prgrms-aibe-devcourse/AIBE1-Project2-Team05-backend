@@ -7,11 +7,15 @@ import com.team05.linkup.domain.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
 @Entity
+@Builder
 @Getter
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
-@Builder
+@Table(uniqueConstraints = @UniqueConstraint(name = "uk_provider_provider_id", columnNames = {"provider", "providerId"}))
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -51,4 +55,12 @@ public class User {
     private boolean matchStatus = false;
     @Column(length = 255)
     private String profileTag;
+
+    @Column(nullable = false, updatable = false)
+    private ZonedDateTime createdAt = ZonedDateTime.now();
+    @Column(nullable = false)
+    private ZonedDateTime updatedAt;
+
+    @OneToMany(mappedBy = "userId", cascade = CascadeType.ALL)
+    private List<RefreshToken> refreshToken;
 }
