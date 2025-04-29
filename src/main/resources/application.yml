@@ -22,9 +22,9 @@ jpa:
   open-in-view: false # OSIV 비활성화 (API 서버라면 false 추천)
 
 mybatis:
-  type-handlers-package: com.cake7.guestbook.common.config.mybatis
+  type-handlers-package: com.team05.linkup.common.config.mybatis
   mapper-locations: classpath:mapper/**/*.xml
-  type-aliases-package: com.cake7.guestbook.domain
+  type-aliases-package: com.team05.linkup.domain
   configuration:
     map-underscore-to-camel-case: true
 
