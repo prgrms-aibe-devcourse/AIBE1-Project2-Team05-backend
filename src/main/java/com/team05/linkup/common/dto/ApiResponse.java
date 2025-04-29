@@ -13,7 +13,7 @@ public class ApiResponse<T> {
     private final String message; // 응답 메시지
 
     @JsonInclude(JsonInclude.Include.NON_NULL) // data가 null이면 응답 JSON에서 제외
-    private T data; // 실제 응답 데이터
+    private final T data; // 실제 응답 데이터
 
     // 성공 시 (데이터 포함)
     private ApiResponse(ResponseCode responseCode, T data) {
