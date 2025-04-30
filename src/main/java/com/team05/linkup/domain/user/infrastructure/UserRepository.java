@@ -2,6 +2,7 @@ package com.team05.linkup.domain.user.infrastructure;
 
 import com.team05.linkup.domain.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,5 +19,10 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<User> findByProviderAndProviderId(String provider, String providerId);
 
-    // Save method from JpaRepository will handle both insert and update
+    @Modifying
+    @Query("""
+                UPDATE User u SET u.role = :role
+                WHERE u.providerId = :providerId
+          """)
+    void updateUserRole(@Param("providerId") String id, @Param("role") String role);
 }
