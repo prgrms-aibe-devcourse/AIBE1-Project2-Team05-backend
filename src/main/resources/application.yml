@@ -12,19 +12,11 @@ spring:
     swagger-ui:
       path: /swagger-ui.html
 
-jpa:
-  hibernate:
-    ddl-auto: none
-  show-sql: true # SQL 로그 출력
-  properties:
+  jpa:
     hibernate:
-      format_sql: true # SQL 예쁘게 출력
-  open-in-view: false # OSIV 비활성화 (API 서버라면 false 추천)
-
-mybatis:
-  type-handlers-package: com.team05.linkup.common.config.mybatis
-  mapper-locations: classpath:mapper/**/*.xml
-  type-aliases-package: com.team05.linkup.domain
-  configuration:
-    map-underscore-to-camel-case: true
-
+      ddl-auto: none
+    show-sql: true # SQL 로그 출력
+    properties:
+      hibernate:
+        format_sql: true # SQL 예쁘게 출력
+    open-in-view: false # OSIV 비활성화 (API 서버라면 false 추천)

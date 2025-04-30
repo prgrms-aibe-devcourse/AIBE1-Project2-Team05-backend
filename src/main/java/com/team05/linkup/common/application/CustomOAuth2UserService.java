@@ -1,0 +1,78 @@
+package com.team05.linkup.common.application;
+
+
+import com.team05.linkup.common.oauth.userInfoAssistant.OAuth2UserInfoFactory;
+import com.team05.linkup.common.oauth.userInfoAssistant.Oauth2UserInfo;
+import com.team05.linkup.domain.user.domain.User;
+import com.team05.linkup.domain.enums.Role;
+import com.team05.linkup.domain.user.util.RandomNicknameGenerator;
+import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+
+@Service
+@RequiredArgsConstructor
+public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
+    private static final Logger logger = LogManager.getLogger();
+    private final UserService userService;
+    private final RandomNicknameGenerator randomNicknameGenerator;
+
+    @Override
+    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+        OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
+        OAuth2User oAuth2User = delegate.loadUser(userRequest);
+
+        String registrationId = userRequest.getClientRegistration().getRegistrationId();
+        String userNameAttribute = userRequest.getClientRegistration()
+                .getProviderDetails()
+                .getUserInfoEndpoint()
+                .getUserNameAttributeName();
+        Oauth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(registrationId, oAuth2User.getAttributes());
+
+        String providerId = userInfo.getId();
+        String name = userInfo.getName();
+        String profileImage = userInfo.getImageUrl();
+
+
+        if (registrationId == null || registrationId.isEmpty() || providerId == null || providerId.isEmpty()) {
+            logger.error("providerId or registrationId is null or empty");
+            throw new OAuth2AuthenticationException(new OAuth2Error("Missing essential user info from OAuth provider"));
+        }
+
+        User newUser = User.builder()
+                .provider(registrationId)
+                .providerId(providerId)
+                .userNameAttribute(userNameAttribute)
+                .name(name)
+                .nickname(randomNicknameGenerator.generateNickname())
+                .role(Role.ROLE_TEMP)
+                .profileImageUrl(profileImage)
+                .build();
+
+        try {
+            // Use the UserService to save or update the user
+            User savedUser = userService.saveOrUpdateUser(newUser);
+            logger.info("User saved or updated successfully with providerId: {}", providerId);
+
+            return new DefaultOAuth2User(
+                    Collections.singleton(new SimpleGrantedAuthority(savedUser.getRole().toString())),
+                    oAuth2User.getAttributes(),
+                    userNameAttribute
+            );
+        } catch (Exception e) {
+            logger.error("Error saving or updating user: {}", e.getMessage());
+            throw new RuntimeException("유저 저장 중 오류 발생", e);
+        }
+    }
+}

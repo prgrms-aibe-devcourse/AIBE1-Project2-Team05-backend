@@ -27,7 +27,7 @@ CREATE TABLE user(
 );
 
 CREATE TABLE area (
-    id BIGINT PRIMARY KEY ,
+    id tinyint PRIMARY KEY ,
     area_name VARCHAR(30) NOT NULL
 );
 
@@ -49,13 +49,20 @@ CREATE TABLE community (
        user_id VARCHAR(36) NOT NULL,
        title VARCHAR(100) NOT NULL,
        category ENUM('전제', '질문/답변', '정보공유', '후기', '자유게시판', '재능나눔') NOT NULL,
-       community_tag VARCHAR(255),
+       community_tag_id VARCHAR(36),
        content LONGTEXT NOT NULL,
        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
        INDEX idx_user_id (user_id),
        CONSTRAINT fk_community_user_id FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE RESTRICT
+);
+
+CREATE TABLE community_tag (
+    id VARCHAR(36) PRIMARY KEY ,
+    community_id VARCHAR(36),
+    tag_name VARCHAR(10) NOT NULL ,
+    CONSTRAINT fk_community_id FOREIGN KEY (community_id) REFERENCES community(id) ON DELETE CASCADE
 );
 
 CREATE TABLE images (

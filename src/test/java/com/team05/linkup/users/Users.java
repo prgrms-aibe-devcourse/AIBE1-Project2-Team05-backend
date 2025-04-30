@@ -1,5 +1,5 @@
-package com.team05.linkup.domain.user.domain;
-
+package com.team05.linkup.users;
+import com.team05.linkup.domain.user.domain.RefreshToken;
 import com.team05.linkup.domain.baseEntity.BaseEntity;
 import com.team05.linkup.domain.enums.ActivityTime;
 import com.team05.linkup.domain.enums.ActivityType;
@@ -16,12 +16,13 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(uniqueConstraints = @UniqueConstraint(name = "uk_provider_provider_id", columnNames = {"provider", "providerId"}))
-public class User extends BaseEntity {
+public class Users extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     @Column(length = 36, updatable = false, nullable = false)
     private String provider;
+    @Setter
     @Column(length = 100, nullable = false)
     private String providerId;
     @Column(length = 50, nullable = false)
@@ -59,4 +60,5 @@ public class User extends BaseEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<RefreshToken> refreshToken;
+
 }
