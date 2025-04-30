@@ -16,7 +16,7 @@ public class RefreshTokenCleanScheduler {
     private static final Logger logger = LogManager.getLogger();
     private final RefreshTokenRepository refreshTokenRepository;
 
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void cleanUsedRefreshToken() throws Exception {
         try {
