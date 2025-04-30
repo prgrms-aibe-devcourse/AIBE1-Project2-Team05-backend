@@ -67,4 +67,23 @@ public class CommunityController {
         return ResponseEntity.ok(ApiResponse.success(popularCommunities));
     }
 
+    /**
+     * 키워드를 사용하여 커뮤니티 게시글을 검색합니다.
+     * 제목, 내용, 태그에서 키워드가 포함된 게시글 목록을 페이징하여 반환합니다.
+     *
+     * @param keyword 검색할 키워드 (필수).
+     * @param pageable 페이징 및 정렬 정보 (선택 사항, 기본값 적용됨).
+     * @return ResponseEntity containing an ApiResponse with a Page of CommunitySummaryResponse DTOs.
+     * Example URL: GET /v1/community/more-detail?keyword=spring
+     */
+    @GetMapping("/more-detail")
+    public ResponseEntity<ApiResponse<Page<CommunitySummaryResponse>>> searchCommunityList(
+            @RequestParam String keyword, // 검색어는 필수로 받음
+            // PageableDefault는 /list 와 동일하게 유지하거나 검색 결과에 맞게 조정
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        Page<CommunitySummaryResponse> searchResultPage = communityService.searchCommunities(keyword, pageable);
+        return ResponseEntity.ok(ApiResponse.success(searchResultPage));
+    }
+
 }
