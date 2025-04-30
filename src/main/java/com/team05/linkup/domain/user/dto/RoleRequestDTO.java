@@ -1,4 +1,6 @@
 package com.team05.linkup.domain.user.dto;
 
-public record RoleRequestDTO(String role) {
+import com.team05.linkup.domain.enums.Role;
+
+public record RoleRequestDTO(Role role) {
 }

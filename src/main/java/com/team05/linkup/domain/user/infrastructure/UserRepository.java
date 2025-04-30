@@ -1,5 +1,6 @@
 package com.team05.linkup.domain.user.infrastructure;
 
+import com.team05.linkup.domain.enums.Role;
 import com.team05.linkup.domain.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -14,6 +15,9 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<User> findById(String id);
 
+    // 닉네임으로 Profile을 찾는 메서드
+    Optional<User> findByNickname(String nickname);
+
     @Query("SELECT u FROM User u WHERE u.providerId = :providerId")
     Optional<User> findByProviderId(@Param("providerId") String providerId);
 
@@ -22,7 +26,7 @@ public interface UserRepository extends JpaRepository<User, String> {
     @Modifying
     @Query("""
                 UPDATE User u SET u.role = :role
-                WHERE u.providerId = :providerId
+                WHERE u.providerId = :providerId AND u.role = 'ROLE_TEMP'
           """)
-    void updateUserRole(@Param("providerId") String id, @Param("role") String role);
+    void updateUserRole(@Param("providerId") String id, @Param("role") Role role);
 }
