@@ -1,4 +1,4 @@
-package com.team05.linkup.common.controller;
+package com.team05.linkup.common.api;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

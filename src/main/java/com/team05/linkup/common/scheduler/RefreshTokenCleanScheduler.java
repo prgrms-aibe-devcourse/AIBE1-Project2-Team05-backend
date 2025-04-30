@@ -1,6 +1,6 @@
 package com.team05.linkup.common.scheduler;
 
-import com.team05.linkup.common.repository.RefreshTokenRepository;
+import com.team05.linkup.domain.user.infrastructure.RefreshTokenRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;

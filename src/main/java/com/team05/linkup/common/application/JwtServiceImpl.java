@@ -1,12 +1,12 @@
-package com.team05.linkup.common.service;
+package com.team05.linkup.common.application;
 
 import com.team05.linkup.common.config.JwtConfig;
 import com.team05.linkup.common.exception.TokenException;
 import com.team05.linkup.common.exception.UserNotfoundException;
 import com.team05.linkup.common.oauth.jwtAssistant.OAuth2ProviderStrategy;
 import com.team05.linkup.common.oauth.jwtAssistant.OAuth2ProviderStrategyFactory;
-import com.team05.linkup.common.repository.UserRepository;
-import com.team05.linkup.domain.User;
+import com.team05.linkup.domain.user.infrastructure.UserRepository;
+import com.team05.linkup.domain.user.domain.User;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;

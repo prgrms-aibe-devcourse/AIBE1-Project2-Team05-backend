@@ -2,9 +2,9 @@ package com.team05.linkup.common.handler;
 
 
 import com.team05.linkup.common.util.JwtUtils;
-import com.team05.linkup.domain.User;
-import com.team05.linkup.common.repository.RefreshTokenRepository;
-import com.team05.linkup.common.repository.UserRepository;
+import com.team05.linkup.domain.user.domain.User;
+import com.team05.linkup.domain.user.infrastructure.RefreshTokenRepository;
+import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

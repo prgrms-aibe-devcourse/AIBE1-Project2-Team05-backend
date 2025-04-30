@@ -1,7 +1,7 @@
 package com.team05.linkup.common.handler;
 
-import com.team05.linkup.common.service.JwtServiceImpl;
-import com.team05.linkup.common.service.RefreshTokenServiceImpl;
+import com.team05.linkup.common.application.JwtServiceImpl;
+import com.team05.linkup.common.application.RefreshTokenServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

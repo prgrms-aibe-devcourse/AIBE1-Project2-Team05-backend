@@ -1,11 +1,11 @@
-package com.team05.linkup.common.service;
+package com.team05.linkup.common.application;
 
 
 import com.team05.linkup.common.oauth.userInfoAssistant.OAuth2UserInfoFactory;
 import com.team05.linkup.common.oauth.userInfoAssistant.Oauth2UserInfo;
-import com.team05.linkup.domain.User;
+import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.enums.Role;
-import com.team05.linkup.users.util.RandomNicknameGenerator;
+import com.team05.linkup.domain.user.util.RandomNicknameGenerator;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

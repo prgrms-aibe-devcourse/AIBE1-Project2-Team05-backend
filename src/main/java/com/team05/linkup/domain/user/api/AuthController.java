@@ -1,7 +1,7 @@
-package com.team05.linkup.users.controller;
+package com.team05.linkup.domain.user.api;
 
-import com.team05.linkup.users.dto.RefreshTokenResponseDTO;
-import com.team05.linkup.common.service.RefreshTokenServiceImpl;
+import com.team05.linkup.domain.user.dto.RefreshTokenResponseDTO;
+import com.team05.linkup.common.application.RefreshTokenServiceImpl;
 import com.team05.linkup.common.util.JwtUtils;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;

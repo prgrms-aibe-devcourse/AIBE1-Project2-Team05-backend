@@ -1,4 +1,4 @@
-package com.team05.linkup.domain;
+package com.team05.linkup.domain.user.domain;
 
 import jakarta.persistence.*;
 import lombok.*;

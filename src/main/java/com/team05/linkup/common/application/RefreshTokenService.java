@@ -1,6 +1,6 @@
-package com.team05.linkup.common.service;
+package com.team05.linkup.common.application;
 
-import com.team05.linkup.users.dto.RefreshTokenResponseDTO;
+import com.team05.linkup.domain.user.dto.RefreshTokenResponseDTO;
 import org.springframework.security.core.Authentication;
 
 public interface RefreshTokenService {
