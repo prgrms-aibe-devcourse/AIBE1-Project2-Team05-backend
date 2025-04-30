@@ -22,4 +22,5 @@ public enum CommunityCategory {
 //        }
 //        throw new IllegalArgumentException("Invalid category name: " + name);
 //    }
+
 }
