@@ -39,7 +39,7 @@ public interface UserRepository extends JpaRepository<User, String> {
     String findProfileTagByProviderId(@Param("providerId") String providerId);
 
     @Query("""
-        SELECT u.providerId, u.profileImageUrl
+        SELECT u.providerId, u.profileTag
         FROM User u
         WHERE u.providerId <> :providerId
     """)
