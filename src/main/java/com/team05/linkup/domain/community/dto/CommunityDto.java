@@ -1,6 +1,6 @@
-package com.team05.linkup.community.core.dto;
+package com.team05.linkup.domain.community.dto;
 
-import com.team05.linkup.domain.Community;
+import com.team05.linkup.domain.community.domain.Community;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

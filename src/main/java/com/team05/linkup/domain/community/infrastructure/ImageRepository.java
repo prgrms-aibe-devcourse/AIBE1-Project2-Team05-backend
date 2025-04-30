@@ -1,7 +1,7 @@
-package com.team05.linkup.community.core.repository;
+package com.team05.linkup.domain.community.infrastructure;
 
-import com.team05.linkup.domain.Community;
-import com.team05.linkup.domain.Image;
+import com.team05.linkup.domain.community.domain.Community;
+import com.team05.linkup.domain.community.domain.Image;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

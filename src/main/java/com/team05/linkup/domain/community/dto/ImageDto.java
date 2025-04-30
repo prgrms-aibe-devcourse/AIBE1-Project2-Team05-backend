@@ -1,4 +1,4 @@
-package com.team05.linkup.community.file.dto;
+package com.team05.linkup.domain.community.dto;
 
 import lombok.Builder;
 import lombok.Getter;
