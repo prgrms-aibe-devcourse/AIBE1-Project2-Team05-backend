@@ -48,13 +48,13 @@ public class CommunityService {
     }
 
     /**
-     * 최근 일정 기간 동안 작성된 게시글 중 인기 게시글 목록을 조회합니다.
-     * 인기도는 Repository 쿼리 내의 정렬 기준(조회수, 좋아요 수, 최신순)에 따라 결정됩니다.
-     * 이 메소드는 읽기 전용 트랜잭션으로 실행됩니다.
+     * 최근 일정 기간 동안 작성된 게시글 중 인기 게시글 목록을 조회
+     * 인기도는 Repository 쿼리 내의 정렬 기준(조회수, 좋아요 수, 최신순)에 따라 결정
+     * 이 메소드는 읽기 전용 트랜잭션으로 실행
      *
      * @param limit 조회할 최대 인기 게시글 수.
-     * @param day   인기 게시글을 선정할 최근 기간(일 단위). 예를 들어 7이면 최근 7일간의 게시글을 대상으로 합니다.
-     * @return 인기 게시글 요약 정보({@link CommunitySummaryResponse})의 {@link List}. 결과는 'limit' 수만큼 제한되며, 없을 경우 빈 리스트가 반환됩니다.
+     * @param day   인기 게시글을 선정할 최근 기간(일 단위). 예를 들어 7이면 최근 7일간의 게시글을 대상으로 함
+     * @return 인기 게시글 요약 정보({@link CommunitySummaryResponse})의 {@link List}. 결과는 'limit' 수만큼 제한되며, 없을 경우 빈 리스트가 반환
      * @see CommunityRepository#findPopularSince(ZonedDateTime, Pageable)
      */
     public List<CommunitySummaryResponse> findPopularCommunities(int limit, int day) {
@@ -67,6 +67,21 @@ public class CommunityService {
 
         // 3. Repository 메소드 호출
         return communityRepository.findPopularSince(daysAgo, topLimit);
+    }
+
+    /**
+     * 키워드를 사용하여 커뮤니티 게시글을 검색
+     * Repository 계층에 검색 로직을 위임
+     *
+     * @param keyword 검색 키워드.
+     * @param pageable 페이징 및 정렬 정보.
+     * @return 검색된 게시글 요약 정보 Page 객체.
+     */
+    public Page<CommunitySummaryResponse> searchCommunities(String keyword, Pageable pageable) {
+        if (keyword == null || keyword.isBlank()) {
+            return Page.empty(pageable);
+        }
+        return communityRepository.searchSummariesByKeyword(keyword, pageable);
     }
 
 }

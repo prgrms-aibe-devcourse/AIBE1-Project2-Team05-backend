@@ -61,4 +61,25 @@ public interface CommunityRepository extends JpaRepository<Community, String> {
     List<CommunitySummaryResponse> findPopularSince(@Param("startDate") ZonedDateTime startDate, Pageable pageable);
 
 
+    /**
+     * 키워드를 사용하여 제목, 내용, 태그에서 게시글을 검색하고 요약 정보를 반환합니다.
+     * 대소문자를 구분하지 않고 검색합니다.
+     *
+     * 경고: 이 쿼리는 데이터 양 증가 시 심각한 성능 저하를 유발할 수 있습니다.
+     * (특히 title, content, communityTag 컬럼에 인덱스가 없거나 활용되지 못할 경우)
+     * 향후 Full-Text Search 또는 검색 엔진 도입을 강력히 권장합니다.
+     *
+     * @param keyword 검색할 키워드 문자열.
+     * @param pageable 페이징 및 정렬 정보.
+     * @return 검색 조건에 맞는 게시글 요약 정보(CommunitySummaryResponse)를 담고 있는 Page 객체.
+     */
+    @Query("SELECT new com.team05.linkup.domain.community.dto.CommunitySummaryResponse(" +
+            "c.id, u.nickname, c.title, c.category, c.createdAt, c.viewCount, c.likeCount, " +
+            "(SELECT COUNT(cmt.id) FROM Comment cmt WHERE cmt.communityId = c.id)) " +
+            "FROM Community c JOIN c.user u " +
+            "WHERE c.title LIKE CONCAT('%', :keyword, '%') " +
+            "   OR c.content LIKE CONCAT('%', :keyword, '%') " +
+            "   OR c.communityTag LIKE CONCAT('%', :keyword, '%')")
+    Page<CommunitySummaryResponse> searchSummariesByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
 }
