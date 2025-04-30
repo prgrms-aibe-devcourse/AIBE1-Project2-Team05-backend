@@ -37,7 +37,4 @@ out/
 .vscode/
 
 ### dev.yml ###
-application-dev.yml
-
-### index.html ###
-index.html
+*-dev.yml

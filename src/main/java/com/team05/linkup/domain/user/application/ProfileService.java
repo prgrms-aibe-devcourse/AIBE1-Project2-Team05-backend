@@ -1,4 +1,4 @@
-package com.team05.linkup.domain.profile.application;
+package com.team05.linkup.domain.user.application;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

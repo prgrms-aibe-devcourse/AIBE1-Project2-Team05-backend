@@ -1,13 +1,13 @@
-package com.team05.linkup.domain.profile.api;
+package com.team05.linkup.domain.user.api;
 
 import com.team05.linkup.common.dto.ApiResponse;
 import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.domain.mentoring.domain.MentoringSessions;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.enums.Role;
-import com.team05.linkup.domain.profile.application.MenteeProfileService;
-import com.team05.linkup.domain.profile.application.MentorProfileService;
-import com.team05.linkup.domain.profile.application.ProfileService;
+import com.team05.linkup.domain.user.application.MenteeProfileService;
+import com.team05.linkup.domain.user.application.MentorProfileService;
+import com.team05.linkup.domain.user.application.ProfileService;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -42,12 +42,12 @@ public class ProfileController {
 
         Map<String, Object> data = new HashMap<>();
         User profile = userOpt.get();
-        if (profile.getRole().equals(Role.MENTO)) {
+        if (profile.getRole().equals(Role.ROLE_MENTOR)) {
             // 멘토의 경우, 커뮤니티 재능나눔 게시글 작성 내역 조회하여 반환
 //          List<Community> talents = mentorProfileService.getCommunityTalents(nickname, 2);
 //          data.put("talent", talents);
 
-        } else if (profile.getRole().equals(Role.MENTEE)) {
+        } else if (profile.getRole().equals(Role.ROLE_MENTEE)) {
             // 멘티의 경우, 내가 신청한 매칭 내역을 조회하여 반환
           List<MentoringSessions> matches = menteeProfileService.getMyMentoringSessions(nickname, 2);
           data.put("matches", matches);
