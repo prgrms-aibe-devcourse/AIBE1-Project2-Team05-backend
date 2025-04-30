@@ -32,7 +32,7 @@ public class User extends BaseEntity {
     @Column(length = 100, nullable = false, unique = true)
     private String nickname;
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 10)
     private Role role;
     @Column(length = 255, nullable = false)
     private String profileImageUrl;
