@@ -1,4 +1,4 @@
-package com.team05.linkup.domain.profile.application;
+package com.team05.linkup.domain.user.application;
 
 import com.team05.linkup.domain.mentoring.domain.MentoringSessions;
 import com.team05.linkup.domain.mentoring.infrastructure.MentoringRepository;

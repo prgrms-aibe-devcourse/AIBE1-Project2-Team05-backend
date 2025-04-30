@@ -21,7 +21,7 @@ public class RefreshToken {
     private User user;
 
     @Column(nullable = false, updatable = false)
-    private ZonedDateTime createdAt = ZonedDateTime.now();
+    private ZonedDateTime createdAt;
 
     @Column(nullable = false)
     private ZonedDateTime expiredAt;
