@@ -1,4 +1,4 @@
-package com.team05.linkup.domain;
+package com.team05.linkup.domain.user.domain;
 
 import com.team05.linkup.domain.baseEntity.BaseEntity;
 import com.team05.linkup.domain.enums.ActivityTime;

@@ -1,16 +1,15 @@
-package com.team05.linkup.domain.profile.controller;
+package com.team05.linkup.domain.profile.api;
 
 import com.team05.linkup.common.dto.ApiResponse;
 import com.team05.linkup.common.enums.ResponseCode;
-import com.team05.linkup.common.exception.UserNotfoundException;
-import com.team05.linkup.domain.User;
+import com.team05.linkup.domain.mentoring.domain.MentoringSessions;
+import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.enums.Role;
-import com.team05.linkup.domain.profile.repository.ProfileRepository;
-import com.team05.linkup.domain.profile.service.MenteeProfileService;
-import com.team05.linkup.domain.profile.service.MentorProfileService;
-import com.team05.linkup.domain.profile.service.ProfileService;
+import com.team05.linkup.domain.profile.application.MenteeProfileService;
+import com.team05.linkup.domain.profile.application.MentorProfileService;
+import com.team05.linkup.domain.profile.application.ProfileService;
+import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,7 +27,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ProfileController {
 
-    private final ProfileRepository profileRepository;
+    private final UserRepository userRepository;
     private final ProfileService profileService;
     private final MentorProfileService mentorProfileService;
     private final MenteeProfileService menteeProfileService;
@@ -36,7 +35,7 @@ public class ProfileController {
     @GetMapping("/{nickname}/profile")
     public ResponseEntity<ApiResponse> getProfile(@PathVariable String nickname) {
         // 1. 사용자의 역할(멘토/멘티) 확인
-        Optional<User> userOpt = profileRepository.findByNickname(nickname);
+        Optional<User> userOpt = userRepository.findByNickname(nickname);
         if (userOpt.isEmpty())
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다."));
@@ -50,8 +49,8 @@ public class ProfileController {
 
         } else if (profile.getRole().equals(Role.MENTEE)) {
             // 멘티의 경우, 내가 신청한 매칭 내역을 조회하여 반환
-//          List<mentoringSessions> matches = menteeProfileService.getMyMentoringSessions(nickname, 2);
-//          data.put("matches", matches);
+          List<MentoringSessions> matches = menteeProfileService.getMyMentoringSessions(nickname, 2);
+          data.put("matches", matches);
         }
 
         // 3. 추가 정보 조회

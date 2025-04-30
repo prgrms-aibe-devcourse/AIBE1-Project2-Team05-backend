@@ -1,9 +1,9 @@
-package com.team05.linkup.domain.profile.service;
+package com.team05.linkup.domain.profile.application;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class ProfileService {
+public class MentorProfileService {
 }

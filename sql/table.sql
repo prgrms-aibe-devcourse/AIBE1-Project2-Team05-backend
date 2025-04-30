@@ -122,7 +122,7 @@ CREATE TABLE comments (
 
 CREATE TABLE mentoring_sessions (
     id varchar(36) PRIMARY KEY ,
-    mento_user_id varchar(36) NOT NULL ,
+    mentor_user_id varchar(36) NOT NULL ,
     mentee_user_id varchar(36) NOT NULL ,
     interest ENUM('프로그래밍/웹개발', '프로그래밍/앱개발', '디자인/UX/UI', '디자인/그래픽',
 '교육/수학', '교육/영어', '음악/피아노', '운동/요가'),
