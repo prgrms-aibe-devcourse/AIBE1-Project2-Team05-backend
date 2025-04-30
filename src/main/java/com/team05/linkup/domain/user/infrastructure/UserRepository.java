@@ -1,6 +1,6 @@
-package com.team05.linkup.common.repository;
+package com.team05.linkup.domain.user.infrastructure;
 
-import com.team05.linkup.domain.User;
+import com.team05.linkup.domain.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

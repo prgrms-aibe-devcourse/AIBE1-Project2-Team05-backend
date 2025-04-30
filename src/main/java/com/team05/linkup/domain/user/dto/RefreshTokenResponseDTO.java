@@ -1,4 +1,4 @@
-package com.team05.linkup.users.dto;
+package com.team05.linkup.domain.user.dto;
 
 public record RefreshTokenResponseDTO(
         String accessToken,

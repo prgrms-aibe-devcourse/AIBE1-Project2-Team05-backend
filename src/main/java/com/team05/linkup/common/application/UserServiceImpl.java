@@ -1,7 +1,7 @@
-package com.team05.linkup.common.service;
+package com.team05.linkup.common.application;
 
-import com.team05.linkup.common.repository.UserRepository;
-import com.team05.linkup.domain.User;
+import com.team05.linkup.domain.user.infrastructure.UserRepository;
+import com.team05.linkup.domain.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

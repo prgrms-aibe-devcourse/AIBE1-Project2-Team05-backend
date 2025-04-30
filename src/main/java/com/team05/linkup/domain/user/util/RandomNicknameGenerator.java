@@ -1,4 +1,4 @@
-package com.team05.linkup.users.util;
+package com.team05.linkup.domain.user.util;
 
 import org.springframework.stereotype.Component;
 

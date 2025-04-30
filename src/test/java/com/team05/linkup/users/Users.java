@@ -1,5 +1,5 @@
 package com.team05.linkup.users;
-import com.team05.linkup.domain.RefreshToken;
+import com.team05.linkup.domain.user.domain.RefreshToken;
 import com.team05.linkup.domain.baseEntity.BaseEntity;
 import com.team05.linkup.domain.enums.ActivityTime;
 import com.team05.linkup.domain.enums.ActivityType;

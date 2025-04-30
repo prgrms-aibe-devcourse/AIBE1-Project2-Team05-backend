@@ -1,4 +1,4 @@
-package com.team05.linkup.common.service;
+package com.team05.linkup.common.application;
 
 import com.team05.linkup.common.exception.UserNotfoundException;
 import org.springframework.security.core.Authentication;
