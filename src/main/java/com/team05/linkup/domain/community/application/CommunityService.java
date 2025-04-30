@@ -26,6 +26,8 @@ import java.util.List;
 public class CommunityService {
 
     private final CommunityRepository communityRepository;
+    // private final CommentRepository commentRepository; // 댓글 수 필요 시 주입
+    // private final LikeRepository likeRepository; // 좋아요 수 실시간 반영 필요 시 주입
 
     /**
      * 지정된 조건(카테고리 필터링, 페이징, 정렬)에 맞는 게시글 요약 목록을 조회합니다.

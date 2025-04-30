@@ -27,6 +27,7 @@ import java.util.List;
 public class CommunityController {
 
     private final CommunityService communityService;
+    // private final CommentService commentService; // 댓글 관련 기능 필요 시 주입
 
     /**
      * 카테고리별로 필터링된(선택) 커뮤니티 게시물의 페이지별 목록을 검색합니다.
@@ -78,7 +79,8 @@ public class CommunityController {
     @GetMapping("/more-detail")
     public ResponseEntity<ApiResponse<Page<CommunitySummaryResponse>>> searchCommunityList(
             @RequestParam String keyword, // 검색어는 필수로 받음
-            @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            // PageableDefault는 /list 와 동일하게 유지하거나 검색 결과에 맞게 조정
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<CommunitySummaryResponse> searchResultPage = communityService.searchCommunities(keyword, pageable);
         return ResponseEntity.ok(ApiResponse.success(searchResultPage));
