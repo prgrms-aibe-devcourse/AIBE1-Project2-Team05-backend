@@ -2,7 +2,7 @@ package com.team05.linkup.domain.community.api;
 
 
 import com.team05.linkup.common.dto.ApiResponse;
-import com.team05.linkup.domain.community.domain.CommunityCategory;
+import com.team05.linkup.domain.enums.Category;
 import com.team05.linkup.domain.community.application.CommunityService;
 import com.team05.linkup.domain.community.dto.CommunitySummaryResponse;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +40,7 @@ public class CommunityController {
      */
     @GetMapping("/list")
     public ResponseEntity<ApiResponse<Page<CommunitySummaryResponse>>> getCommunityList(
-            @RequestParam(required = false) CommunityCategory category,
+            @RequestParam(required = false) Category category,
             @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<CommunitySummaryResponse> communityPage = communityService.findCommunities(category , pageable);

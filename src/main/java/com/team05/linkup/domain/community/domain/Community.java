@@ -1,6 +1,7 @@
 package com.team05.linkup.domain.community.domain;
 
 import com.team05.linkup.domain.baseEntity.BaseEntity;
+import com.team05.linkup.domain.enums.Category;
 import com.team05.linkup.domain.user.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -23,7 +24,7 @@ public class Community extends BaseEntity {
     private String title;
 
     @Enumerated(EnumType.STRING)
-    private CommunityCategory category;
+    private Category category;
 
     @Column(name = "community_tag")
     private String communityTag;

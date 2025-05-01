@@ -1,6 +1,6 @@
 package com.team05.linkup.domain.community.application;
 
-import com.team05.linkup.domain.community.domain.CommunityCategory;
+import com.team05.linkup.domain.enums.Category;
 import com.team05.linkup.domain.community.infra.CommunityRepository;
 import com.team05.linkup.domain.community.dto.CommunitySummaryResponse;
 import lombok.RequiredArgsConstructor;
@@ -34,9 +34,9 @@ public class CommunityService {
      * @param pageable 페이징 및 정렬 정보 (페이지 번호, 페이지 크기, 정렬 기준). Spring Data Web Support에 의해 Controller에서 생성됩니다.
      * @return 조건에 맞는 게시글 요약 정보({@link CommunitySummaryResponse})를 담고 있는 {@link Page} 객체.
      * 결과가 없을 경우 빈 Page 객체가 반환됩니다.
-     * @see CommunityRepository#findCommunitySummaries(CommunityCategory, Pageable)
+     * @see CommunityRepository#findCommunitySummaries(Category, Pageable)
      */
-    public Page<CommunitySummaryResponse> findCommunities(CommunityCategory category, Pageable pageable) {
+    public Page<CommunitySummaryResponse> findCommunities(Category category, Pageable pageable) {
 
         return communityRepository.findCommunitySummaries(
                 category,

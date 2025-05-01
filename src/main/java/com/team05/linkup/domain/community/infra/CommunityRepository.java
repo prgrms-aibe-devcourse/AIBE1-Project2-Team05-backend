@@ -1,7 +1,7 @@
 package com.team05.linkup.domain.community.infra;
 
 import com.team05.linkup.domain.community.domain.Community;
-import com.team05.linkup.domain.community.domain.CommunityCategory;
+import com.team05.linkup.domain.enums.Category;
 import com.team05.linkup.domain.community.dto.CommunitySummaryResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,7 +38,7 @@ public interface CommunityRepository extends JpaRepository<Community, String> {
             "FROM Community c JOIN c.user u " +
             "WHERE (:category IS NULL OR c.category = :category)")
     Page<CommunitySummaryResponse> findCommunitySummaries(
-            @Param("category") CommunityCategory category,
+            @Param("category") Category category,
             Pageable pageable);
 
     /**

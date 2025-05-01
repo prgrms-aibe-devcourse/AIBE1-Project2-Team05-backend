@@ -1,6 +1,6 @@
 package com.team05.linkup.domain.community.dto;
 
-import com.team05.linkup.domain.community.domain.CommunityCategory;
+import com.team05.linkup.domain.enums.Category;
 import java.time.ZonedDateTime;
 
 /**
@@ -21,7 +21,7 @@ public record CommunitySummaryResponse(
         String id,
         String nickname,
         String title,
-        CommunityCategory category,
+        Category category,
         ZonedDateTime createdAt,
         Long viewCount,
         Long likeCount,
