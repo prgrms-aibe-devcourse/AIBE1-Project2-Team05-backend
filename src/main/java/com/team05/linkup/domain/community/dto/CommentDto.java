@@ -40,7 +40,7 @@ public class CommentDto {
                     .profileImageUrl(comment.getUser().getProfileImageUrl())
                     .commentContent(comment.getCommentContent())
                     .isParent(comment.isParent())
-                    .totalLikeCount(comment.getTotalLikeCount())
+                    .totalLikeCount(comment.getTotalLikeCount() != null ? comment.getTotalLikeCount() : 0)
                     .createdAt(comment.getCreatedAt())
                     .updatedAt(comment.getUpdatedAt())
                     .childComments(childComments.stream()

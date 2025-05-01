@@ -1,9 +1,14 @@
 package com.team05.linkup.domain.community.domain;
+
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.baseEntity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * 커뮤니티 이미지 엔티티
+ * 커뮤니티 게시글에 첨부된 이미지를 나타냅니다.
+ */
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

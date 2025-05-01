@@ -39,7 +39,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
             OAuth2ProviderStrategy strategy = strategyFactory.getStrategy(registrationId);
             String providerId = strategy.extractProviderId(oAuth2User);
-            User userId = userRepository.findByProviderId(providerId)
+            User userId = userRepository.findByProviderAndProviderId(registrationId, providerId)
                     .orElseThrow(() -> new Exception("User not found with providerId: " + providerId));
 
             String refreshTokenId = UUID.randomUUID().toString();
@@ -47,6 +47,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             ZonedDateTime expiresAt = now.plusDays(1);
             RefreshToken refreshToken = RefreshToken.builder()
                     .id(refreshTokenId)
+                    .provider(registrationId)
                     .user(userId)
                     .createdAt(now)
                     .expiredAt(expiresAt)
@@ -63,20 +64,20 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     //RTR 기법 - 리프레시 토큰 로테이션
     @Transactional
-    public RefreshTokenResponseDTO regenerateAccessAndRefreshToken(String refreshTokenId) throws Exception {
+    public RefreshTokenResponseDTO regenerateAccessAndRefreshToken(String provider, String providerId) throws Exception {
         try {
-            RefreshToken refreshToken = refreshTokenRepository.findByProviderId(refreshTokenId)
+            RefreshToken refreshToken = refreshTokenRepository.findByProviderAndProviderId(provider,providerId)
                     .orElseThrow(() -> new TokenException("refresh token not found"));
 
             if (refreshToken.getExpiredAt() == null) {
-                logger.warn("ExpiredAt is null for token: {}", refreshTokenId);
+                logger.warn("ExpiredAt is null for token: {}", providerId);
                 refreshTokenRepository.invalidateAllUserTokens(refreshToken.getUser());
                 throw new TokenException("Invalid token state: expiration date is missing");
             }
 
             ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
             if(refreshToken.getExpiredAt().isBefore(now)) {
-                logger.warn("Token has expired for token: {}", refreshTokenId);
+                logger.warn("Token has expired for token: {}", providerId);
                 refreshTokenRepository.invalidateAllUserTokens(refreshToken.getUser());
                 throw new TokenException("Invalid token state: token has expired");
             }
@@ -98,7 +99,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             refreshTokenRepository.updateUsedStatus(refreshToken.getId(), true);
 
             // 새 액세스 토큰 생성
-            Authentication authentication = jwtServiceImpl.getAuthentication(refreshToken.getUser().toString());
+            Authentication authentication = jwtServiceImpl.getAuthentication(refreshToken.getUser().getId());
             String newAccessToken = jwtServiceImpl.generateAccessToken(authentication);
 
             String newRefreshToken = createRefreshToken(authentication);

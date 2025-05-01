@@ -1,4 +1,4 @@
-package com.team05.linkup.domain.community.infrastructure;
+package com.team05.linkup.domain.community.infra;
 
 import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.domain.Image;

@@ -5,13 +5,12 @@ import com.team05.linkup.common.exception.TokenException;
 import com.team05.linkup.common.exception.UserNotfoundException;
 import com.team05.linkup.common.oauth.jwtAssistant.OAuth2ProviderStrategy;
 import com.team05.linkup.common.oauth.jwtAssistant.OAuth2ProviderStrategyFactory;
-import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import com.team05.linkup.domain.user.domain.User;
+import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -54,6 +53,7 @@ public class JwtServiceImpl implements JwtService {
             return Jwts.builder()
                     .subject(providerId)
                     .claim("authorities",authorities)
+                    .claim("provider", registrationId)
                     .issuedAt(Date.from(now.toInstant()))
                     .expiration(Date.from(expiration.toInstant()))
                     .issuer("cake7-auth-server") // ✅ 발급자 설정
@@ -93,7 +93,8 @@ public class JwtServiceImpl implements JwtService {
             );
 
             // Return authentication with OAuth2User as principal
-            return new UsernamePasswordAuthenticationToken(oAuth2User, null, authorities);
+            return new OAuth2AuthenticationToken
+                    (oAuth2User,  authorities, user.get().getProvider());
 
         } catch (Exception e) {
             logger.error("Error getting authentication: {}", e.getMessage());
