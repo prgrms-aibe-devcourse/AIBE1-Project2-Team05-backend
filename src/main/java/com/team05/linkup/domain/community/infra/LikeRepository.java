@@ -16,6 +16,15 @@ import java.util.Optional;
 public interface LikeRepository extends JpaRepository<Like, String> {
 
     /**
+     * 특정 사용자와 커뮤니티 게시글에 대한 '좋아요' 존재 여부를 확인합니다.
+     *
+     * @param user        확인할 사용자 엔티티
+     * @param communityId 확인할 커뮤니티 게시글 ID
+     * @return '좋아요'가 존재하면 true, 그렇지 않으면 false
+     */
+    boolean existsByUserAndCommunityId(User user, String communityId); // 사용자 객체 기반 확인
+
+    /**
      * 특정 사용자와 특정 커뮤니티 게시글에 대한 '좋아요' 정보를 조회.
      * 사용자가 해당 게시글에 좋아요를 눌렀는지 확인하는 데 사용.
      *
