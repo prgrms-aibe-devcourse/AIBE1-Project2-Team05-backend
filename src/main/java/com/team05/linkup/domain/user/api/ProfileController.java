@@ -62,71 +62,35 @@ public class ProfileController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다."));
 
-        Map<String, Object> data = new HashMap<>();
+//        Map<String, Object> data = new HashMap<>();
 
         User profile = userOpt.get();
+//        log.info("✅ 현재 사용자 닉네임 = {}", nickname);
+//        log.info("✅ 역할 = {}", user.getRole());
         logger.debug(profile.getRole());
+        Map<String, Object> data = getCommonActivity(nickname); // 공통 조회 항목들 불러오기
+
 
         if (profile.getRole().equals(Role.ROLE_MENTOR)) {
             // 멘토의 경우, 커뮤니티 재능나눔 게시글 작성 내역 조회하여 반환
-//          List<Community> talents = mentorProfileService.getCommunityTalents(profile.getId(), 2);
-//          data.put("talent", talents);
-
-        } else if (profile.getRole().equals(Role.ROLE_MENTEE)) {
-            // 멘티의 경우, 내가 신청한 매칭의 멘토 정보를 조회하여 반환
-          List<MatchedMentorProfileDto> matches = menteeProfileService.getMyMentoringSessions(profile.getId(), 2);
-          data.put("matches", matches);
-            logger.debug("멘티의 매칭 내역 조회 성공");
-        }
-
-        // 3. 추가 정보 조회
-        // 커뮤니티 재능나눔 게시글 작성 내역 조회하여 반환
-//        List<Community> posts = profileService.getMyPosts(nickname, 2);
-//        data.put("posts", posts);
-
-        // 사용자가 작성한 댓글을 조회하여 반환
-//        List<Comments> comments = profileService.getMyComments(nickname, 2);
-//        data.put("comments", comments);
-
-        // 사용자의 북마크를 조회하여 반환
-//        List<Bookmark> bookmarks = profileService.getMyBookmarks(nickname, 2);
-//        data.put("bookmarks", bookmarks);
-
-
-        return ResponseEntity.ok(ApiResponse.success(data));
-    }
-
-    @GetMapping("/{nickname}/profile/activity")
-    public ResponseEntity<ApiResponse> getProfileActivity(@PathVariable String nickname) {
-        Optional<User> userOpt = userRepository.findByNickname(nickname);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "활동 내역을 찾을 수 없습니다."));
-        }
-
-        User user = userOpt.get();
-        log.info("✅ 현재 사용자 닉네임 = {}", nickname);
-        log.info("✅ 역할 = {}", user.getRole());
-        Map<String, Object> data = getCommonActivity(nickname); // 공통 조회 항목들 불러오기
-
-        if (user.getRole().equals(Role.ROLE_MENTOR)) {
             log.info("✅ 멘토 맞음, 재능 데이터 조회 시작!");
             List<CommunityTalentSummaryDTO> talents = mentorProfileService.getCommunityTalents(nickname, 2);
             log.info("✅ 재능 개수: {}", talents.size());
             data.put("talents", talents);
-        } else if (user.getRole().equals(Role.ROLE_MENTEE)) {
-            log.info("✅ 멘티 맞음, 매칭 내역 조회 시작!");
-            List<MentoringSessions> matches = menteeProfileService.getMyMentoringSessions(nickname, 2);
+
+        } else if (profile.getRole().equals(Role.ROLE_MENTEE)) {
+            // 멘티의 경우, 내가 신청한 매칭의 멘토 정보를 조회하여 반환
+            List<MatchedMentorProfileDto> matches = menteeProfileService.getMyMentoringSessions(profile.getId(), 2);
             data.put("matches", matches);
+            logger.debug("멘티의 매칭 내역 조회 성공");
         }
 
         return ResponseEntity.ok(ApiResponse.success(data));
     }
-
     /**
      * 📦 활동 내역 중 공통 항목을 한 번에 불러오는 private 메서드
      */
-    private Map<String, Object> getCommonActivity(String nickname) {
+    private Map<String, Object> getCommonActivity (String nickname){
         Map<String, Object> data = new HashMap<>();
         data.put("posts", profileService.getMyPosts(nickname, 2));
         data.put("comments", profileService.getMyComments(nickname, 2));
@@ -135,3 +99,29 @@ public class ProfileController {
         return data;
     }
 }
+//
+//    @GetMapping("/{nickname}/profile/activity")
+//    public ResponseEntity<ApiResponse> getProfileActivity(@PathVariable String nickname) {
+//        Optional<User> userOpt = userRepository.findByNickname(nickname);
+//        if (userOpt.isEmpty()) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "활동 내역을 찾을 수 없습니다."));
+//        }
+//
+//        User user = userOpt.get();
+//        log.info("✅ 현재 사용자 닉네임 = {}", nickname);
+//        log.info("✅ 역할 = {}", user.getRole());
+////        Map<String, Object> data = getCommonActivity(nickname); // 공통 조회 항목들 불러오기
+//
+////        if (user.getRole().equals(Role.ROLE_MENTOR)) {
+////
+////        } else if (user.getRole().equals(Role.ROLE_MENTEE)) {
+////            log.info("✅ 멘티 맞음, 매칭 내역 조회 시작!");
+////            List<MentoringSessions> matches = menteeProfileService.getMyMentoringSessions(nickname, 2);
+////            data.put("matches", matches);
+////        }
+//
+//    }
+//
+//
+//}

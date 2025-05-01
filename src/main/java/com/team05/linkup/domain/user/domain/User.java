@@ -5,9 +5,6 @@ import com.team05.linkup.domain.enums.ActivityTime;
 import com.team05.linkup.domain.enums.ActivityType;
 import com.team05.linkup.domain.enums.Interest;
 import com.team05.linkup.domain.enums.Role;
-import com.team05.linkup.domain.enums.converter.ActivityTimeConverter;
-import com.team05.linkup.domain.enums.converter.ActivityTypeConverter;
-import com.team05.linkup.domain.enums.converter.InterestConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -46,15 +43,12 @@ public class User extends BaseEntity {
     @Column(length = 255)
     private String introduction;
 
-    @Convert(converter = InterestConverter.class)
+    @Enumerated(EnumType.STRING)
     private Interest interest;
 
-    @Convert(converter = ActivityTimeConverter.class)
-    @Column(name = "activity_time")
+    @Enumerated(EnumType.STRING)
     private ActivityTime activityTime;
-
-    @Convert(converter = ActivityTypeConverter.class)
-    @Column(name = "activity_type")
+    @Enumerated(EnumType.STRING)
     private ActivityType activityType;
     @Column(length = 255)
     private String contactLink;

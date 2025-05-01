@@ -1,14 +1,9 @@
 package com.team05.linkup.domain.user.application;
 
 import com.team05.linkup.domain.community.infra.CommunityRepository;
-import com.team05.linkup.domain.user.dto.MyBookmarkResponseDTO;
-import com.team05.linkup.domain.user.dto.MyCommentResponseDTO;
-import com.team05.linkup.domain.user.dto.MyLikeResponseDTO;
-import com.team05.linkup.domain.user.dto.MyPostResponseDTO;
 import com.team05.linkup.domain.user.domain.User;
-import com.team05.linkup.domain.user.dto.ProfilePageDTO;
+import com.team05.linkup.domain.user.dto.*;
 import com.team05.linkup.domain.user.infrastructure.AreaRepository;
-import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,6 +41,17 @@ public class ProfileService {
                 .me(isCurrentUser) // 현재 사용자와 비교해 설정 (예: SecurityContext에서 가져오기)
                 .build();
     }
+    private static boolean isCurrentUser(User user) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String currentProviderId = null;
+        if (principal instanceof String) {
+            currentProviderId = (String) principal;
+        }
+        logger.debug("사용자 provider Id: {}, 프로필 provider ID: {}", currentProviderId, user.getProviderId());
+        return currentProviderId != null && currentProviderId.equals(user.getProviderId());
+    }
+
+
     private final CommunityRepository communityRepository;
 
     public List<MyPostResponseDTO> getMyPosts(String nickname, int limit) {
@@ -105,15 +111,4 @@ public class ProfileService {
                 .collect(Collectors.toList());
     }
 
-}
-
-    private static boolean isCurrentUser(User user) {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String currentProviderId = null;
-        if (principal instanceof String) {
-            currentProviderId = (String) principal;
-        }
-        logger.debug("사용자 provider Id: {}, 프로필 provider ID: {}", currentProviderId, user.getProviderId());
-        return currentProviderId != null && currentProviderId.equals(user.getProviderId());
-    }
 }
