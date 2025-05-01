@@ -29,6 +29,7 @@ import java.util.List;
 @Tag(name = "커뮤니티 API", description = "커뮤니티 관련 API")
 public class CommunityController {
     private final CommunityService communityService;
+    // private final CommentService commentService; // 댓글 관련 기능 필요 시 주입
 
     /**
      * 카테고리별로 필터링된(선택) 커뮤니티 게시물의 페이지별 목록을 검색합니다.
