@@ -73,9 +73,9 @@ public class ProfileController {
 
         if (profile.getRole().equals(Role.ROLE_MENTOR)) {
             // 멘토의 경우, 커뮤니티 재능나눔 게시글 작성 내역 조회하여 반환
-            log.info("✅ 멘토 맞음, 재능 데이터 조회 시작!");
+//            log.info("✅ 멘토 맞음, 재능 데이터 조회 시작!");
             List<CommunityTalentSummaryDTO> talents = mentorProfileService.getCommunityTalents(nickname, 2);
-            log.info("✅ 재능 개수: {}", talents.size());
+//            log.info("✅ 재능 개수: {}", talents.size());
             data.put("talents", talents);
 
         } else if (profile.getRole().equals(Role.ROLE_MENTEE)) {
@@ -88,7 +88,7 @@ public class ProfileController {
         return ResponseEntity.ok(ApiResponse.success(data));
     }
     /**
-     * 📦 활동 내역 중 공통 항목을 한 번에 불러오는 private 메서드
+     *  활동 내역 중 공통 항목을 한 번에 불러오는 private 메서드
      */
     private Map<String, Object> getCommonActivity (String nickname){
         Map<String, Object> data = new HashMap<>();
@@ -99,29 +99,3 @@ public class ProfileController {
         return data;
     }
 }
-//
-//    @GetMapping("/{nickname}/profile/activity")
-//    public ResponseEntity<ApiResponse> getProfileActivity(@PathVariable String nickname) {
-//        Optional<User> userOpt = userRepository.findByNickname(nickname);
-//        if (userOpt.isEmpty()) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-//                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "활동 내역을 찾을 수 없습니다."));
-//        }
-//
-//        User user = userOpt.get();
-//        log.info("✅ 현재 사용자 닉네임 = {}", nickname);
-//        log.info("✅ 역할 = {}", user.getRole());
-////        Map<String, Object> data = getCommonActivity(nickname); // 공통 조회 항목들 불러오기
-//
-////        if (user.getRole().equals(Role.ROLE_MENTOR)) {
-////
-////        } else if (user.getRole().equals(Role.ROLE_MENTEE)) {
-////            log.info("✅ 멘티 맞음, 매칭 내역 조회 시작!");
-////            List<MentoringSessions> matches = menteeProfileService.getMyMentoringSessions(nickname, 2);
-////            data.put("matches", matches);
-////        }
-//
-//    }
-//
-//
-//}

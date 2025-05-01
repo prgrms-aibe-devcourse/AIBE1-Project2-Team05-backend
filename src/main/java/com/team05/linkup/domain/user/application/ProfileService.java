@@ -72,7 +72,7 @@ public class ProfileService {
     }
 
     public List<MyCommentResponseDTO> getMyComments(String nickname, int limit) {
-        // ✅ userId 조회
+        // userId 조회
         String userId = communityRepository.findUserIdByNickname(nickname); // ※ 아래에서 쿼리도 추가로 만들어줘야 함
 
         List<Object[]> rows = communityRepository.findByMyCommunityComments(userId, limit);
