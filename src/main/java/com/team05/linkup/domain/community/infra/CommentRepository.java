@@ -1,7 +1,6 @@
 package com.team05.linkup.domain.community.infra;
 
 import com.team05.linkup.domain.community.domain.Comment;
-import com.team05.linkup.domain.community.domain.Community;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,15 +9,16 @@ import java.util.List;
 
 public interface CommentRepository extends JpaRepository<Comment, String> {
 
-    @Query("SELECT c FROM Comment c WHERE c.community.id = :communityId AND c.isParent = true ORDER BY c.orderNumber")
+    @Query("SELECT c FROM Comment c WHERE c.communityId = :communityId AND c.parentCommentId IS NULL ORDER BY c.orderNumber")
     List<Comment> findParentCommentsByCommunityId(@Param("communityId") String communityId);
 
-    @Query("SELECT c FROM Comment c WHERE c.parentComment.id = :parentId ORDER BY c.createdAt")
+    @Query("SELECT c FROM Comment c WHERE c.parentCommentId = :parentId ORDER BY c.createdAt")
     List<Comment> findChildCommentsByParentId(@Param("parentId") String parentId);
 
-    List<Comment> findByCommunityAndIsParentTrueOrderByOrderNumber(Community community);
+    // Method name 쿼리 수정
+    List<Comment> findByCommunityIdAndParentCommentIdIsNullOrderByOrderNumber(String communityId);
 
-    List<Comment> findByParentCommentOrderByCreatedAt(Comment parentComment);
+    List<Comment> findByParentCommentIdOrderByCreatedAt(String parentCommentId);
 
     Integer countByCommunityId(String communityId);
 }

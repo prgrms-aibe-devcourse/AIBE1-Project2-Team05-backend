@@ -1,6 +1,8 @@
 package com.team05.linkup.domain.community.dto;
 
 import com.team05.linkup.domain.community.domain.Comment;
+import com.team05.linkup.domain.user.domain.User;
+import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,14 +35,16 @@ public class CommentDto {
         private List<Response> childComments;
 
         public static Response from(Comment comment, List<Comment> childComments) {
+            User user = null; // 실제 구현에서는 userRepository를 통해 조회
+
             return Response.builder()
                     .id(comment.getId())
-                    .userId(comment.getUser().getId())
-                    .nickname(comment.getUser().getNickname())
-                    .profileImageUrl(comment.getUser().getProfileImageUrl())
+                    .userId(comment.getUserId())
+                    .nickname(comment.getName()) // User 객체 대신 name 필드 사용
+                    .profileImageUrl(user != null ? user.getProfileImageUrl() : null)
                     .commentContent(comment.getCommentContent())
-                    .isParent(comment.isParent())
-                    .totalLikeCount(comment.getTotalLikeCount() != null ? comment.getTotalLikeCount() : 0)
+                    .isParent(comment.getParentCommentId() == null) // parentCommentId 기준으로 판단
+                    .totalLikeCount(comment.getTotalLikeCount())
                     .createdAt(comment.getCreatedAt())
                     .updatedAt(comment.getUpdatedAt())
                     .childComments(childComments.stream()

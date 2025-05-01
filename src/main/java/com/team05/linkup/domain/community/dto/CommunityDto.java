@@ -1,7 +1,6 @@
 package com.team05.linkup.domain.community.dto;
 
 import com.team05.linkup.domain.community.domain.Community;
-import com.team05.linkup.domain.community.domain.CommunityCategory;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -65,8 +64,8 @@ public class CommunityDto {
         private String category;
         private String communityTag;
         private String content;
-        private int viewCount;
-        private int likeCount;
+        private int viewCount; // Long에서 int로 변환
+        private int likeCount; // Long에서 int로 변환
         private int commentCount;
         private boolean isLiked;
         private boolean isBookmarked;

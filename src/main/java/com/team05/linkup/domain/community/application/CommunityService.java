@@ -124,7 +124,7 @@ public class CommunityService {
                 .category(community.getCategory().name())
                 .communityTag(community.getCommunityTag())
                 .content(community.getContent())
-                .viewCount(community.getViewCount())
+                .viewCount(community.getViewCount().intValue())
                 // .likeCount((int) likeCount)
                 .commentCount(commentCount)
                 // .isLiked(isLiked)
@@ -146,7 +146,7 @@ public class CommunityService {
                 .category(parseCategory(request.getCategory()))
                 .communityTag(request.getCommunityTag())
                 .content(request.getContent())
-                .viewCount(0)
+                .viewCount(0L)
                 .build();
 
         Community savedCommunity = communityRepository.save(community);
@@ -205,7 +205,7 @@ public class CommunityService {
                 .category(community.getCategory().name())
                 .communityTag(community.getCommunityTag())
                 .content(community.getContent())
-                .viewCount(community.getViewCount())
+                .viewCount(community.getViewCount().intValue())
                 // .likeCount((int) likeCount)
                 .commentCount(commentCount)
                 .createdAt(community.getCreatedAt())

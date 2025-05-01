@@ -1,6 +1,5 @@
 package com.team05.linkup.domain.community.domain;
 
-import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.baseEntity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,41 +11,34 @@ import lombok.*;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "comments")
 public class Comment extends BaseEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(length = 36, updatable = false, nullable = false)
+    @Column(length = 36)
     private String id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private String userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "community_id", nullable = false)
-    private Community community;
+    @Column(name = "community_id", nullable = false)
+    private String communityId;
 
-    @Column(name = "comment_content", length = 300, nullable = false)
+    @Column(nullable = false, length = 300)
     private String commentContent;
 
     @Column(name = "order_number") // For sorting replies if needed
     private Long orderNumber;
 
-    @Column(name = "is_parent")
-    private boolean isParent;
-
     @Column(name = "total_like_count", columnDefinition = "INT default 0")
-    private Integer totalLikeCount = 0;
+    private int totalLikeCount = 0;
 
     @Column(length = 100) // Denormalized user name for easy retrieval
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_comment_id")
-    private Comment parentComment;
+    @Column(name = "parent_comment_id")
+    private String parentCommentId;
 
     // 댓글 내용 수정
     public void updateContent(String content) {

@@ -36,14 +36,14 @@ public class Community extends BaseEntity {
     private String communityTag;
 
     @Lob
-    @Column(columnDefinition = "LONGTEXT", nullable = false)
+    @Column(nullable = false)
     private String content;
 
-    @Column(name = "view_count", columnDefinition = "int default 0")
-    private int viewCount = 0;
+    @Column(name = "view_count", nullable = false, columnDefinition = "BIGINT default 0")
+    private Long viewCount = 0L;
 
-    @Column(name = "like_count", nullable = false, columnDefinition = "int default 0")
-    private int likeCount = 0;
+    @Column(name = "like_count", nullable = false, columnDefinition = "BIGINT default 0")
+    private Long likeCount = 0L;
 
     // 도메인 로직
     /**
