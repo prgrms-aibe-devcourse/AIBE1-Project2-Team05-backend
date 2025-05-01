@@ -1,5 +1,3 @@
-
-
 CREATE TABLE user(
          id VARCHAR(36) PRIMARY KEY ,
          provider VARCHAR(10) NOT NULL ,
@@ -7,7 +5,7 @@ CREATE TABLE user(
          user_name_attribute VARCHAR(50) NOT NULL ,
          nickname VARCHAR(100) NOT NULL ,
          name VARCHAR(100) NOT NULL ,
-         role ENUM('ROLE_TEMP', 'ROLE_MENTO', 'ROLE_MENTEE') DEFAULT 'ROLE_TEMP',
+         role ENUM('ROLE_TEMP', 'ROLE_MENTOR', 'ROLE_MENTEE') DEFAULT 'ROLE_TEMP',
          profile_image_url VARCHAR(255) NOT NULL ,
          account_disable BOOLEAN DEFAULT FALSE,
          area_id tinyint,
@@ -31,7 +29,7 @@ CREATE TABLE area (
     area_name VARCHAR(30) NOT NULL
 );
 
-CREATE TABLE refresh_token (
+CREATE TABLE `refresh_token` (
        id VARCHAR(36) PRIMARY KEY ,
        user_id VARCHAR(36) NOT NULL ,
        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -157,12 +155,12 @@ CREATE TABLE review(
    CONSTRAINT fk_review_mentoring_session_id FOREIGN KEY (mentoring_session_id) REFERENCES mentoring_sessions(id) ON DELETE CASCADE
 );
 
-CREATE VIEW mento_statistics AS
+CREATE VIEW mentor_statistics AS
 SELECT
-    m.mento_user_id,
+    m.mentor_user_id,
     COUNT(*) AS total_sessions,  -- 총 멘토링 횟수
     SUM(CASE WHEN m.status = '진행중' THEN 1 ELSE 0 END) AS ongoing_sessions,  -- 진행 중인 멘토링 횟수
     AVG(r.star) AS average_rating  -- 평균 만족도
 FROM mentoring_sessions m
          LEFT JOIN review r ON m.id = r.mentoring_session_id
-GROUP BY m.mento_user_id;
+GROUP BY m.mentor_user_id;
