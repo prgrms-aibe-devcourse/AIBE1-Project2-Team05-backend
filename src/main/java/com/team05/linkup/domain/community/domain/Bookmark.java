@@ -3,6 +3,10 @@ package com.team05.linkup.domain.community.domain;
 import com.team05.linkup.domain.baseEntity.BaseEntity;
 import com.team05.linkup.domain.user.domain.User;
 import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -35,7 +39,7 @@ public class Bookmark extends BaseEntity { // BaseEntity 상속 (createdAt, upda
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private User user;  // private String userId;
 
     /**
      * 북마크된 커뮤니티 게시글 엔티티.
@@ -44,7 +48,7 @@ public class Bookmark extends BaseEntity { // BaseEntity 상속 (createdAt, upda
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "community_id", nullable = false)
-    private Community community;
+    private Community community;    // private String communityId;
 
     /**
      * 북마크 생성을 위한 빌더 패턴 생성자.
