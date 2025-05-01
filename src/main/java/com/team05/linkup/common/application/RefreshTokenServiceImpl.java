@@ -1,13 +1,14 @@
 package com.team05.linkup.common.application;
 
 import com.team05.linkup.common.exception.TokenException;
+import com.team05.linkup.common.exception.UserNotfoundException;
 import com.team05.linkup.common.oauth.jwtAssistant.OAuth2ProviderStrategy;
 import com.team05.linkup.common.oauth.jwtAssistant.OAuth2ProviderStrategyFactory;
 import com.team05.linkup.domain.user.domain.RefreshToken;
 import com.team05.linkup.domain.user.domain.User;
+import com.team05.linkup.domain.user.dto.RefreshTokenResponseDTO;
 import com.team05.linkup.domain.user.infrastructure.RefreshTokenRepository;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
-import com.team05.linkup.domain.user.dto.RefreshTokenResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -40,11 +42,25 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             OAuth2ProviderStrategy strategy = strategyFactory.getStrategy(registrationId);
             String providerId = strategy.extractProviderId(oAuth2User);
             User userId = userRepository.findByProviderAndProviderId(registrationId, providerId)
-                    .orElseThrow(() -> new Exception("User not found with providerId: " + providerId));
+                    .orElseThrow(() -> new UserNotfoundException("User not found with providerId: " + providerId));
+
+
 
             String refreshTokenId = UUID.randomUUID().toString();
             ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
             ZonedDateTime expiresAt = now.plusDays(1);
+
+            List<RefreshToken> activeTokens = refreshTokenRepository
+                    .findByUserAndUsedIsFalseAndExpiredAtAfterOrderByCreatedAtAsc(userId, now);
+
+            final int MAX_TOKENS_PER_USER = 3;
+            if (activeTokens.size() >= MAX_TOKENS_PER_USER) {
+                // 가장 오래된 토큰부터 삭제 (최신 2개만 남김)
+                for (int i = 0; i < activeTokens.size() - (MAX_TOKENS_PER_USER - 1); i++) {
+                    refreshTokenRepository.delete(activeTokens.get(i));
+                }
+            }
+
             RefreshToken refreshToken = RefreshToken.builder()
                     .id(refreshTokenId)
                     .provider(registrationId)
@@ -66,45 +82,50 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Transactional
     public RefreshTokenResponseDTO regenerateAccessAndRefreshToken(String provider, String providerId) throws Exception {
         try {
-            RefreshToken refreshToken = refreshTokenRepository.findByProviderAndProviderId(provider,providerId)
-                    .orElseThrow(() -> new TokenException("refresh token not found"));
 
-            if (refreshToken.getExpiredAt() == null) {
+            List<RefreshToken> refreshToken = refreshTokenRepository.findByProviderAndProviderId(provider,providerId);
+            if (refreshToken == null || refreshToken.isEmpty()) {
+                throw new TokenException("refresh token not found");
+            }
+
+            RefreshToken token = refreshToken.get(0);
+
+            if (token.getExpiredAt() == null) {
                 logger.warn("ExpiredAt is null for token: {}", providerId);
-                refreshTokenRepository.invalidateAllUserTokens(refreshToken.getUser());
+                refreshTokenRepository.invalidateAllUserTokens(token.getUser());
                 throw new TokenException("Invalid token state: expiration date is missing");
             }
 
             ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-            if(refreshToken.getExpiredAt().isBefore(now)) {
+            if(token.getExpiredAt().isBefore(now)) {
                 logger.warn("Token has expired for token: {}", providerId);
-                refreshTokenRepository.invalidateAllUserTokens(refreshToken.getUser());
+                refreshTokenRepository.invalidateAllUserTokens(token.getUser());
                 throw new TokenException("Invalid token state: token has expired");
             }
 
             // 토큰이 이미 사용됐다면 토큰 탈취 가능성 (RTR 핵심 기능)
-            if(refreshToken.isUsed()) {
-                logger.warn("Token reuse detected for user: {}", refreshToken.getUser());
-                refreshTokenRepository.invalidateAllUserTokens(refreshToken.getUser());
-                throw new TokenException("Token reuse detected for user: "+ refreshToken.getUser());
+            if(token.isUsed()) {
+                logger.warn("Token reuse detected for user: {}", token.getUser());
+                refreshTokenRepository.invalidateAllUserTokens(token.getUser());
+                throw new TokenException("Token reuse detected for user: "+ token.getUser());
             }
 
-            if (refreshToken.isExpired()) {
-                logger.warn("Expired token used for user: {}", refreshToken.getUser());
+            if (token.isExpired()) {
+                logger.warn("Expired token used for user: {}", token.getUser());
                 throw new TokenException("refresh token expired");
             }
 
             // 토큰 사용처리
-            refreshToken.markUsed();
-            refreshTokenRepository.updateUsedStatus(refreshToken.getId(), true);
+            token.markUsed();
+            refreshTokenRepository.updateUsedStatus(token.getId(), true);
 
             // 새 액세스 토큰 생성
-            Authentication authentication = jwtServiceImpl.getAuthentication(refreshToken.getUser().getId());
+            Authentication authentication = jwtServiceImpl.getAuthentication(token.getUser().getId());
             String newAccessToken = jwtServiceImpl.generateAccessToken(authentication);
 
             String newRefreshToken = createRefreshToken(authentication);
 
-            logger.debug("Refreshed tokens for user: {}", refreshToken.getUser());
+            logger.debug("Refreshed tokens for user: {}", token.getUser());
             return new RefreshTokenResponseDTO(newAccessToken, newRefreshToken,
                     "Cookie", 60 * 60 * 24 * 7);
 
