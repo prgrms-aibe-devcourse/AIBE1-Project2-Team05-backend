@@ -4,6 +4,7 @@ package com.team05.linkup.common.util;
 import com.team05.linkup.common.config.JwtConfig;
 import com.team05.linkup.common.exception.TokenException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.Cookie;
@@ -42,6 +43,22 @@ public class JwtUtils {
         } catch (TokenException e) {
             logger.error("parse token error: {}", e.getMessage());
             throw new JwtException("parse token error");
+        }
+    }
+
+    public Claims parseTokenWithoutExpiredAtValidation(String token) {
+        try {
+            return Jwts.parser()
+                    .verifyWith(jwtConfig.secretKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (ExpiredJwtException e) {
+            logger.error("ExpiredJwtException token error: {}", e.getMessage());
+            return e.getClaims();
+        } catch (Exception e) {
+            logger.error("parse token error: {}", e.getMessage());
+            throw new TokenException("parse token error");
         }
     }
 
