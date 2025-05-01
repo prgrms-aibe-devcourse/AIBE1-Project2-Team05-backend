@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MentoringRepository extends JpaRepository<MentoringSessions, String> {
-
-    @Query(value = "SELECT * FROM mentoring_session WHERE mentee_nickname = :nickname ORDER BY created_at DESC LIMIT :limit", nativeQuery = true)
-    List<MentoringSessions> findByMenteeNicknameWithLimit(@Param("nickname") String nickname, @Param("limit") int limit);
+    @Query(value = "SELECT * FROM mentoring_sessions WHERE mentee_user_id = :userId ORDER BY created_at DESC LIMIT :limit", nativeQuery = true)
+    List<MentoringSessions> findByMenteeUserIdWithLimit(@Param("userId") String userId, @Param("limit") int limit);
 }

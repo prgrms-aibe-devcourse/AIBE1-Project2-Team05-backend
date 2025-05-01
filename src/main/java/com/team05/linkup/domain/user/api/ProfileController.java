@@ -2,7 +2,7 @@ package com.team05.linkup.domain.user.api;
 
 import com.team05.linkup.common.dto.ApiResponse;
 import com.team05.linkup.common.enums.ResponseCode;
-import com.team05.linkup.domain.mentoring.domain.MentoringSessions;
+import com.team05.linkup.domain.mentoring.dto.MatchedMentorProfileDto;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.enums.Role;
 import com.team05.linkup.domain.user.application.MenteeProfileService;
@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,12 +29,13 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ProfileController {
 
+    private static final Logger logger = LogManager.getLogger();
     private final UserRepository userRepository;
     private final ProfileService profileService;
     private final MentorProfileService mentorProfileService;
     private final MenteeProfileService menteeProfileService;
 
-    @GetMapping("/{nickname}/profile")
+    @GetMapping("/{nickname}/profile/activity")
     public ResponseEntity<ApiResponse> getProfile(@PathVariable String nickname) {
         // 1. 사용자의 역할(멘토/멘티) 확인
         Optional<User> userOpt = userRepository.findByNickname(nickname);
@@ -41,16 +44,20 @@ public class ProfileController {
                     .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다."));
 
         Map<String, Object> data = new HashMap<>();
+
         User profile = userOpt.get();
+        logger.debug(profile.getRole());
+
         if (profile.getRole().equals(Role.ROLE_MENTOR)) {
             // 멘토의 경우, 커뮤니티 재능나눔 게시글 작성 내역 조회하여 반환
-//          List<Community> talents = mentorProfileService.getCommunityTalents(nickname, 2);
+//          List<Community> talents = mentorProfileService.getCommunityTalents(profile.getId(), 2);
 //          data.put("talent", talents);
 
         } else if (profile.getRole().equals(Role.ROLE_MENTEE)) {
-            // 멘티의 경우, 내가 신청한 매칭 내역을 조회하여 반환
-          List<MentoringSessions> matches = menteeProfileService.getMyMentoringSessions(nickname, 2);
+            // 멘티의 경우, 내가 신청한 매칭의 멘토 정보를 조회하여 반환
+          List<MatchedMentorProfileDto> matches = menteeProfileService.getMyMentoringSessions(profile.getId(), 2);
           data.put("matches", matches);
+            logger.debug("멘티의 매칭 내역 조회 성공");
         }
 
         // 3. 추가 정보 조회

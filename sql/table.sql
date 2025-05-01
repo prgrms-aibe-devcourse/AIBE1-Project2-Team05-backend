@@ -29,7 +29,7 @@ CREATE TABLE area (
     area_name VARCHAR(30) NOT NULL
 );
 
-CREATE TABLE refresh_token (
+CREATE TABLE `refresh_token` (
        id VARCHAR(36) PRIMARY KEY ,
        user_id VARCHAR(36) NOT NULL ,
        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -46,7 +46,7 @@ CREATE TABLE community (
        id VARCHAR(36) PRIMARY KEY,
        user_id VARCHAR(36) NOT NULL,
        title VARCHAR(100) NOT NULL,
-       category ENUM('전제', '질문/답변', '정보공유', '후기', '자유게시판', '재능나눔') NOT NULL,
+       category ENUM('질문/답변', '정보공유', '후기', '자유게시판', '재능나눔') NOT NULL,
        community_tag_id VARCHAR(36),
        content LONGTEXT NOT NULL,
        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
