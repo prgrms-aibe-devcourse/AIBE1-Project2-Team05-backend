@@ -4,14 +4,17 @@ import com.team05.linkup.common.exception.UserNotfoundException;
 import com.team05.linkup.common.util.ApiUtils;
 import com.team05.linkup.domain.mentoring.dto.AiMatchingRequestDTO;
 import com.team05.linkup.domain.mentoring.dto.AiMatchingResponseDTO;
+import com.team05.linkup.domain.mentoring.util.RecommendationLogic;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +22,7 @@ public class AIMatchingServiceImpl implements AiMatchingService {
     private static final Logger logger = LogManager.getLogger();
     private final UserRepository userRepository;
     private final ApiUtils apiUtils;
+    private final RecommendationLogic recommendationLogic;
 
     @Override
     public AiMatchingResponseDTO matchMentor(String provider, String providerId) {
@@ -28,12 +32,25 @@ public class AIMatchingServiceImpl implements AiMatchingService {
 
             List<AiMatchingRequestDTO.OtherProfile> otherProfiles = resultList.stream().map(obj -> new AiMatchingRequestDTO.OtherProfile(
                                     (String) obj[0],
-                                    (String) obj[1]
-                            )).toList();
+                                    (String) obj[1],
+                                    (String) obj[2],
+                                    (Integer) obj[3]
+                            )).collect(Collectors.toList());
+
             AiMatchingRequestDTO requestDTO = new AiMatchingRequestDTO(myProfileTag, otherProfiles);
             String url = "http://localhost:5000/word-similarity";
-            Optional<AiMatchingResponseDTO> response = apiUtils.getApiResponse(url, "POST", requestDTO, AiMatchingResponseDTO.class);
-            return response.orElseThrow(() -> new UserNotfoundException("mentor is not found"));
+
+            Optional<AiMatchingResponseDTO> responseOpt = apiUtils.getApiResponse(url, "POST", requestDTO, AiMatchingResponseDTO.class);
+
+            AiMatchingResponseDTO response = responseOpt.orElseThrow(() ->
+                    new UserNotfoundException("mentor is not found"));
+
+            List<AiMatchingResponseDTO.Result> sampled = recommendationLogic.weightedRandomSample(response.results(), 4);
+
+            Collections.shuffle(sampled);
+
+            return new AiMatchingResponseDTO(myProfileTag, sampled);
+
         } catch (UserNotfoundException e) {
             logger.error("user is not found: {}", e.getMessage());
             throw new UserNotfoundException("user is not found: " + e.getMessage());
