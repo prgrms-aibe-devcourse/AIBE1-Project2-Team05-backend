@@ -38,3 +38,6 @@ out/
 
 ### dev.yml ###
 *-dev.yml
+
+### sample.sql
+sampledata.sql
