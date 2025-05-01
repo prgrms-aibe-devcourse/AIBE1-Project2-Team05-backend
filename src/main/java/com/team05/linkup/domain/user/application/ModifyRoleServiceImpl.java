@@ -17,10 +17,10 @@ public class ModifyRoleServiceImpl implements ModifyRoleService {
     private final UserRepository userRepository;
 
     @Override
-    public void modifyRole(String userId, Role role) throws Exception {
+    public void modifyRole(String providerId, Role role) throws Exception {
         try {
-            userRepository.updateUserRole(userId, role);
-            logger.debug("Role updated for user: {}", userId);
+            userRepository.updateUserRole(providerId, role);
+            logger.debug("Role updated for user: {}", providerId);
         } catch (UserNotfoundException e) {
             logger.error("User not found: {}", e.getMessage());
             throw new UserNotfoundException("User not found: " + e.getMessage());

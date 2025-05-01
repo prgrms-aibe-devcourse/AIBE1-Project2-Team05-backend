@@ -5,5 +5,5 @@ import org.springframework.security.core.Authentication;
 
 public interface RefreshTokenService {
     String createRefreshToken(Authentication authentication) throws Exception;
-    RefreshTokenResponseDTO regenerateAccessAndRefreshToken(String refreshTokenId) throws Exception;
+    RefreshTokenResponseDTO regenerateAccessAndRefreshToken(String provdier, String providerId) throws Exception;
 }

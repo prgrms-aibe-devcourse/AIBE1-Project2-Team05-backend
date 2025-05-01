@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -29,4 +30,19 @@ public interface UserRepository extends JpaRepository<User, String> {
                 WHERE u.providerId = :providerId AND u.role = 'ROLE_TEMP'
           """)
     void updateUserRole(@Param("providerId") String id, @Param("role") Role role);
+
+    @Query("""
+        SELECT u.profileTag
+        FROM User u
+        WHERE u.providerId = :providerId
+    """)
+    String findProfileTagByProviderId(@Param("providerId") String providerId);
+
+    @Query("""
+        SELECT u.providerId, u.profileTag
+        FROM User u
+        WHERE u.providerId <> :providerId
+    """)
+    List<Object[]> findOtherProfileTagsByProviderId(@Param("providerId") String providerId);
+
 }

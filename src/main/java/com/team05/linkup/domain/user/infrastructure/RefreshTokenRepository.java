@@ -14,8 +14,8 @@ import java.util.Optional;
 @Repository
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, String> {
 
-    @Query("SELECT r FROM RefreshToken r JOIN FETCH r.user u WHERE u.providerId = :providerId AND r.used = false")
-    Optional<RefreshToken> findByProviderId(@Param("providerId") String providerId);
+    @Query("SELECT r FROM RefreshToken r JOIN FETCH r.user u WHERE u.provider = :provider AND u.providerId = :providerId AND r.used = false")
+    Optional<RefreshToken> findByProviderAndProviderId(@Param("provider") String provider, @Param("providerId") String providerId);
 
     @Modifying
     @Query("UPDATE RefreshToken r SET r.used = true WHERE r.user = :userId AND r.used = false")
