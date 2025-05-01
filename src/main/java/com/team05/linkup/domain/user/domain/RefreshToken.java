@@ -16,12 +16,15 @@ public class RefreshToken {
     @Column(length = 36)
     private String id;
 
+    @Column(length = 36, updatable = false, nullable = false)
+    private String provider;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
     @Column(nullable = false, updatable = false)
-    private ZonedDateTime createdAt = ZonedDateTime.now();
+    private ZonedDateTime createdAt;
 
     @Column(nullable = false)
     private ZonedDateTime expiredAt;

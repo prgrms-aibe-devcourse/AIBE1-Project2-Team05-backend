@@ -2,12 +2,11 @@ package com.team05.linkup.domain.user.api;
 
 import com.team05.linkup.common.dto.ApiResponse;
 import com.team05.linkup.common.enums.ResponseCode;
-import com.team05.linkup.domain.mentoring.domain.MentoringSessions;
-import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.enums.Role;
-import com.team05.linkup.domain.profile.application.MenteeProfileService;
-import com.team05.linkup.domain.profile.application.MentorProfileService;
-import com.team05.linkup.domain.profile.application.ProfileService;
+import com.team05.linkup.domain.mentoring.domain.MentoringSessions;
+import com.team05.linkup.domain.user.application.MenteeProfileService;
+import com.team05.linkup.domain.user.application.ProfileService;
+import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,7 +28,7 @@ public class ProfileController {
 
     private final UserRepository userRepository;
     private final ProfileService profileService;
-    private final MentorProfileService mentorProfileService;
+    private final MenteeProfileService mentorProfileService;
     private final MenteeProfileService menteeProfileService;
 
     @GetMapping("/{nickname}/profile")

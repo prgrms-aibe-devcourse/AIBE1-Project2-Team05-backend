@@ -9,6 +9,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,14 +27,23 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @NonNullApi
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
+    private static final Logger logger = LogManager.getLogger(JwtAuthenticationFilter.class);
     private final JwtUtils jwtUtils;
+    private static final String REFRESH_TOKEN_PATH = "/v1/auth/refresh";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
         String token = jwtUtils.extractToken(request);
+        String requestURI = request.getRequestURI();
+
+        // Skip JWT validation for the refresh token endpoint
+        if (requestURI.equals(REFRESH_TOKEN_PATH)) {
+            logger.debug("Skipping JWT validation for refresh token endpoint");
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         if (StringUtils.hasText(token) && jwtUtils.validateToken(token)) {
             Claims claims = jwtUtils.parseToken(token);

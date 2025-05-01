@@ -10,14 +10,4 @@ public enum Role {
     ROLE_MENTOR,
     ROLE_MENTEE
 
-//    private final String roleName;
-//
-//    public static Role fromRoleName(String name) {
-//        for (Role role : Role.values()) {
-//            if (role.roleName.equals(name)) {
-//                return role;
-//            }
-//        }
-//        throw new IllegalArgumentException("Invalid role: " + name);
-//    }
 }

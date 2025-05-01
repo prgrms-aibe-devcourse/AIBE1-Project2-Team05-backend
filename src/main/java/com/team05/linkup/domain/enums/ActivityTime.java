@@ -11,8 +11,7 @@ public enum ActivityTime {
     WEEKDAY_EVENING("평일저녁"),
     WEEKEND_MORNING("주말오전"),
     WEEKEND_AFTERNOON("주말오후"),
-    WEEKEND_EVENING("주말저녁"),
-    ALL("모두");
+    WEEKEND_EVENING("주말저녁");
 
     private final String displayName;
 
