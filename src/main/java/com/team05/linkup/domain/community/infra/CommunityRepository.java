@@ -6,8 +6,10 @@ import com.team05.linkup.domain.community.dto.CommunitySummaryResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -82,4 +84,30 @@ public interface CommunityRepository extends JpaRepository<Community, String> {
             "   OR c.communityTag LIKE CONCAT('%', :keyword, '%')")
     Page<CommunitySummaryResponse> searchSummariesByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
+
+
+    /**
+     * 지정된 ID의 커뮤니티 게시글의 좋아요 수를 1 증가시킵니다.
+     * 이 작업은 데이터베이스 수준에서 직접 수행됩니다.
+     *
+     * @param communityId 좋아요 수를 증가시킬 게시글의 ID.
+     * @return 영향을 받은 행의 수 (일반적으로 1 또는 0).
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE Community c SET c.likeCount = c.likeCount + 1 WHERE c.id = :communityId")
+    int incrementLikeCount(@Param("communityId") String communityId);
+
+    /**
+     * 지정된 ID의 커뮤니티 게시글의 좋아요 수를 1 감소시킵니다.
+     * 좋아요 수가 0보다 작아지지 않도록 합니다.
+     * 이 작업은 데이터베이스 수준에서 직접 수행됩니다.
+     *
+     * @param communityId 좋아요 수를 감소시킬 게시글의 ID.
+     * @return 영향을 받은 행의 수 (일반적으로 1 또는 0).
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE Community c SET c.likeCount = CASE WHEN c.likeCount > 0 THEN c.likeCount - 1 ELSE 0 END WHERE c.id = :communityId")
+    int decrementLikeCount(@Param("communityId") String communityId);
 }

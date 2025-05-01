@@ -48,9 +48,11 @@ CREATE TABLE community (
        id VARCHAR(36) PRIMARY KEY,
        user_id VARCHAR(36) NOT NULL,
        title VARCHAR(100) NOT NULL,
-       category ENUM('전제', '질문/답변', '정보공유', '후기', '자유게시판', '재능나눔') NOT NULL,
+       category ENUM('QUESTION', 'INFO', 'REVIEW', 'FREE', 'TALENT') NOT NULL,
        community_tag_id VARCHAR(36),
        content LONGTEXT NOT NULL,
+       view_count bigint default 0 not null,
+       like_count bigint default 0 not null,
        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -137,7 +139,7 @@ CREATE TABLE mentoring_sessions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_mentoring_session_mento_user_id FOREIGN KEY (mento_user_id) REFERENCES user(id) ON DELETE CASCADE ,
+    CONSTRAINT fk_mentoring_session_mentor_user_id FOREIGN KEY (mentor_user_id) REFERENCES user(id) ON DELETE CASCADE ,
     CONSTRAINT fk_mentoring_session_mentee_user_id FOREIGN KEY (mentee_user_id) REFERENCES user(id) ON DELETE CASCADE
 );
 
