@@ -5,6 +5,7 @@ import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.common.util.JwtUtils;
 import com.team05.linkup.domain.mentoring.dto.AiMatchingResponseDTO;
 import com.team05.linkup.domain.mentoring.service.AIMatchingServiceImpl;
+import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,14 +25,16 @@ public class AiMatchingController {
 
     @GetMapping("/recommendation")
     @Operation(description = "ai 매칭 멘토 리스트 결과")
-    public ResponseEntity<ApiResponse> getRecommendation(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<AiMatchingResponseDTO>> getRecommendation(HttpServletRequest request) {
         try {
             String token = jwtUtils.extractToken(request);
             if (token != null && !token.isEmpty()) {
                 boolean isValid = jwtUtils.validateToken(token);
                 if (isValid) {
-                    String providerId = jwtUtils.parseToken(token).getSubject();
-                    AiMatchingResponseDTO responseDTO = aiMatchingServiceImpl.matchMentor(providerId);
+                    Claims claims = jwtUtils.parseToken(token);
+                    String providerId = claims.getSubject();
+                    String provider = (String) claims.get("provider");
+                    AiMatchingResponseDTO responseDTO = aiMatchingServiceImpl.matchMentor(provider,providerId);
                     return ResponseEntity.ok(ApiResponse.success(responseDTO));
                 }
             }

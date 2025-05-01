@@ -17,7 +17,7 @@ public class ModifyRoleServiceImpl implements ModifyRoleService {
     private final UserRepository userRepository;
 
     @Override
-    public void modifyRole(String providerId, Role role) throws Exception {
+    public void modifyRole(String provider, String providerId, Role role) throws Exception {
         try {
             userRepository.updateUserRole(providerId, role);
             logger.debug("Role updated for user: {}", providerId);

@@ -15,16 +15,16 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class AIMatchingServiceImpl implements MatchingService {
+public class AIMatchingServiceImpl implements AiMatchingService {
     private static final Logger logger = LogManager.getLogger();
     private final UserRepository userRepository;
     private final ApiUtils apiUtils;
 
     @Override
-    public AiMatchingResponseDTO matchMentor(String providerId) {
+    public AiMatchingResponseDTO matchMentor(String provider, String providerId) {
         try {
-            String myProfileTag = userRepository.findProfileTagByProviderId(providerId);
-            List<Object[]> resultList = userRepository.findOtherProfileTagsByProviderId(providerId);
+            String myProfileTag = userRepository.findProfileTagByProviderId(provider,providerId);
+            List<Object[]> resultList = userRepository.findOtherProfileTagsByProviderId(provider,providerId);
 
             List<AiMatchingRequestDTO.OtherProfile> otherProfiles = resultList.stream().map(obj -> new AiMatchingRequestDTO.OtherProfile(
                                     (String) obj[0],
