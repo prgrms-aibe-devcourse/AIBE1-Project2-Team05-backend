@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.*;
 /**
  * 커뮤니티 게시글의 '좋아요' 관련 HTTP 요청을 처리하는 컨트롤러.
  */
-@Tag(name = "Like API", description = "커뮤니티 게시글 좋아요 관련 API")
+@Tag(name = "커뮤니티 API", description = "커뮤니티 게시글 좋아요 관련 API")
 @RestController
-@RequestMapping("/v1/community/{communityId}/like")
+@RequestMapping("/v1/community/details/{communityId}/like")
 @RequiredArgsConstructor
 public class LikeController {
 

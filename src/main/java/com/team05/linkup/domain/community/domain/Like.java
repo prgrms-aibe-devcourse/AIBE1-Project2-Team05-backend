@@ -4,7 +4,6 @@ import com.team05.linkup.domain.baseEntity.BaseEntity; // BaseEntity 사용 시
 import com.team05.linkup.domain.user.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.UuidGenerator; // UUID 사용 시
 
 /**
  * 사용자가 커뮤니티 게시글에 대해 '좋아요'를 표시하는 관계를 나타내는 엔티티.
@@ -16,14 +15,13 @@ import org.hibernate.annotations.UuidGenerator; // UUID 사용 시
 @Entity
 @Table(name = "likes", uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"user_id", "community_id"})})
-public class Like  extends BaseEntity {
+public class Like extends BaseEntity {
 
     /**
      * '좋아요' 레코드의 고유 식별자 (UUID, 시간 기반 생성).
      */
     @Id
-    @GeneratedValue(generator = "uuid2") // UUID 자동 생성 전략
-    @UuidGenerator(style = UuidGenerator.Style.TIME)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(length = 36)
     private String id;
 
