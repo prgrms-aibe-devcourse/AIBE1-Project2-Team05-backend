@@ -34,6 +34,7 @@ CREATE TABLE area (
 CREATE TABLE refresh_token (
        id VARCHAR(36) PRIMARY KEY ,
        user_id VARCHAR(36) NOT NULL ,
+       provider VARCHAR(10) NOT NULL ,
        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
        expired_at DATETIME  NOT NULL,
        used BOOLEAN NOT NULL DEFAULT FALSE,
