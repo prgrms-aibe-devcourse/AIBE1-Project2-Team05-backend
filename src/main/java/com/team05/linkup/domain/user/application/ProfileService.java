@@ -111,4 +111,17 @@ public class ProfileService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     *  활동 내역 중 공통 항목
+     *  (서비스 단으로 리팩터링
+     *      && Map<String, Object> -> DTO 형태로 변경)
+     */
+    public ActivityResponseDTO getCommonActivityDTO(String nickname) {
+        return ActivityResponseDTO.builder()
+                .posts(getMyPosts(nickname, 2))
+                .comments(getMyComments(nickname, 2))
+                .bookmarks(getMyBookmarks(nickname, 1))
+                .likes(getMyLikePosts(nickname, 1))
+                .build();
+    }
 }
