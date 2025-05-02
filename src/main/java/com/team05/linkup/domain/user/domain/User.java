@@ -43,6 +43,9 @@ public class User extends BaseEntity {
     @JoinColumn(name = "areaId", referencedColumnName = "areacode")
     private Area area;
 
+    @Column(name = "sigunguCode")
+    private Integer sigunguCode;
+
     @Column(length = 255)
     private String introduction;
 
