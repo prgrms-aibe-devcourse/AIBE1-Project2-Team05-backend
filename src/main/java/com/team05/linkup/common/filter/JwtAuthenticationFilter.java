@@ -1,6 +1,7 @@
 package com.team05.linkup.common.filter;
 
 
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.common.util.JwtUtils;
 import io.jsonwebtoken.Claims;
 import io.micrometer.common.lang.NonNullApi;
@@ -49,13 +50,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Claims claims = jwtUtils.parseToken(token);
             String providerId = claims.getSubject();
             String authorities = (String) claims.get("authorities");
+            String provider = (String) claims.get("provider");
 
             List<SimpleGrantedAuthority> grantedAuthorities = Arrays.stream(authorities.split(","))
                     .map(SimpleGrantedAuthority::new)
                     .collect(Collectors.toList());
 
+            UserPrincipal userPrincipal = new UserPrincipal(providerId, provider);
+
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(providerId, token, grantedAuthorities);
+                    new UsernamePasswordAuthenticationToken(userPrincipal, token, grantedAuthorities);
 
             //이 인증 객체를 시큐리티 컨텍스트에 등록하면, 이후 컨트롤러 등에서 @AuthenticationPrincipal을 통해 유저 정보를 가져올 수 있음.
             SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -66,4 +70,3 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
 }
-
