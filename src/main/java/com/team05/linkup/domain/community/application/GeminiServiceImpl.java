@@ -8,6 +8,7 @@ import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.SafetySetting;
 import com.team05.linkup.common.config.ApikeyConfig;
 import com.team05.linkup.common.config.GeminiConfig;
+import com.team05.linkup.common.exception.AiCommentGenerationException;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -55,7 +56,9 @@ public class GeminiServiceImpl implements GeminiService {
             logger.debug("{}", response.text());
 
             return response.text();
-
+        } catch (AiCommentGenerationException e) {
+            logger.error("AiCommentGenerationException in getGeminiResponse: {}", e.getMessage());
+            throw new AiCommentGenerationException("Error in getGeminiResponse: " + e.getMessage());
         } catch (Exception e) {
             logger.error("Error in getGeminiResponse: {}", e.getMessage());
             throw new Exception("Error in getGeminiResponse: " + e.getMessage(), e);

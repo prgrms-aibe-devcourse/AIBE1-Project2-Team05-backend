@@ -1,6 +1,5 @@
 package com.team05.linkup.domain.community.domain;
 
-import com.team05.linkup.domain.enums.Interest;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,8 +13,7 @@ public class AiComment {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-    @Enumerated(EnumType.STRING)
-    private Interest interest;
+
     @Column(length = 300)
     private String content;
 

@@ -28,8 +28,6 @@ public class QAiComment extends EntityPathBase<AiComment> {
 
     public final StringPath id = createString("id");
 
-    public final EnumPath<com.team05.linkup.domain.enums.Interest> interest = createEnum("interest", com.team05.linkup.domain.enums.Interest.class);
-
     public QAiComment(String variable) {
         this(AiComment.class, forVariable(variable), INITS);
     }
