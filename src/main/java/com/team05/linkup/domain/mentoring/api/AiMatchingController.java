@@ -26,17 +26,32 @@ public class AiMatchingController {
     private final AiMatchingSelectorServiceImpl aiMatchingSelectorServiceImpl;
 
     @GetMapping("/recommendation")
+    @PreAuthorize("hasAuthority('ROLE_MENTEE')")
     @Operation(description = "ai 매칭 멘토 리스트 결과")
 
     public ResponseEntity<ApiResponse<AiMatchingResponseDTO>> getRecommendation(HttpServletRequest request,
-                                                                                @AuthenticationPrincipal String providerId,
-                                                                                @AuthenticationPrincipal String provider) {
+                                                                                @AuthenticationPrincipal String providerId) {
         try {
-                if (providerId == null || provider == null) {
-                    return ResponseEntity
-                            .status(ResponseCode.UNAUTHORIZED.getStatus())
-                            .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
-                }
+            if (providerId == null) {
+                return ResponseEntity
+                        .status(ResponseCode.UNAUTHORIZED.getStatus())
+                        .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
+            }
+
+            // Extract token and get provider from claims
+            String token = jwtUtils.extractToken(request);
+            if (token == null) {
+                return ResponseEntity
+                        .status(ResponseCode.UNAUTHORIZED.getStatus())
+                        .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
+            }
+
+            String provider = (String) jwtUtils.parseToken(token).get("provider");
+            if (provider == null) {
+                return ResponseEntity
+                        .status(ResponseCode.UNAUTHORIZED.getStatus())
+                        .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
+            }
                 AiMatchingResponseDTO responseDTO = aiMatchingServiceImpl.matchMentor(provider,providerId);
                 return ResponseEntity.ok(ApiResponse.success(responseDTO));
 
@@ -51,14 +66,28 @@ public class AiMatchingController {
     @PreAuthorize("hasAuthority('ROLE_MENTEE')")
     public ResponseEntity<ApiResponse> matchMentor(HttpServletRequest request,
                                                    @PathVariable String nickname,
-                                                   @AuthenticationPrincipal String providerId,
-                                                   @AuthenticationPrincipal String provider) {
+                                                   @AuthenticationPrincipal String providerId) {
         try {
-            if (providerId == null || provider == null) {
+            if (providerId == null) {
                 return ResponseEntity
                         .status(ResponseCode.UNAUTHORIZED.getStatus())
                         .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
-                }
+            }
+
+            // Extract token and get provider from claims
+            String token = jwtUtils.extractToken(request);
+            if (token == null) {
+                return ResponseEntity
+                        .status(ResponseCode.UNAUTHORIZED.getStatus())
+                        .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
+            }
+
+            String provider = (String) jwtUtils.parseToken(token).get("provider");
+            if (provider == null) {
+                return ResponseEntity
+                        .status(ResponseCode.UNAUTHORIZED.getStatus())
+                        .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
+            }
                     aiMatchingSelectorServiceImpl.matchingMentor(provider, providerId, nickname);
                     return ResponseEntity.ok(ApiResponse.success());
         } catch (DuplicateMentoringMatchException e) {

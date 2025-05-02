@@ -27,9 +27,9 @@ public interface UserRepository extends JpaRepository<User, String> {
     @Modifying
     @Query("""
                 UPDATE User u SET u.role = :role
-                WHERE u.providerId = :providerId AND u.role = 'ROLE_TEMP'
+                WHERE u.id = :id AND u.role = 'ROLE_TEMP'
           """)
-    void updateUserRole(@Param("providerId") String id, @Param("role") Role role);
+    void updateUserRole(@Param("id") String id, @Param("role") Role role);
 
     @Query("""
         SELECT u.profileTag
