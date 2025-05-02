@@ -58,8 +58,8 @@ public class QMentoringSessions extends EntityPathBase<MentoringSessions> {
 
     public QMentoringSessions(Class<? extends MentoringSessions> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.mentee = inits.isInitialized("mentee") ? new com.team05.linkup.domain.user.domain.QUser(forProperty("mentee")) : null;
-        this.mentor = inits.isInitialized("mentor") ? new com.team05.linkup.domain.user.domain.QUser(forProperty("mentor")) : null;
+        this.mentee = inits.isInitialized("mentee") ? new com.team05.linkup.domain.user.domain.QUser(forProperty("mentee"), inits.get("mentee")) : null;
+        this.mentor = inits.isInitialized("mentor") ? new com.team05.linkup.domain.user.domain.QUser(forProperty("mentor"), inits.get("mentor")) : null;
     }
 
 }

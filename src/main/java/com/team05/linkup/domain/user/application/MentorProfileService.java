@@ -1,7 +1,7 @@
 package com.team05.linkup.domain.user.application;
 
 import com.team05.linkup.domain.community.dto.CommunityTalentSummaryDTO;
-import com.team05.linkup.domain.community.infra.CommunityRepository;
+import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

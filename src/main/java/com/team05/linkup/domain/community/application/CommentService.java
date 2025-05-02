@@ -2,7 +2,7 @@ package com.team05.linkup.domain.community.application;
 
 import com.team05.linkup.domain.community.domain.Comment;
 import com.team05.linkup.domain.community.dto.CommentDto;
-import com.team05.linkup.domain.community.infra.CommentRepository;
+import com.team05.linkup.domain.community.infrastructure.CommentRepository;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import jakarta.persistence.EntityNotFoundException;

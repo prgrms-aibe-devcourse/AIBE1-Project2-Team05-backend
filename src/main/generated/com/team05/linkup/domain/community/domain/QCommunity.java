@@ -24,6 +24,8 @@ public class QCommunity extends EntityPathBase<Community> {
 
     public final com.team05.linkup.domain.baseEntity.QBaseEntity _super = new com.team05.linkup.domain.baseEntity.QBaseEntity(this);
 
+    public final QAiComment aiComment;
+
     public final EnumPath<CommunityCategory> category = createEnum("category", CommunityCategory.class);
 
     public final StringPath communityTag = createString("communityTag");
@@ -64,7 +66,8 @@ public class QCommunity extends EntityPathBase<Community> {
 
     public QCommunity(Class<? extends Community> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.user = inits.isInitialized("user") ? new com.team05.linkup.domain.user.domain.QUser(forProperty("user")) : null;
+        this.aiComment = inits.isInitialized("aiComment") ? new QAiComment(forProperty("aiComment"), inits.get("aiComment")) : null;
+        this.user = inits.isInitialized("user") ? new com.team05.linkup.domain.user.domain.QUser(forProperty("user"), inits.get("user")) : null;
     }
 
 }

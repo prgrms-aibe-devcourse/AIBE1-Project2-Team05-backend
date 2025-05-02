@@ -45,6 +45,9 @@ public class Community extends BaseEntity {
     @Column(name = "like_count", nullable = false, columnDefinition = "BIGINT default 0")
     private Long likeCount = 0L;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    private AiComment aiComment;
+
     // 도메인 로직
     /**
      * 게시글 내용 업데이트

@@ -1,12 +1,11 @@
 package com.team05.linkup.domain.community.application;
 
-import com.team05.linkup.common.exception.UserNotfoundException;
 import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.domain.CommunityCategory;
 import com.team05.linkup.domain.community.dto.CommunityDto;
 import com.team05.linkup.domain.community.dto.CommunitySummaryResponse;
-import com.team05.linkup.domain.community.infra.CommentRepository;
-import com.team05.linkup.domain.community.infra.CommunityRepository;
+import com.team05.linkup.domain.community.infrastructure.CommentRepository;
+import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
 //import com.team05.linkup.domain.community.infrastructure.BookmarkRepository;
 //import com.team05.linkup.domain.community.infrastructure.LikeRepository;
 import com.team05.linkup.domain.user.domain.User;
