@@ -4,6 +4,7 @@ import com.team05.linkup.common.filter.JwtAuthenticationFilter;
 import com.team05.linkup.common.filter.PreventDuplicateLoginFilter;
 import com.team05.linkup.common.handler.CustomLogoutSuccessHandler;
 import com.team05.linkup.common.handler.OAuth2AuthenticationSuccessHandler;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,7 +28,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity // 스프링 시큐리티 필터가 스프링 필터체인에 등록이 된다
-@EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
+@EnableMethodSecurity(
+    securedEnabled = true, 
+    prePostEnabled = true,
+    jsr250Enabled = true
+)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -39,6 +44,7 @@ public class SecurityConfig {
     public DefaultMethodSecurityExpressionHandler methodSecurityExpressionHandler() {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
 //        expressionHandler.setRoleHierarchy(roleHierarchy());
+        expressionHandler.setDefaultRolePrefix("ROLE_");
         return expressionHandler;
     }
 
@@ -53,7 +59,6 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers("/").permitAll()
-//                        .requestMatchers("/static/index.html").permitAll()
                         .requestMatchers("/index.html").permitAll()
                         .requestMatchers("/v1/auth/refresh").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
@@ -71,6 +76,10 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(new OAuth2AuthenticationEntryPoint())
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.getWriter().write("Access Denied: " + accessDeniedException.getMessage());
+                        })
                 )
                 .formLogin(form -> form
                         .loginProcessingUrl("/login")  // 로그인 요청 URL

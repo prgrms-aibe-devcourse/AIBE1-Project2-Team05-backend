@@ -31,9 +31,9 @@ public class QMentoringSessions extends EntityPathBase<MentoringSessions> {
 
     public final EnumPath<com.team05.linkup.domain.enums.Interest> interest = createEnum("interest", com.team05.linkup.domain.enums.Interest.class);
 
-    public final com.team05.linkup.domain.user.domain.QUser mentee_user_id;
+    public final com.team05.linkup.domain.user.domain.QUser mentee;
 
-    public final com.team05.linkup.domain.user.domain.QUser mentor_user_id;
+    public final com.team05.linkup.domain.user.domain.QUser mentor;
 
     public final EnumPath<com.team05.linkup.domain.enums.MentoringStatus> status = createEnum("status", com.team05.linkup.domain.enums.MentoringStatus.class);
 
@@ -58,8 +58,8 @@ public class QMentoringSessions extends EntityPathBase<MentoringSessions> {
 
     public QMentoringSessions(Class<? extends MentoringSessions> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.mentee_user_id = inits.isInitialized("mentee_user_id") ? new com.team05.linkup.domain.user.domain.QUser(forProperty("mentee_user_id")) : null;
-        this.mentor_user_id = inits.isInitialized("mentor_user_id") ? new com.team05.linkup.domain.user.domain.QUser(forProperty("mentor_user_id")) : null;
+        this.mentee = inits.isInitialized("mentee") ? new com.team05.linkup.domain.user.domain.QUser(forProperty("mentee")) : null;
+        this.mentor = inits.isInitialized("mentor") ? new com.team05.linkup.domain.user.domain.QUser(forProperty("mentor")) : null;
     }
 
 }

@@ -45,11 +45,10 @@ public class AiMatchingListServiceImpl implements AiMatchingService {
 
             AiMatchingResponseDTO response = responseOpt.orElseThrow(() ->
                     new UserNotfoundException("mentor is not found"));
-            logger.debug("response: {}", response);
             List<AiMatchingResponseDTO.Result> sampled = recommendationLogic.weightedRandomSample(response.results(), 4);
 
             Collections.shuffle(sampled);
-
+            logger.debug("sampled: {}", sampled);
             return new AiMatchingResponseDTO(myProfileTag, sampled);
 
         } catch (UserNotfoundException e) {
