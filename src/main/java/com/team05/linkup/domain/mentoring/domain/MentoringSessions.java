@@ -20,11 +20,11 @@ public class MentoringSessions extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "mentor_user_id", nullable = false)
-    private User mentor_user_id;  // 멘토 (User 엔티티와 다대일 관계)
+    private User mentor;  // 멘토 (User 엔티티와 다대일 관계)
 
     @ManyToOne
     @JoinColumn(name = "mentee_user_id", nullable = false)
-    private User mentee_user_id;  // 멘티 (User 엔티티와 다대일 관계)
+    private User mentee;  // 멘티 (User 엔티티와 다대일 관계)
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

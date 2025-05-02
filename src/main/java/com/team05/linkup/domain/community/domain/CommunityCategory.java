@@ -10,5 +10,5 @@ public enum CommunityCategory {
     INFO,     // ("정보공유"),
     REVIEW,   // ("후기"),
     FREE,     // ("자유게시판"),
-    TALENT;   // ("재능나눔");
+    TALENT   // ("재능나눔");
 }

@@ -1,34 +1,27 @@
-// --- Comment Entity ---
 package com.team05.linkup.domain.community.domain;
 
 import com.team05.linkup.domain.baseEntity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-
 /**
-* 커뮤니티 기능에서 comment entity
+ * 커뮤니티 기능에서 comment entity
  * comment는 community(게시글) 및 잠재적으로 parent comment(답글)과 관련 될 수 있습니다.
  */
+@Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Entity
+@Builder
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "comments")
 public class Comment extends BaseEntity {
-
     @Id
     @Column(length = 36)
     private String id;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "user_id", nullable = false)
-//    private User user;
     @Column(name = "user_id", nullable = false)
     private String userId;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "community_id", nullable = false)
-//    private Community community;
     @Column(name = "community_id", nullable = false)
     private String communityId;
 
@@ -44,11 +37,23 @@ public class Comment extends BaseEntity {
     @Column(length = 100) // Denormalized user name for easy retrieval
     private String name;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "parent_comment_id")
-//    private Comment parentComment;
     @Column(name = "parent_comment_id")
     private String parentCommentId;
 
+    // 댓글 내용 수정
+    public void updateContent(String content) {
+        this.commentContent = content;
+    }
 
+    // 댓글 좋아요 수 증가
+    public void incrementLikeCount() {
+        this.totalLikeCount++;
+    }
+
+    // 댓글 좋아요 수 감소
+    public void decrementLikeCount() {
+        if (this.totalLikeCount > 0) {
+            this.totalLikeCount--;
+        }
+    }
 }
