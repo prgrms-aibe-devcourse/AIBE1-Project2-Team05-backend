@@ -39,7 +39,10 @@ public class User extends BaseEntity {
     @Builder.Default
     private boolean accountDisable = false;
 
-    private Integer areaId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "areaId", referencedColumnName = "areacode")
+    private Area area;
+
     @Column(length = 255)
     private String introduction;
 

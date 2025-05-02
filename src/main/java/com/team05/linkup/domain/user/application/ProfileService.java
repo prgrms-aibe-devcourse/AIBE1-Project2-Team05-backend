@@ -23,9 +23,8 @@ public class ProfileService {
 
     public ProfilePageDTO getProfile(User user) {
 
-        String areaName = areaRepository.findById(user.getAreaId())
-                .map(area -> area.getAreaName())
-                .orElse(null);
+
+        String areaName = user.getArea() != null ? user.getArea().getAreaName() : null;
 
         boolean isCurrentUser = isCurrentUser(user);
 
