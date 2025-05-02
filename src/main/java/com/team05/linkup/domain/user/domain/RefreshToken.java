@@ -30,6 +30,7 @@ public class RefreshToken {
     private ZonedDateTime expiredAt;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean used = false;
 
     public boolean isExpired() {

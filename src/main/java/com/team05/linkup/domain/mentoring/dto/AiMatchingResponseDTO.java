@@ -1,4 +1,12 @@
 package com.team05.linkup.domain.mentoring.dto;
 
-public record AiMatchingResponseDTO(String profileTag, Object[] results) {
+import java.util.List;
+
+public record AiMatchingResponseDTO(String profileTag, List<Result> results) {
+    public record Result(
+                        Integer areaId,
+                         String nickname,
+                         String profileTag,
+                         String profileImageUrl,
+                         double similarity) {}
 }

@@ -16,6 +16,7 @@ public class MentoringSessions extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = 36)
     private String id;  // 멘토링 세션 ID (UUID)
 
     @ManyToOne

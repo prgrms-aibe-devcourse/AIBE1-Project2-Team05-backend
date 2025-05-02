@@ -6,6 +6,7 @@ import com.team05.linkup.common.exception.TokenException;
 import com.team05.linkup.common.util.JwtUtils;
 import com.team05.linkup.domain.user.application.ModifyRoleServiceImpl;
 import com.team05.linkup.domain.user.dto.RoleRequestDTO;
+import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +30,10 @@ public class RoleController {
             if (token != null && !token.isEmpty()) {
                 boolean isValid = jwtUtils.validateToken(token);
                 if (isValid) {
-                    String providerId = jwtUtils.parseToken(token).getSubject();
-                    modifyRoleServiceImpl.modifyRole(providerId, roleRequestDTO.role());
+                    Claims claims = jwtUtils.parseToken(token);
+                    String providerId = claims.getSubject();
+                    String provider = (String) claims.get("provider");
+                    modifyRoleServiceImpl.modifyRole(provider, providerId, roleRequestDTO.role());
                     return ResponseEntity.ok(ApiResponse.success());
                 }
             }

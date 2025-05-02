@@ -9,13 +9,19 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, String> {
 
-    @Query("SELECT r FROM RefreshToken r JOIN FETCH r.user u WHERE u.provider = :provider AND u.providerId = :providerId AND r.used = false")
-    Optional<RefreshToken> findByProviderAndProviderId(@Param("provider") String provider, @Param("providerId") String providerId);
+    @Query("""
+            SELECT r 
+            FROM RefreshToken r 
+            JOIN FETCH r.user u 
+            WHERE u.provider = :provider AND u.providerId = :providerId AND r.used = false
+            ORDER BY u.createdAt DESC
+       """)
+    List<RefreshToken> findByProviderAndProviderId(@Param("provider") String provider, @Param("providerId") String providerId);
 
     @Modifying
     @Query("UPDATE RefreshToken r SET r.used = true WHERE r.user = :userId AND r.used = false")
@@ -28,4 +34,7 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Stri
     @Modifying
     @Query("DELETE FROM RefreshToken r WHERE r.used = true OR r.expiredAt < :expiredAt")
     void deleteAllUserTokens(@Param("expiredAt") ZonedDateTime expiredAt);
+
+
+    List<RefreshToken> findByUserAndUsedIsFalseAndExpiredAtAfterOrderByCreatedAtAsc(User user, ZonedDateTime now);
 }

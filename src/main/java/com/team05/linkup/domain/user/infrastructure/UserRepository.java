@@ -34,15 +34,15 @@ public interface UserRepository extends JpaRepository<User, String> {
     @Query("""
         SELECT u.profileTag
         FROM User u
-        WHERE u.providerId = :providerId
+        WHERE u.providerId = :providerId AND u.provider = :provider
     """)
-    String findProfileTagByProviderId(@Param("providerId") String providerId);
+    String findProfileTagByProviderId(@Param("provider") String provider, @Param("providerId") String providerId);
 
     @Query("""
-        SELECT u.providerId, u.profileTag
+        SELECT u.areaId, u.nickname, u.profileTag, u.profileImageUrl, u.providerId
         FROM User u
-        WHERE u.providerId <> :providerId
+        WHERE u.providerId <> :providerId AND u.provider = :provider
     """)
-    List<Object[]> findOtherProfileTagsByProviderId(@Param("providerId") String providerId);
+    List<Object[]> findOtherProfileTagsByProviderId(@Param("provider") String provider, @Param("providerId") String providerId);
 
 }
