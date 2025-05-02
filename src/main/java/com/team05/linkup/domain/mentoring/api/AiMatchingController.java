@@ -4,16 +4,14 @@ import com.team05.linkup.common.dto.ApiResponse;
 import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.common.util.JwtUtils;
 import com.team05.linkup.domain.mentoring.dto.AiMatchingResponseDTO;
-import com.team05.linkup.domain.mentoring.service.AIMatchingServiceImpl;
+import com.team05.linkup.domain.mentoring.service.AiMatchingListServiceImpl;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/v1/matching")
@@ -21,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "ai 매칭 api입니다")
 public class AiMatchingController {
     private final JwtUtils jwtUtils;
-    private final AIMatchingServiceImpl aiMatchingServiceImpl;
+    private final AiMatchingListServiceImpl aiMatchingServiceImpl;
 
     @GetMapping("/recommendation")
     @Operation(description = "ai 매칭 멘토 리스트 결과")
@@ -42,6 +40,14 @@ public class AiMatchingController {
         } catch (Exception e) {
             return ResponseEntity.ok(ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR));
         }
+    }
 
+    @PostMapping("/{nickname}")
+    public ResponseEntity<ApiResponse> matchMentor(@PathVariable String nickname) {
+        try {
+            return ResponseEntity.ok(ApiResponse.success());
+        } catch (Exception e) {
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR));
+        }
     }
 }

@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AIMatchingServiceImpl implements AiMatchingService {
+public class AiMatchingListServiceImpl implements AiMatchingService {
     private static final Logger logger = LogManager.getLogger();
     private final UserRepository userRepository;
     private final ApiUtils apiUtils;
@@ -31,10 +31,11 @@ public class AIMatchingServiceImpl implements AiMatchingService {
             List<Object[]> resultList = userRepository.findOtherProfileTagsByProviderId(provider,providerId);
 
             List<AiMatchingRequestDTO.OtherProfile> otherProfiles = resultList.stream().map(obj -> new AiMatchingRequestDTO.OtherProfile(
-                                    (String) obj[0],
+                                    (Integer) obj[0],
                                     (String) obj[1],
                                     (String) obj[2],
-                                    (Integer) obj[3]
+                                    (String) obj[3],
+                                    (String) obj[4]
                             )).collect(Collectors.toList());
 
             AiMatchingRequestDTO requestDTO = new AiMatchingRequestDTO(myProfileTag, otherProfiles);
@@ -44,7 +45,7 @@ public class AIMatchingServiceImpl implements AiMatchingService {
 
             AiMatchingResponseDTO response = responseOpt.orElseThrow(() ->
                     new UserNotfoundException("mentor is not found"));
-
+            logger.debug("response: {}", response);
             List<AiMatchingResponseDTO.Result> sampled = recommendationLogic.weightedRandomSample(response.results(), 4);
 
             Collections.shuffle(sampled);
