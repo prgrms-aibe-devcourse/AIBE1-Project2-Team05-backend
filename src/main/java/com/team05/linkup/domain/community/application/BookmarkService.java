@@ -30,16 +30,17 @@ public class BookmarkService {
      * 사용자가 특정 커뮤니티 게시글에 대한 '북마크' 상태를 토글.
      * 이미 북마크 상태이면 취소하고, 아니면 북마크를 추가.
      *
+     * @param provider  토글 요청 사용자 Provider.
      * @param providerId  토글 요청 사용자 Provider ID.
      * @param communityId 대상 게시글 ID.
      * @return 토글 후의 최종 북마크 상태 (true: 북마크됨, false: 북마크 안됨).
      * @throws EntityNotFoundException 사용자 또는 게시글을 찾을 수 없는 경우.
      */
     @Transactional
-    public boolean toggleBookmark(String providerId, String communityId) {
+    public boolean toggleBookmark(String provider, String providerId, String communityId) {
         // 1. 사용자 및 커뮤니티 엔티티 조회
-        User user = userRepository.findByProviderId(providerId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with PID: " + providerId));
+        User user = userRepository.findByProviderAndProviderId(provider, providerId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with PID: " + provider + "-" + providerId));
         Community community = communityRepository.findById(communityId)
                 .orElseThrow(() -> new EntityNotFoundException("Community not found with CID: " + communityId));
 
