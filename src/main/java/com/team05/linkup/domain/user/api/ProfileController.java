@@ -64,8 +64,7 @@ public class ProfileController {
         User profile = userOpt.get();
         logger.debug(profile.getRole());
 
-        // 공통 조회 항목 - Controller에서는 입출력과 역할 분기만 담당 (리팩토링)
-//        Map<String, Object> data = profileService.getCommonActivity(nickname);
+        // 공통 조회 항목 - Controller에서는 입출력과 역할 분기만 담당
         ActivityResponseDTO.ActivityResponseDTOBuilder builder =
                 profileService.getCommonActivityDTO(nickname).toBuilder();
 

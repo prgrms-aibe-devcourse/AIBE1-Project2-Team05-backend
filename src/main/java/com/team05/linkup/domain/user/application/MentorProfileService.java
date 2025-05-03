@@ -14,10 +14,10 @@ public class MentorProfileService {
     private final CommunityRepository communityRepository;
 
     public List<CommunityTalentSummaryDTO> getCommunityTalents(String nickname, int limit) {
-        // 💡 Object[]로 반환된 raw 데이터 받아오기 (native query 사용)
+        // Object[]로 반환된 raw 데이터 받아오기 (native query 사용)
         List<Object[]> results = communityRepository.findByCategoty(nickname, limit);
 
-        // 💡 필요한 DTO로 변환 (null-safe)
+        // 필요한 DTO로 변환 (null-safe)
         return results.stream()
                 .map(row -> {
 
@@ -30,9 +30,6 @@ public class MentorProfileService {
                             title,
                             tagId,
                             content
-//                            (String) row[0],                   // title
-//                            (String) row[1],     // community_tag_id
-//                            (String) row[2]                    // content (요약된)
                     );
                 })
                 .collect(Collectors.toList());
