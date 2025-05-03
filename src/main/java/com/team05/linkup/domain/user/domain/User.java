@@ -19,6 +19,7 @@ import java.util.List;
 public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = 36)
     private String id;
     @Column(length = 36, updatable = false, nullable = false)
     private String provider;
