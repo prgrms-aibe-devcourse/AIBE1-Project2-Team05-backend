@@ -1,10 +1,11 @@
 package com.team05.linkup.domain.community.api;
 
 import com.team05.linkup.common.dto.ApiResponse;
-import com.team05.linkup.domain.community.domain.CommunityCategory;
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.community.application.CommunityService;
-import com.team05.linkup.domain.community.dto.CommunitySummaryResponse;
+import com.team05.linkup.domain.community.domain.CommunityCategory;
 import com.team05.linkup.domain.community.dto.CommunityDto;
+import com.team05.linkup.domain.community.dto.CommunitySummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -90,9 +91,9 @@ public class CommunityController {
     @PostMapping("/new")
     @Operation(summary = "게시글 작성", description = "새로운 게시글을 작성합니다.")
     public ApiResponse<CommunityDto.Response> createCommunity(
-            @AuthenticationPrincipal String userId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestBody CommunityDto.Request request) {
-        return ApiResponse.created(communityService.createCommunity(userId, request));
+        return ApiResponse.created(communityService.createCommunity(userPrincipal, request));
     }
 
     @GetMapping("/detail/{postId}")

@@ -1,5 +1,6 @@
 package com.team05.linkup.domain.community.application;
 
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.domain.CommunityCategory;
 import com.team05.linkup.domain.community.dto.CommunityCreatedEventDTO;
@@ -136,8 +137,8 @@ public class CommunityService {
 
     // 게시글 생성
     @Transactional
-    public CommunityDto.Response createCommunity(String userId, CommunityDto.Request request) {
-        User user = userRepository.findById(userId)
+    public CommunityDto.Response createCommunity(UserPrincipal userPrincipal, CommunityDto.Request request) {
+        User user = userRepository.findByProviderAndProviderId(userPrincipal.provider(), userPrincipal.providerId())
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
         Community community = Community.builder()

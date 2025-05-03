@@ -14,7 +14,7 @@ public class AiComment {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(length = 300)
+    @Column(columnDefinition = "LONGTEXT", nullable = false)
     private String content;
 
     @OneToOne(fetch = FetchType.LAZY)
