@@ -39,13 +39,7 @@ public class RoleController {
             String providerId = userPrincipal.providerId();
             String provider = userPrincipal.provider();
 
-            if (providerId == null || provider == null) {
-                return ResponseEntity
-                        .status(ResponseCode.UNAUTHORIZED.getStatus())
-                        .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
-            }
-
-            modifyRoleServiceImpl.modifyRole(provider, providerId, roleRequestDTO.role());
+            modifyRoleServiceImpl.modifyRole(userPrincipal, roleRequestDTO.role());
             return ResponseEntity.ok(ApiResponse.success());
 
         } catch (Exception e) {
