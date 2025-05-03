@@ -2,8 +2,10 @@ package com.team05.linkup.domain.mentoring.application;
 
 import com.team05.linkup.common.exception.UserNotfoundException;
 import com.team05.linkup.common.util.ApiUtils;
+import com.team05.linkup.domain.enums.Interest;
 import com.team05.linkup.domain.mentoring.dto.AiMatchingRequestDTO;
 import com.team05.linkup.domain.mentoring.dto.AiMatchingResponseDTO;
+import com.team05.linkup.domain.mentoring.dto.ProfileTagInterestDTO;
 import com.team05.linkup.domain.mentoring.util.RecommendationLogic;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,21 +23,36 @@ import java.util.stream.Collectors;
 public class AiMatchingListServiceImpl implements AiMatchingService {
     private static final Logger logger = LogManager.getLogger();
     private final UserRepository userRepository;
+//    private final CustomUserRepositoryImpl customUserRepositoryImpl;
     private final ApiUtils apiUtils;
     private final RecommendationLogic recommendationLogic;
 
     @Override
     public AiMatchingResponseDTO matchMentor(String provider, String providerId) {
         try {
-            String myProfileTag = userRepository.findProfileTagByProviderId(provider,providerId);
-            List<Object[]> resultList = userRepository.findOtherProfileTagsByProviderId(provider,providerId);
+            ProfileTagInterestDTO result = userRepository.findProfileTagAndInterestByProviderAndProviderId(provider,providerId);
+//            if (result[0] == null || result[1] == null ) {
+//                throw new UserNotfoundException("User profile data not found");
+//            }
+            logger.debug(result);
+
+            String myProfileTag = result.profileTag();
+            Interest myInterest = result.interest();
+
+            logger.debug("myProfileTag: {}, myInterest: {}", myProfileTag, myInterest);
+            List<Object[]> resultList = userRepository.findOtherProfileTagsByProviderId(provider,
+                                                                                        providerId,
+                                                                                        myInterest);
 
             List<AiMatchingRequestDTO.OtherProfile> otherProfiles = resultList.stream().map(obj -> new AiMatchingRequestDTO.OtherProfile(
-                                    (Integer) obj[0],
-                                    (String) obj[1],
-                                    (String) obj[2],
-                                    (String) obj[3],
-                                    (String) obj[4]
+                                (Integer) obj[0],  // areacode
+                                (String) obj[1],   // areaName
+                                (Integer) obj[2],  // sigungucode
+                                (String) obj[3],   // sigunguname
+                                (String) obj[4],   // nickname
+                                (String) obj[5],   // profileTag
+                                (String) obj[6],   // profileImageUrl
+                                (String) obj[7]    // providerId
                             )).collect(Collectors.toList());
 
             AiMatchingRequestDTO requestDTO = new AiMatchingRequestDTO(myProfileTag, otherProfiles);
@@ -54,7 +71,11 @@ public class AiMatchingListServiceImpl implements AiMatchingService {
         } catch (UserNotfoundException e) {
             logger.error("user is not found: {}", e.getMessage());
             throw new UserNotfoundException("user is not found: " + e.getMessage());
-        } catch (Exception e) {
+        } catch (IndexOutOfBoundsException e) {
+            logger.error("IndexOutOfBoundsException: {}", e.getMessage());
+            throw new IndexOutOfBoundsException("IndexOutOfBoundsException: " + e.getMessage());
+        }
+        catch (Exception e) {
             logger.error("Error in matchMentor: {}", e.getMessage());
             throw new RuntimeException("Error in matchMentor: " + e.getMessage(), e);
         }
