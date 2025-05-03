@@ -84,5 +84,4 @@ public class ProfileController {
 
         return ResponseEntity.ok(ApiResponse.success(builder.build()));
     }
-
 }

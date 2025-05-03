@@ -14,16 +14,27 @@ public class MentorProfileService {
     private final CommunityRepository communityRepository;
 
     public List<CommunityTalentSummaryDTO> getCommunityTalents(String nickname, int limit) {
-        // 💡 Object[]로 반환된 raw 데이터 받아오기
+        // 💡 Object[]로 반환된 raw 데이터 받아오기 (native query 사용)
         List<Object[]> results = communityRepository.findByCategoty(nickname, limit);
 
-        // 💡 필요한 DTO로 변환
+        // 💡 필요한 DTO로 변환 (null-safe)
         return results.stream()
-                .map(row -> new CommunityTalentSummaryDTO(
-                        (String) row[0],                   // title
-                        (String) row[1],     // community_tag_id
-                        (String) row[2]                    // content (요약된)
-                ))
+                .map(row -> {
+
+                    // 🛡️ null-safe 및 명시적 캐스팅 - 혹시 모를 null 상황 대비
+                    String title = (String) row[0]; // 타입 캐스팅 - (String) 명시적으로 분리
+                    String tagId = (String) row[1];
+                    String content = (String) row[2];
+
+                    return new CommunityTalentSummaryDTO(
+                            title,
+                            tagId,
+                            content
+//                            (String) row[0],                   // title
+//                            (String) row[1],     // community_tag_id
+//                            (String) row[2]                    // content (요약된)
+                    );
+                })
                 .collect(Collectors.toList());
     }
 }
