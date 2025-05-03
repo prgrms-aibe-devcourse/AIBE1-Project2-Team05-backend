@@ -18,7 +18,7 @@ public class AiComment {
     private String content;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "community_id")
+    @JoinColumn(name = "community_id", unique = true) // 1:1 제약
     private Community community;
 
 }

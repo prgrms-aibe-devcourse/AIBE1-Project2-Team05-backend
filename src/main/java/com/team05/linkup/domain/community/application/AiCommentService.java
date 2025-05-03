@@ -1,7 +1,7 @@
 package com.team05.linkup.domain.community.application;
 
-import com.team05.linkup.domain.community.domain.Community;
+import com.team05.linkup.domain.community.dto.CommunityCreatedEventDTO;
 
 public interface AiCommentService {
-    void createCommunityWithAiComment(Community community) throws Exception;
+    void handleCommunityCreated(CommunityCreatedEventDTO event) throws Exception;
 }
