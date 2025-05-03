@@ -40,7 +40,7 @@ public class User extends BaseEntity {
     private boolean accountDisable = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "areaId", referencedColumnName = "areacode")
+    @JoinColumn(name = "area", referencedColumnName = "areacode")
     private Area area;
 
     @Column(name = "sigunguCode")
