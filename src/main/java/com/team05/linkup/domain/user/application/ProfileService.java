@@ -1,6 +1,6 @@
 package com.team05.linkup.domain.user.application;
 
-import com.team05.linkup.domain.community.infra.CommunityRepository;
+import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
 import com.team05.linkup.domain.user.domain.Area;
 import com.team05.linkup.domain.user.domain.Sigungu;
 import com.team05.linkup.domain.user.domain.User;

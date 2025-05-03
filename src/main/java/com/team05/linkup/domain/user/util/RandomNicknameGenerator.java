@@ -1,10 +1,12 @@
 package com.team05.linkup.domain.user.util;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Random;
 
 @Component
+@RequiredArgsConstructor
 public class RandomNicknameGenerator {
     private static final String[] ADJECTIVES = {
             "행복한", "용감한", "신나는", "귀여운", "멋진", "우아한", "빛나는", "자유로운"
@@ -15,20 +17,16 @@ public class RandomNicknameGenerator {
             "원숭이"
     };
 
-    private static final Random RANDOM = new Random();
+    private final Random random;
 
-    private static final RandomNicknameGenerator INSTANCE = new RandomNicknameGenerator();
-
-    private RandomNicknameGenerator() {}
-
-    public static RandomNicknameGenerator getInstance() {
-        return INSTANCE;
+    public RandomNicknameGenerator() {
+        this.random = new Random();
     }
 
     public String generateNickname() {
-        String adjective = ADJECTIVES[RANDOM.nextInt(ADJECTIVES.length)];
-        String noun = NOUNS[RANDOM.nextInt(NOUNS.length)];
-        int number = RANDOM.nextInt(1000);
+        String adjective = ADJECTIVES[random.nextInt(ADJECTIVES.length)];
+        String noun = NOUNS[random.nextInt(NOUNS.length)];
+        int number = random.nextInt(1000);
 
         return adjective + noun + number;
     }

@@ -1,18 +1,18 @@
 package com.team05.linkup.domain.community.application;
 
-import com.team05.linkup.common.exception.UserNotfoundException;
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.domain.CommunityCategory;
+import com.team05.linkup.domain.community.dto.CommunityCreatedEventDTO;
 import com.team05.linkup.domain.community.dto.CommunityDto;
 import com.team05.linkup.domain.community.dto.CommunitySummaryResponse;
-import com.team05.linkup.domain.community.infra.CommentRepository;
-import com.team05.linkup.domain.community.infra.CommunityRepository;
-//import com.team05.linkup.domain.community.infrastructure.BookmarkRepository;
-//import com.team05.linkup.domain.community.infrastructure.LikeRepository;
+import com.team05.linkup.domain.community.infrastructure.CommentRepository;
+import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,6 +37,7 @@ public class CommunityService {
     private final CommentRepository commentRepository;
     // private final LikeRepository likeRepository;
     // private final BookmarkRepository bookmarkRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     private CommunityCategory parseCategory(String raw) {
         try {
@@ -136,8 +137,8 @@ public class CommunityService {
 
     // 게시글 생성
     @Transactional
-    public CommunityDto.Response createCommunity(String userId, CommunityDto.Request request) {
-        User user = userRepository.findById(userId)
+    public CommunityDto.Response createCommunity(UserPrincipal userPrincipal, CommunityDto.Request request) {
+        User user = userRepository.findByProviderAndProviderId(userPrincipal.provider(), userPrincipal.providerId())
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
         Community community = Community.builder()
@@ -150,6 +151,10 @@ public class CommunityService {
                 .build();
 
         Community savedCommunity = communityRepository.save(community);
+
+        eventPublisher.publishEvent(new CommunityCreatedEventDTO(savedCommunity)); /* 이벤트 비동기 리스너 생성
+                                                                                     질문 카테고리 ai 답변*/
+
         return CommunityDto.Response.from(savedCommunity);
     }
 

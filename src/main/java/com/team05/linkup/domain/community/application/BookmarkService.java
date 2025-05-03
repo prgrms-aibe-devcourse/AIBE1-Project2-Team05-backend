@@ -2,8 +2,8 @@ package com.team05.linkup.domain.community.application;
 
 import com.team05.linkup.domain.community.domain.Bookmark;
 import com.team05.linkup.domain.community.domain.Community;
-import com.team05.linkup.domain.community.infra.BookmarkRepository;
-import com.team05.linkup.domain.community.infra.CommunityRepository;
+import com.team05.linkup.domain.community.infrastructure.BookmarkRepository;
+import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import jakarta.persistence.EntityNotFoundException;

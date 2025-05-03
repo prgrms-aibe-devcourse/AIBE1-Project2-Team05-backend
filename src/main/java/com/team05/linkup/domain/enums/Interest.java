@@ -3,8 +3,6 @@ package com.team05.linkup.domain.enums;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Arrays;
-
 @Getter
 @RequiredArgsConstructor
 public enum Interest {
@@ -18,11 +16,4 @@ public enum Interest {
     FITNESS_YOGA("운동/요가");
 
     private final String displayName;
-
-    public static Interest fromDisplayName(String name) {
-        return Arrays.stream(Interest.values())
-                .filter(i -> i.displayName.equals(name))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Invalid interest: " + name));
-    }
 }
