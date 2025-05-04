@@ -14,13 +14,4 @@ public enum ActivityTime {
     WEEKEND_EVENING("주말저녁");
 
     private final String displayName;
-
-    public static ActivityTime fromDisplayName(String name) {
-        for (ActivityTime time : ActivityTime.values()) {
-            if (time.displayName.equals(name)) {
-                return time;
-            }
-        }
-        throw new IllegalArgumentException("Invalid activity time: " + name);
-    }
 }

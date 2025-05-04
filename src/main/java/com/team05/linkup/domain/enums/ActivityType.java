@@ -11,13 +11,4 @@ public enum ActivityType {
     ALL("모두");
 
     private final String displayName;
-
-    public static ActivityType fromDisplayName(String name) {
-        for (ActivityType type : ActivityType.values()) {
-            if (type.displayName.equals(name)) {
-                return type;
-            }
-        }
-        throw new IllegalArgumentException("Invalid activity type: " + name);
-    }
 }

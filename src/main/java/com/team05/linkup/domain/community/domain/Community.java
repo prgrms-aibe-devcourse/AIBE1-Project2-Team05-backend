@@ -42,8 +42,12 @@ public class Community extends BaseEntity {
     @Column(name = "view_count", nullable = false, columnDefinition = "BIGINT default 0")
     private Long viewCount = 0L;
 
-    @Column(name = "like_count", nullable = false, columnDefinition = "BIGINT default 0")
+    @Column(name = "like_count", columnDefinition = "BIGINT")
+    @Builder.Default
     private Long likeCount = 0L;
+
+    @OneToOne(mappedBy = "community")
+    private AiComment aiComment;
 
     // 도메인 로직
     /**

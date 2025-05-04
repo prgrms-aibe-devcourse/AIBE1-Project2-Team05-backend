@@ -13,12 +13,13 @@ import java.util.List;
 @Entity
 @Builder
 @Getter
-@NoArgsConstructor(access = AccessLevel.PUBLIC)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(uniqueConstraints = @UniqueConstraint(name = "uk_provider_provider_id", columnNames = {"provider", "providerId"}))
 public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = 36)
     private String id;
     @Column(length = 36, updatable = false, nullable = false)
     private String provider;
@@ -39,7 +40,13 @@ public class User extends BaseEntity {
     @Builder.Default
     private boolean accountDisable = false;
 
-    private Integer areaId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area", referencedColumnName = "areacode")
+    private Area area;
+
+    @Column(name = "sigunguCode")
+    private Integer sigunguCode;
+
     @Column(length = 255)
     private String introduction;
 

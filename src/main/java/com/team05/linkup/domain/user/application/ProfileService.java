@@ -1,11 +1,14 @@
 package com.team05.linkup.domain.user.application;
 
+import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
+import com.team05.linkup.domain.user.domain.Area;
+import com.team05.linkup.domain.user.domain.Sigungu;
 import com.team05.linkup.domain.community.infra.CommunityRepository;
 import com.team05.linkup.domain.mentoring.dto.ReceivedReviewDTO;
 import com.team05.linkup.domain.mentoring.infrastructure.ReviewRepository;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.dto.*;
-import com.team05.linkup.domain.user.infrastructure.AreaRepository;
+import com.team05.linkup.domain.user.infrastructure.SigunguRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +19,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,13 +27,27 @@ import java.util.stream.Collectors;
 public class ProfileService {
 
     private static final Logger logger = LogManager.getLogger();
-    private final AreaRepository areaRepository;
+    private final SigunguRepository sigunguRepository;
 
     public ProfilePageDTO getProfile(User user) {
+        // Area 객체에서 지역 이름을 가져옵니다
+        String areaName = null;
+        String sigungu = null;
 
-        String areaName = areaRepository.findById(user.getAreaId())
-                .map(area -> area.getAreaName())
-                .orElse(null);
+        if (user.getArea() != null) {
+            Area area = user.getArea();
+            areaName = area.getAreaName();
+
+            // 사용자의 sigunguCode가 있으면 해당 시군구 정보를 가져옵니다
+            if (user.getSigunguCode() != null) {
+                // 람다 표현식 없이 직접 처리
+                Optional<Sigungu> sigunguOpt = sigunguRepository.findByIdAreacodeAndIdSigungucode(
+                    area.getAreacode(), user.getSigunguCode());
+                if (sigunguOpt.isPresent()) {
+                    sigungu = sigunguOpt.get().getSigunguname();
+                }
+            }
+        }
 
         boolean isCurrentUser = isCurrentUser(user);
 
@@ -41,6 +59,7 @@ public class ProfileService {
                 .tag(user.getProfileTag())
                 .interest(user.getInterest().getDisplayName())
                 .area(areaName)
+                .sigungu(sigungu)
                 .introduction(user.getIntroduction())
                 .me(isCurrentUser) // 현재 사용자와 비교해 설정 (예: SecurityContext에서 가져오기)
                 .build();

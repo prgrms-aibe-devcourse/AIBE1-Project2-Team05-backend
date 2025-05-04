@@ -57,7 +57,7 @@ public class QImage extends EntityPathBase<Image> {
     public QImage(Class<? extends Image> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.community = inits.isInitialized("community") ? new QCommunity(forProperty("community"), inits.get("community")) : null;
-        this.user = inits.isInitialized("user") ? new com.team05.linkup.domain.user.domain.QUser(forProperty("user")) : null;
+        this.user = inits.isInitialized("user") ? new com.team05.linkup.domain.user.domain.QUser(forProperty("user"), inits.get("user")) : null;
     }
 
 }

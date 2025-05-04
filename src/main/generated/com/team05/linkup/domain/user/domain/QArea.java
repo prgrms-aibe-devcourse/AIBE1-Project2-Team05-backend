@@ -7,6 +7,7 @@ import com.querydsl.core.types.dsl.*;
 import com.querydsl.core.types.PathMetadata;
 import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
+import com.querydsl.core.types.dsl.PathInits;
 
 
 /**
@@ -19,9 +20,11 @@ public class QArea extends EntityPathBase<Area> {
 
     public static final QArea area = new QArea("area");
 
+    public final NumberPath<Integer> areacode = createNumber("areacode", Integer.class);
+
     public final StringPath areaName = createString("areaName");
 
-    public final NumberPath<Integer> id = createNumber("id", Integer.class);
+    public final ListPath<Sigungu, QSigungu> sigungus = this.<Sigungu, QSigungu>createList("sigungus", Sigungu.class, QSigungu.class, PathInits.DIRECT2);
 
     public QArea(String variable) {
         super(Area.class, forVariable(variable));

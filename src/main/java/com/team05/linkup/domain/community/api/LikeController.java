@@ -1,6 +1,7 @@
 package com.team05.linkup.domain.community.api;
 
 import com.team05.linkup.common.dto.ApiResponse;
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.domain.community.application.LikeService;
 import com.team05.linkup.domain.community.dto.LikeStatusResponse;
@@ -27,20 +28,25 @@ public class LikeController {
      * (좋아요 상태 -> 좋아요 취소 / 좋아요 아닌 상태 -> 좋아요 추가)
      *
      * @param communityId 토글할 게시글의 ID (경로 변수).
-     * @param providerId  현재 인증된 사용자 정보 (Spring Security가 주입).
+     * @param userPrincipal  현재 인증된 사용자 정보 (Spring Security가 주입).
      * @return 토글 후의 최종 '좋아요' 상태를 담은 응답 (liked: true/false).
      */
     @Operation(summary = "게시글 좋아요 토글", description = "특정 커뮤니티 게시글의 좋아요 상태를 변경(토글)합니다.")
     @PostMapping
     public ResponseEntity<ApiResponse<LikeStatusResponse>> toggleLike(
             @PathVariable String communityId,
-            @AuthenticationPrincipal String providerId
+            @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        if (providerId == null) {
-            return ResponseEntity.status(401).body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
+        if (userPrincipal == null) {
+            return ResponseEntity
+                    .status(ResponseCode.UNAUTHORIZED.getStatus())
+                    .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
         }
+        String provider = userPrincipal.provider();
+        String providerId = userPrincipal.providerId();
 
-        boolean liked = likeService.toggleLike(providerId, communityId);
+
+        boolean liked = likeService.toggleLike(provider, providerId, communityId);
         return ResponseEntity.ok(ApiResponse.success(new LikeStatusResponse(liked)));
     }
 }

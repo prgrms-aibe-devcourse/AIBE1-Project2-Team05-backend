@@ -10,14 +10,4 @@ public enum MentoringStatus {
     COMPLETED("완료");      // 완료 상태
 
     private final String statusName;
-
-    // 문자열로부터 MentoringStatus를 반환하는 메서드
-    public static MentoringStatus fromStatusName(String name) {
-        for (MentoringStatus status : MentoringStatus.values()) {
-            if (status.statusName.equals(name)) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("Invalid status: " + name);
-    }
 }

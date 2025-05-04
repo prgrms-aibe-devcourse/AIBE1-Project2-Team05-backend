@@ -18,6 +18,8 @@ public class QUser extends EntityPathBase<User> {
 
     private static final long serialVersionUID = 394259938L;
 
+    private static final PathInits INITS = PathInits.DIRECT2;
+
     public static final QUser user = new QUser("user");
 
     public final com.team05.linkup.domain.baseEntity.QBaseEntity _super = new com.team05.linkup.domain.baseEntity.QBaseEntity(this);
@@ -28,7 +30,7 @@ public class QUser extends EntityPathBase<User> {
 
     public final EnumPath<com.team05.linkup.domain.enums.ActivityType> activityType = createEnum("activityType", com.team05.linkup.domain.enums.ActivityType.class);
 
-    public final NumberPath<Integer> areaId = createNumber("areaId", Integer.class);
+    public final QArea area;
 
     public final StringPath contactLink = createString("contactLink");
 
@@ -59,21 +61,32 @@ public class QUser extends EntityPathBase<User> {
 
     public final EnumPath<com.team05.linkup.domain.enums.Role> role = createEnum("role", com.team05.linkup.domain.enums.Role.class);
 
+    public final NumberPath<Integer> sigunguCode = createNumber("sigunguCode", Integer.class);
+
     //inherited
     public final DateTimePath<java.time.ZonedDateTime> updatedAt = _super.updatedAt;
 
     public final StringPath userNameAttribute = createString("userNameAttribute");
 
     public QUser(String variable) {
-        super(User.class, forVariable(variable));
+        this(User.class, forVariable(variable), INITS);
     }
 
     public QUser(Path<? extends User> path) {
-        super(path.getType(), path.getMetadata());
+        this(path.getType(), path.getMetadata(), PathInits.getFor(path.getMetadata(), INITS));
     }
 
     public QUser(PathMetadata metadata) {
-        super(User.class, metadata);
+        this(metadata, PathInits.getFor(metadata, INITS));
+    }
+
+    public QUser(PathMetadata metadata, PathInits inits) {
+        this(User.class, metadata, inits);
+    }
+
+    public QUser(Class<? extends User> type, PathMetadata metadata, PathInits inits) {
+        super(type, metadata, inits);
+        this.area = inits.isInitialized("area") ? new QArea(forProperty("area")) : null;
     }
 
 }
