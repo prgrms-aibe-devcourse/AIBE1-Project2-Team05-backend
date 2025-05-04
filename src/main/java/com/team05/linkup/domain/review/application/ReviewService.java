@@ -75,7 +75,7 @@ public class ReviewService {
         if (!violations.isEmpty()) {
             // 첫 번째 유효성 위반 메시지를 추출
             String message = violations.iterator().next().getMessage();
-            // ConstraintViolationException 발생 (Spring @ExceptionHandler로 잡아 응답 처리 가능)
+            // ConstraintViolationException 발생 (try-catch로 직접 처리)
             throw new ConstraintViolationException(message, violations);
         }
 
@@ -105,5 +105,41 @@ public class ReviewService {
                 .star(review.getStar())
                 .interest(review.getInterest())
                 .build();
+    }
+
+    public void updateReview(User user, String reviewId, ReviewRequestDTO reviewRequestDTO) {
+        // 1. 리뷰 존재 여부 확인
+        Review existingReview = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
+
+        // 2. 멘토링 세션 조회
+        MentoringSessions session = mentoringRepository.findMentoringSessionById(existingReview.getMentoringSessionId())
+                .orElseThrow(() -> new IllegalArgumentException("멘토링 세션을 찾을 수 없습니다."));
+
+        // 3. 권한 확인
+        if (!session.getMentee().getId().equals(user.getId())) {
+            throw new IllegalStateException("리뷰 수정 권한이 없습니다.");
+        }
+
+        // 4. 유효성 검사 수행 (Bean Validation 수동 호출)
+        Set<ConstraintViolation<ReviewRequestDTO>> violations = validator.validate(reviewRequestDTO);
+        if (!violations.isEmpty()) {
+            // 첫 번째 유효성 위반 메시지를 추출
+            String message = violations.iterator().next().getMessage();
+            // ConstraintViolationException 발생 (try-catch로 직접 처리)
+            throw new ConstraintViolationException(message, violations);
+        }
+
+        // 5. 리뷰 업데이트
+        Review updatedReview = Review.builder()
+                .id(existingReview.getId()) // 기존 ID 유지
+                .mentoringSessionId(existingReview.getMentoringSessionId()) // 기존 멘토링 세션 ID 유지
+                .title(reviewRequestDTO.getTitle()) // 제목 업데이트
+                .content(reviewRequestDTO.getContent()) // 내용 업데이트
+                .star(reviewRequestDTO.getStar()) // 별점 업데이트
+                .interest(reviewRequestDTO.getInterest()) // 관심사 업데이트
+                .build();
+
+        reviewRepository.save(updatedReview);
     }
 }
