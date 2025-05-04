@@ -3,6 +3,7 @@ package com.team05.linkup.domain.community.infrastructure;
 import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.domain.CommunityCategory;
 import com.team05.linkup.domain.community.dto.CommunitySummaryResponse;
+import com.team05.linkup.domain.community.infra.CommunityRepositoryCustom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-public interface CommunityRepository extends JpaRepository<Community, String>, CommunityRepositoryCustom  {
+public interface CommunityRepository extends JpaRepository<Community, String>, CommunityRepositoryCustom {
 
     // 기본 정렬 쿼리 유지
 

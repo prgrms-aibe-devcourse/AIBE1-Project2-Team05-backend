@@ -1,6 +1,7 @@
 package com.team05.linkup.domain.user.api;
 
 import com.team05.linkup.common.dto.ApiResponse;
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.domain.community.dto.CommunityTalentSummaryDTO;
 import com.team05.linkup.domain.enums.Role;
@@ -19,8 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -112,36 +112,37 @@ public class ProfileController {
 
     // 멘토 매칭 현황
     @GetMapping("/{nickname}/matching")
-    public ResponseEntity<ApiResponse<MyMatchingPageDTO>> getMatchingPage(@PathVariable String nickname) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    // 기존: SecurityContextHolder로 인증 정보 가져옴 → 수정: @AuthenticationPrincipal 사용
+    public ResponseEntity<ApiResponse<MyMatchingPageDTO>> getMatchingPage(@PathVariable String nickname, @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
-        // ✅ 현재 로그인한 사용자의 닉네임
-        String currentUserNickname = authentication.getName(); // nickname이 principal로 설정돼 있어야 함
-        logger.debug("✅ 현재 로그인한 사용자 닉네임: {}", currentUserNickname);
+        logger.debug("✅ 현재 로그인한 사용자 providerId: {}", userPrincipal.providerId());
 
-        // ✅ 본인 여부 확인
-        if (!currentUserNickname.equals(nickname)) {
+        // 본인 여부 확인
+        // 기존: authentication.getName() → 수정: userPrincipal.providerId()
+        if (!userPrincipal.providerId().equals(nickname)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, "본인의 매칭 정보만 조회할 수 있습니다."));
         }
 
-        // ✅ 사용자 조회
-        Optional<User> userOpt = userRepository.findByNickname(nickname);
+        // 사용자 조회
+        // 기존: findByNickname(nickname) → 수정: findByProviderAndProviderId(provider, providerId)
+        Optional<User> userOpt = userRepository.findByProviderAndProviderId(userPrincipal.provider(), userPrincipal.providerId());
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다."));
+                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "사용자를 찾을 수 없습니다."));
         }
 
         User user = userOpt.get();
 
-        // ✅ 멘토인지 확인
+        // 멘토인지 확인
         if (!user.getRole().equals(Role.ROLE_MENTOR)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "멘토만 매칭 정보를 조회할 수 있습니다."));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, "멘토만 매칭 정보를 조회할 수 있습니다."));
         }
 
-        // ✅ 서비스 로직 위임
+        // 서비스 로직 위임
         MyMatchingPageDTO result = profileService.getMatchingPageData(user);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
+
 }
