@@ -25,6 +25,13 @@ jobs:
       # Gradle 빌드 (테스트 스킵)
       - name: Build with Gradle
         run: ./gradlew build -x test
+    # Docker 설치
+      - name: Set up Docker
+        run: |
+         sudo apt-get update
+         sudo apt-get install -y docker.io
+         sudo systemctl start docker
+         sudo systemctl enable docker  
 
       # Docker Hub 로그인
       - name: Login to Docker Hub
