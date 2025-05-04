@@ -55,7 +55,7 @@ spring:
 # 로깅 설정
 logging:
   level:
-    com.team05.linkup: DEBUG
+    com.team05.linkup: INFO
 # mapper 패키지의 로깅 레벨을 DEBUG로 설정 (DEV)
 
 jwt:

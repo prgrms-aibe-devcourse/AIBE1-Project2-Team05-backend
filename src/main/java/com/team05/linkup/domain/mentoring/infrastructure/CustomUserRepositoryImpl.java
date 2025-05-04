@@ -3,6 +3,7 @@ package com.team05.linkup.domain.mentoring.infrastructure;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.team05.linkup.domain.mentoring.domain.QMentoringSessions;
 import com.team05.linkup.domain.user.domain.QUser;
+import com.team05.linkup.domain.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
