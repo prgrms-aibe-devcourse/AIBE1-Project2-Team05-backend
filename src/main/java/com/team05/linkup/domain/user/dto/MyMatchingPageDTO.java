@@ -12,5 +12,5 @@ public class MyMatchingPageDTO {
     private List<ReceivedReviewDTO> reviews;
     private List<CommunityQnAPostResponseDTO> communityQnAs;
 //    private List<OngoingMatchingDTO> ongoingMatchings;
-//    private MentoringStatsDTO stats;
+    private MentorStatsDTO stats;
 }

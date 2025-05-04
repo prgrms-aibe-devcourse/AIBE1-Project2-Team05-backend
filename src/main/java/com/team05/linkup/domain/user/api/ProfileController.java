@@ -84,11 +84,16 @@ public class ProfileController {
         return ResponseEntity.ok(ApiResponse.success(builder.build()));
     }
 
-
-    // 임시로 주석 상태로 유지 - 추후 삭제 예정
+//    // 멘토 매칭 현황
 //    @GetMapping("/{nickname}/matching")
-//    public ResponseEntity<ApiResponse<MyMatchingPageDTO>> getMatchingPage(@PathVariable String nickname) {
-//        Optional<User> userOpt = userRepository.findByNickname(nickname);
+//    public ResponseEntity<ApiResponse<MyMatchingPageDTO>> getMatchingPage(
+//            @PathVariable String nickname,
+//            @AuthenticationPrincipal UserPrincipal userPrincipal    // 기본 인증 방식
+//    ) {
+//        logger.debug("✅ 현재 로그인한 사용자 provider = {}, providerId = {}", userPrincipal.provider(), userPrincipal.providerId());
+//
+//        // provider + providerId로 현재 로그인한 사용자 조회
+//        Optional<User> userOpt = userRepository.findByProviderAndProviderId(userPrincipal.provider(), userPrincipal.providerId());
 //        if (userOpt.isEmpty()) {
 //            return ResponseEntity.status(HttpStatus.NOT_FOUND)
 //                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "사용자를 찾을 수 없습니다."));
@@ -96,27 +101,47 @@ public class ProfileController {
 //
 //        User user = userOpt.get();
 //
-//        // 🔒 보호 로직: 멘토만 접근 가능
-//        if (!user.getRole().equals(Role.ROLE_MENTOR)) {
+//        // nickname 비교로 본인 확인
+//        if (!user.getNickname().equals(nickname)) {
 //            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-//                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, "멘토만 매칭 현황을 조회할 수 있습니다."));
+//                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, "본인의 매칭 정보만 조회할 수 있습니다."));
 //        }
 //
-//        MyMatchingPageDTO matchingPageData = profileService.getMatchingPageData(user);
-//        return ResponseEntity.ok(ApiResponse.success(matchingPageData));
+//        // 멘토 권한 확인
+//        if (!user.getRole().equals(Role.ROLE_MENTOR)) {
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+//                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, "멘토만 매칭 정보를 조회할 수 있습니다."));
+//        }
+//
+//        // 매칭 데이터 조회
+//        MyMatchingPageDTO result = profileService.getMatchingPageData(user);
+//        return ResponseEntity.ok(ApiResponse.success(result));
 //    }
 
-
-    // 멘토 매칭 현황
+    // 멘토 매칭 현황 -> swagger 테스트용 코드(배포 시 위에 주석으로 되어있는 코드 활성화 후 지금 코드 삭제 예정)
     @GetMapping("/{nickname}/matching")
     public ResponseEntity<ApiResponse<MyMatchingPageDTO>> getMatchingPage(
             @PathVariable String nickname,
-            @AuthenticationPrincipal UserPrincipal userPrincipal
+            @AuthenticationPrincipal UserPrincipal userPrincipal // ✅ 기본 인증 방식
     ) {
-        logger.debug("✅ 현재 로그인한 사용자 provider = {}, providerId = {}", userPrincipal.provider(), userPrincipal.providerId());
+        // ✅ Swagger 등에서 인증 객체가 null일 때 테스트용 fallback
+        if (userPrincipal == null) {
+            logger.warn("⚠️ 인증 객체가 null입니다. Swagger 테스트 중일 수 있습니다.");
+            Optional<User> fallbackUserOpt = userRepository.findByNickname(nickname);
+            if (fallbackUserOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "사용자를 찾을 수 없습니다."));
+            }
+
+            User fallbackUser = fallbackUserOpt.get();
+            userPrincipal = new UserPrincipal(fallbackUser.getProviderId(), fallbackUser.getProvider());
+        }
 
         // provider + providerId로 현재 로그인한 사용자 조회
-        Optional<User> userOpt = userRepository.findByProviderAndProviderId(userPrincipal.provider(), userPrincipal.providerId());
+        Optional<User> userOpt = userRepository.findByProviderAndProviderId(
+                userPrincipal.provider(), userPrincipal.providerId()
+        );
+
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "사용자를 찾을 수 없습니다."));
@@ -140,5 +165,6 @@ public class ProfileController {
         MyMatchingPageDTO result = profileService.getMatchingPageData(user);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
+
 
 }

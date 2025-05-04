@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface ReviewRepository extends JpaRepository<Review, String> {
 
@@ -32,4 +33,14 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
             @Param("mentorId") String mentorId,
             @Param("limit") int limit
     );
+
+    // ⭐ 리뷰 평균 별점 (지금은 주석처리만 해둠)
+    @Query("""
+        SELECT AVG(r.star)
+        FROM Review r
+        WHERE r.mentoringSession.mentor.id = :mentorId
+    """)
+    Double calculateAverageRatingForMentor(@Param("mentorId") UUID mentorId);
+
+
 }

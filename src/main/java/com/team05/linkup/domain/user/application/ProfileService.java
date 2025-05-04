@@ -12,16 +12,12 @@ import com.team05.linkup.domain.user.infrastructure.SigunguRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -184,12 +180,14 @@ public class ProfileService {
                 .build();
     }
 
+    private final MentorProfileService mentorProfileService;
+
     public MyMatchingPageDTO getMatchingPageData(User mentor) {
         return MyMatchingPageDTO.builder()
                 .reviews(getReviewsForMentor(mentor.getId(), 2))
                 .communityQnAs(getRecentQnAByInterest(mentor.getInterest().name(), 2))
 //                .ongoingMatchings(getOngoingMatchings(mentor.getId()))
-//                .stats(getMentoringStats(mentor.getId()))
+                .stats(mentorProfileService.getMentoringStats(UUID.fromString(mentor.getId())))
                 .build();
     }
 
