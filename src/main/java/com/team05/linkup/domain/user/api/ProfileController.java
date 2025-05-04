@@ -1,6 +1,7 @@
 package com.team05.linkup.domain.user.api;
 
 import com.team05.linkup.common.dto.ApiResponse;
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.domain.community.dto.CommunityTalentSummaryDTO;
 import com.team05.linkup.domain.enums.Role;
@@ -17,6 +18,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,18 +42,17 @@ public class ProfileController {
 
     @GetMapping("/{nickname}")
     @Transactional(readOnly = true)
-    public ResponseEntity<ApiResponse<ProfilePageDTO>> getProfile(@PathVariable String nickname) {
+    public ResponseEntity<ApiResponse<ProfilePageDTO>> getProfile(@PathVariable String nickname, @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         Optional<User> userOpt = userRepository.findByNickname(nickname);
         if (userOpt.isEmpty())
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다."));
 
-        ProfilePageDTO profilePageDTO = profileService.getProfile(userOpt.get());
+        ProfilePageDTO profilePageDTO = profileService.getProfile(userOpt.get(), userPrincipal);
 
         return ResponseEntity.ok(ApiResponse.success(profilePageDTO));
     }
-
 
     @GetMapping("/{nickname}/activity")
     public ResponseEntity<ApiResponse<ActivityResponseDTO>> getActivity(@PathVariable String nickname) {

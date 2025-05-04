@@ -1,5 +1,6 @@
 package com.team05.linkup.domain.user.application;
 
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
 import com.team05.linkup.domain.user.domain.Area;
 import com.team05.linkup.domain.user.domain.Sigungu;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -26,7 +28,7 @@ public class ProfileService {
     private final SigunguRepository sigunguRepository;
 
     @Transactional(readOnly = true)
-    public ProfilePageDTO getProfile(User user) {
+    public ProfilePageDTO getProfile(User user, UserPrincipal userPrincipal) {
         // Area 객체에서 지역 이름을 가져옵니다
         String areaName = Optional.ofNullable(user.getArea())
                 .map(Area::getAreaName)
@@ -39,7 +41,7 @@ public class ProfileService {
                         .map(Sigungu::getSigunguname))
                 .orElse(null);
 
-        boolean isCurrentUser = isCurrentUser(user);
+        boolean isCurrentUser = isCurrentUser(user, userPrincipal);
 
         return ProfilePageDTO.builder()
                 .id(user.getId())
@@ -55,16 +57,21 @@ public class ProfileService {
                 .build();
     }
 
-    private static boolean isCurrentUser(User user) {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String currentProviderId = null;
-        if (principal instanceof String) {
-            currentProviderId = (String) principal;
+    private static boolean isCurrentUser(User user, UserPrincipal userPrincipal) {
+        if (userPrincipal == null) {
+            return false;
         }
-        logger.debug("사용자 provider Id: {}, 프로필 provider ID: {}", currentProviderId, user.getProviderId());
-        return currentProviderId != null && currentProviderId.equals(user.getProviderId());
-    }
 
+        String principalProvider = userPrincipal.provider();
+        String principalProviderId = userPrincipal.providerId();
+        String userProvider = user.getProvider();
+        String userProviderId = user.getProviderId();
+
+        logger.debug("Principal 사용자 provider: {}, Principal 사용자 provider Id: {}", principalProvider, principalProviderId);
+        logger.debug("User 프로필 provider: {}, User 프로필 provider ID: {}", userProvider, userProviderId);
+
+        return Objects.equals(principalProvider, userProvider) && Objects.equals(principalProviderId, userProviderId);
+    }
 
     private final CommunityRepository communityRepository;
 
