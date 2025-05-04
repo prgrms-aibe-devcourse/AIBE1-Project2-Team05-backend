@@ -63,6 +63,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}  # SSH 개인 키
           port: ${{ secrets.SERVER_SSH_PORT }}  # SSH 포트
           script: |
+            sudo usermod -aG docker ${{ secrets.SERVER_SSH_USERNAME }}
             # 기존 컨테이너 중지 및 제거
             docker stop app-container || true
             docker rm app-container || true
