@@ -112,20 +112,13 @@ public class ProfileController {
 
     // 멘토 매칭 현황
     @GetMapping("/{nickname}/matching")
-    // 기존: SecurityContextHolder로 인증 정보 가져옴 → 수정: @AuthenticationPrincipal 사용
-    public ResponseEntity<ApiResponse<MyMatchingPageDTO>> getMatchingPage(@PathVariable String nickname, @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<ApiResponse<MyMatchingPageDTO>> getMatchingPage(
+            @PathVariable String nickname,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        logger.debug("✅ 현재 로그인한 사용자 provider = {}, providerId = {}", userPrincipal.provider(), userPrincipal.providerId());
 
-        logger.debug("✅ 현재 로그인한 사용자 providerId: {}", userPrincipal.providerId());
-
-        // 본인 여부 확인
-        // 기존: authentication.getName() → 수정: userPrincipal.providerId()
-        if (!userPrincipal.providerId().equals(nickname)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, "본인의 매칭 정보만 조회할 수 있습니다."));
-        }
-
-        // 사용자 조회
-        // 기존: findByNickname(nickname) → 수정: findByProviderAndProviderId(provider, providerId)
+        // provider + providerId로 현재 로그인한 사용자 조회
         Optional<User> userOpt = userRepository.findByProviderAndProviderId(userPrincipal.provider(), userPrincipal.providerId());
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -134,13 +127,19 @@ public class ProfileController {
 
         User user = userOpt.get();
 
-        // 멘토인지 확인
+        // nickname 비교로 본인 확인
+        if (!user.getNickname().equals(nickname)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, "본인의 매칭 정보만 조회할 수 있습니다."));
+        }
+
+        // 멘토 권한 확인
         if (!user.getRole().equals(Role.ROLE_MENTOR)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, "멘토만 매칭 정보를 조회할 수 있습니다."));
         }
 
-        // 서비스 로직 위임
+        // 매칭 데이터 조회
         MyMatchingPageDTO result = profileService.getMatchingPageData(user);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
