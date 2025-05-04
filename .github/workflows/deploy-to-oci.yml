@@ -79,7 +79,7 @@ jobs:
               -e KAKAO_CLIENT_SECRET="$KAKAO_CLIENT_SECRET" \
               -e NAVER_CLIENT_ID="$NAVER_CLIENT_ID" \
               -e NAVER_CLIENT_SECRET="$NAVER_CLIENT_SECRET" \
-              -e SPRING_PROFILES_ACTIVE="prod" \
+              -e SPRING_PROFILES_ACTIVE="$SPRING_PROFILES_ACTIVE" \
               -e GEMINI_API_KEY="$GEMINI_API_KEY" \
               ${{ secrets.DOCKER_USERNAME }}/my-repo:latest
   
