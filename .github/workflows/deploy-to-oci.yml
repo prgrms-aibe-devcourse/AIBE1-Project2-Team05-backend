@@ -71,7 +71,7 @@ jobs:
             
             docker run -d \
               --name app-container \
-              -p 8080:8080 \
+              -p 8443:8443 \
               -e JWT_SECRET="${{secrets.JWT_SECRET}}" \
               -e SPRING_DATASOURCE_URL="${{secrets.MYSQL_URL}}" \
               -e SPRING_DATASOURCE_USERNAME="${{secrets.MYSQL_USER}}" \
@@ -84,6 +84,7 @@ jobs:
               -e NAVER_CLIENT_SECRET="${{secrets.NAVER_CLIENT_SECRET}}" \
               -e SPRING_PROFILES_ACTIVE="${{secrets.SPRING_PROFILES_ACTIVE}}" \
               -e GEMINI_API_KEY="${{secrets.GEMINI_API_KEY}}" \
+              -e SERVER_PORT="${{secrets.PORT}}" \
               ${{ env.DOCKER_REPO }}:latest
             
             echo "새 컨테이너 실행 시도 완료"
