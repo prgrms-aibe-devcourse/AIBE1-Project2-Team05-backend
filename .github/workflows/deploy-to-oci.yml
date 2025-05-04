@@ -71,7 +71,7 @@ jobs:
               -p 8080:8080 \
               -e JWT_SECRET="$JWT_SECRET" \
               -e SPRING_DATASOURCE_URL="$MYSQL_URL" \
-              -e SPRING_DATASOURCE_USERNAME="$MYSQL_USERNAME" \
+              -e SPRING_DATASOURCE_USERNAME="$MYSQL_USER" \
               -e SPRING_DATASOURCE_PASSWORD="$MYSQL_PASSWORD" \
               -e GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
               -e GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
