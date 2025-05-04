@@ -6,6 +6,7 @@ import com.team05.linkup.domain.mentoring.infrastructure.MentoringRepository;
 import com.team05.linkup.domain.review.domain.Review;
 import com.team05.linkup.domain.review.dto.MyCompletedMentoringDTO;
 import com.team05.linkup.domain.review.dto.ReviewRequestDTO;
+import com.team05.linkup.domain.review.dto.ReviewResponseDTO;
 import com.team05.linkup.domain.review.infrastructure.ReviewRepository;
 import com.team05.linkup.domain.user.domain.User;
 import jakarta.validation.ConstraintViolation;
@@ -59,7 +60,6 @@ public class ReviewService {
 
         // 2. 멘토링 세션 완료 상태 검증
         Optional<MentoringSessions> session = mentoringRepository.findMentoringSessionById(reviewRequestDTO.getMentoringSessionId());
-        logger.debug(reviewRequestDTO.getMentoringSessionId());
         if (session.isEmpty() || session.get().getStatus() != MentoringStatus.COMPLETED) {
             logger.debug(session.get().getStatus());
             logger.debug(MentoringStatus.COMPLETED);
@@ -81,5 +81,29 @@ public class ReviewService {
 
         // 5. 검증 통과 시 저장
         reviewRepository.save(review);
+    }
+
+    public ReviewResponseDTO getReview(User user, String reviewId) {
+        // 1. 리뷰 존재 여부 확인
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
+
+        // 2. 멘토링 세션 조회
+        MentoringSessions session = mentoringRepository.findMentoringSessionById(review.getMentoringSessionId())
+                .orElseThrow(() -> new IllegalArgumentException("멘토링 세션을 찾을 수 없습니다."));
+
+        // 3. 멘토링 세션의 멘티 ID와 현재 사용자 ID 비교
+        if (!session.getMentee().getId().equals(user.getId())) {
+            throw new IllegalStateException("해당 리뷰에 접근할 권한이 없습니다.");
+        }
+
+        // 4. DTO 변환 및 반환
+        return ReviewResponseDTO.builder()
+                .mentoringSessionId(review.getMentoringSessionId())
+                .title(review.getTitle())
+                .content(review.getContent())
+                .star(review.getStar())
+                .interest(review.getInterest())
+                .build();
     }
 }

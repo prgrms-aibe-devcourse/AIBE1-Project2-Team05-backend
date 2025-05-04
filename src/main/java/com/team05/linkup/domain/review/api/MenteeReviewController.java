@@ -6,6 +6,7 @@ import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.domain.review.application.ReviewService;
 import com.team05.linkup.domain.review.dto.MyCompletedMentoringDTO;
 import com.team05.linkup.domain.review.dto.ReviewRequestDTO;
+import com.team05.linkup.domain.review.dto.ReviewResponseDTO;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import jakarta.validation.ConstraintViolationException;
@@ -63,6 +64,28 @@ public class MenteeReviewController {
             // 멘토링 세션이 완료되지 않은 경우 (BAD_REQUEST)
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error(ResponseCode.INVALID_MENTORING_SESSION, ex.getMessage()));
+        }
+    }
+
+    @GetMapping("/review/{reviewId}")
+    public ResponseEntity<ApiResponse<ReviewResponseDTO>> getReviewForUpdate(@AuthenticationPrincipal UserPrincipal userPrincipal, @PathVariable String reviewId) {
+        Optional<User> userOpt = userRepository.findByProviderAndProviderId(
+                userPrincipal.provider(), userPrincipal.providerId());
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다."));
+
+        try {
+            ReviewResponseDTO result = reviewService.getReview(userOpt.get(), reviewId);
+            return ResponseEntity.ok(ApiResponse.success(result));
+        } catch (IllegalArgumentException e) {
+            // 리뷰나 멘토링 세션을 찾을 수 없을 때
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, e.getMessage()));
+        } catch (IllegalStateException e) {
+            // 권한이 없을 때
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, e.getMessage()));
         }
     }
 }
