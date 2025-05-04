@@ -5,6 +5,9 @@ on:
     branches: [ feat/cicd ] # 브랜치에 푸시될 때 실행
   workflow_dispatch: # 수동 실행 옵션
 
+env:
+  DOCKER_REPO: ${{ secrets.DOCKER_USERNAME }}/linkup-app
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -43,7 +46,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/my-repo:${{ github.sha }},${{ secrets.DOCKER_USERNAME }}/my-repo:latest
+          tags: ${{ env.DOCKER_REPO }}:${{ github.sha }},${{ env.DOCKER_REPO }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -63,26 +66,26 @@ jobs:
             docker rm app-container || true
             echo "기존 컨테이너 제거 시도 완료"          
             
-            docker pull ${{ secrets.DOCKER_USERNAME }}/my-repo:latest
+            docker pull ${{ env.DOCKER_REPO }}:latest
             echo "Docker 이미지 풀링 완료"
             
             docker run -d \
               --name app-container \
               -p 8080:8080 \
-              -e JWT_SECRET=${{secrets.JWT_SECRET}} \
-              -e SPRING_DATASOURCE_URL=${{secrets.MYSQL_URL}} \
-              -e SPRING_DATASOURCE_USERNAME=${{secrets.MYSQL_USER}} \
-              -e SPRING_DATASOURCE_PASSWORD=${{secrets.MYSQL_PASSWORD}} \
-              -e GOOGLE_CLIENT_ID=${{secrets.GOOGLE_CLIENT_ID}} \
-              -e GOOGLE_CLIENT_SECRET=${{secrets.GOOGLE_CLIENT_SECRET}} \
-              -e KAKAO_CLIENT_ID=${{secrets.KAKAO_CLIENT_ID}} \
-              -e KAKAO_CLIENT_SECRET=${{secrets.KAKAO_CLIENT_SECRET}} \
-              -e NAVER_CLIENT_ID=${{secrets.NAVER_CLIENT_ID}} \
-              -e NAVER_CLIENT_SECRET=${{secrets.NAVER_CLIENT_SECRET}} \
-              -e SPRING_PROFILES_ACTIVE=${{secrets.SPRING_PROFILES_ACTIVE}} \
-              -e GEMINI_API_KEY=${{secrets.GEMINI_API_KEY}} \
-              ${{ secrets.DOCKER_USERNAME }}/my-repo:latest
-  
+              -e JWT_SECRET="${{secrets.JWT_SECRET}}" \
+              -e SPRING_DATASOURCE_URL="${{secrets.MYSQL_URL}}" \
+              -e SPRING_DATASOURCE_USERNAME="${{secrets.MYSQL_USER}}" \
+              -e SPRING_DATASOURCE_PASSWORD="${{secrets.MYSQL_PASSWORD}}" \
+              -e GOOGLE_CLIENT_ID="${{secrets.GOOGLE_CLIENT_ID}}" \
+              -e GOOGLE_CLIENT_SECRET="${{secrets.GOOGLE_CLIENT_SECRET}}" \
+              -e KAKAO_CLIENT_ID="${{secrets.KAKAO_CLIENT_ID}}" \
+              -e KAKAO_CLIENT_SECRET="${{secrets.KAKAO_CLIENT_SECRET}}" \
+              -e NAVER_CLIENT_ID="${{secrets.NAVER_CLIENT_ID}}" \
+              -e NAVER_CLIENT_SECRET="${{secrets.NAVER_CLIENT_SECRET}}" \
+              -e SPRING_PROFILES_ACTIVE="${{secrets.SPRING_PROFILES_ACTIVE}}" \
+              -e GEMINI_API_KEY="${{secrets.GEMINI_API_KEY}}" \
+              ${{ env.DOCKER_REPO }}:latest
+            
             echo "새 컨테이너 실행 시도 완료"
             
             # 사용하지 않는 이미지 정리
