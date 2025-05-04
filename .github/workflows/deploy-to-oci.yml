@@ -1,8 +1,8 @@
 name: Deploy to Docker Hub
 
 on:
-  push:
-    branches: [ feat/cicd ] # 브랜치에 푸시될 때 실행
+  pull_request:
+    branches: [ main ]
   workflow_dispatch: # 수동 실행 옵션
 
 env:
