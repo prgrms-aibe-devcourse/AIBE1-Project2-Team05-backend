@@ -4,10 +4,13 @@ import java.util.List;
 
 public record AiMatchingRequestDTO(String profileTag, List<OtherProfile> otherProfiles) {
     public record OtherProfile(
-                                Integer areaId,
+                                Integer areacode,
+                                String areaName,      // 추가
+                                Integer sigungucode,  // 추가
+                                String sigunguname,   // 추가
                                 String nickname,
-                               String profileTag,
-                               String profileImageUrl,
+                                String profileTag,
+                                String profileImageUrl,
                                 String providerId
                                ) {}
 }

@@ -1,6 +1,8 @@
 package com.team05.linkup.domain.user.infrastructure;
 
+import com.team05.linkup.domain.enums.Interest;
 import com.team05.linkup.domain.enums.Role;
+import com.team05.linkup.domain.mentoring.dto.ProfileTagInterestDTO;
 import com.team05.linkup.domain.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -32,17 +34,26 @@ public interface UserRepository extends JpaRepository<User, String> {
     void updateUserRole(@Param("id") String id, @Param("role") Role role);
 
     @Query("""
-        SELECT u.profileTag
+        SELECT new com.team05.linkup.domain.mentoring.dto.ProfileTagInterestDTO(u.profileTag, u.interest)
         FROM User u
         WHERE u.providerId = :providerId AND u.provider = :provider
     """)
-    String findProfileTagByProviderId(@Param("provider") String provider, @Param("providerId") String providerId);
+    ProfileTagInterestDTO findProfileTagAndInterestByProviderAndProviderId(@Param("provider") String provider, @Param("providerId") String providerId);
 
     @Query("""
-        SELECT u.area, u.nickname, u.profileTag, u.profileImageUrl, u.providerId
-        FROM User u
-        WHERE u.providerId <> :providerId AND u.provider = :provider
+        SELECT u.area.areacode,
+                       area.areaName,
+                       u.sigunguCode,
+                       sigungu.sigunguname,
+                       u.nickname,
+                       u.profileTag,
+                       u.profileImageUrl,
+                       u.providerId
+        FROM User u, Area area, Sigungu sigungu
+        WHERE u.providerId <> :providerId AND u.provider = :provider AND u.interest = :interest
     """)
-    List<Object[]> findOtherProfileTagsByProviderId(@Param("provider") String provider, @Param("providerId") String providerId);
+    List<Object[]> findOtherProfileTagsByProviderId(@Param("provider") String provider,
+                                                    @Param("providerId") String providerId,
+                                                    @Param("interest") Interest interest);
 
 }
