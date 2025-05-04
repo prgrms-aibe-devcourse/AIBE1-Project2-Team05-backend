@@ -142,4 +142,22 @@ public class ReviewService {
 
         reviewRepository.save(updatedReview);
     }
+
+    public void deleteReview(User user, String reviewId) {
+        // 1. 리뷰 존재 여부 확인
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
+
+        // 2. 멘토링 세션 조회
+        MentoringSessions session = mentoringRepository.findMentoringSessionById(review.getMentoringSessionId())
+                .orElseThrow(() -> new IllegalArgumentException("멘토링 세션을 찾을 수 없습니다."));
+
+        // 3. 권한 확인
+        if (!session.getMentee().getId().equals(user.getId())) {
+            throw new IllegalStateException("리뷰 삭제 권한이 없습니다.");
+        }
+
+        // 4. 리뷰 삭제
+        reviewRepository.delete(review);
+    }
 }

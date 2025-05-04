@@ -114,4 +114,26 @@ public class MenteeReviewController {
                     .body(ApiResponse.error(ResponseCode.INVALID_MENTORING_SESSION, ex.getMessage()));
         }
     }
+
+    @DeleteMapping("/review/{reviewId}")
+    public ResponseEntity<ApiResponse> deleteReview(@AuthenticationPrincipal UserPrincipal userPrincipal, @PathVariable String reviewId) {
+        Optional<User> userOpt = userRepository.findByProviderAndProviderId(
+                userPrincipal.provider(), userPrincipal.providerId());
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다."));
+
+        try {
+            reviewService.deleteReview(userOpt.get(), reviewId);
+            return ResponseEntity.ok(ApiResponse.success("리뷰가 성공적으로 삭제되었습니다."));
+        } catch (IllegalStateException ex) {
+            // 권한이 없을 때 (FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, ex.getMessage()));
+        } catch (IllegalArgumentException ex) {
+            // 리뷰를 찾을 수 없거나 잘못된 요청일 때 (BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, ex.getMessage()));
+        }
+    }
 }
