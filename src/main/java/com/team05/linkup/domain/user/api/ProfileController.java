@@ -7,25 +7,22 @@ import com.team05.linkup.domain.community.dto.CommunityTalentSummaryDTO;
 import com.team05.linkup.domain.enums.Role;
 import com.team05.linkup.domain.mentoring.application.OngoingMatchingService;
 import com.team05.linkup.domain.mentoring.dto.MatchedMentorProfileDto;
+import com.team05.linkup.domain.user.application.InterestMoreDetailsService;
 import com.team05.linkup.domain.user.application.MenteeProfileService;
 import com.team05.linkup.domain.user.application.MentorProfileService;
 import com.team05.linkup.domain.user.application.ProfileService;
 import com.team05.linkup.domain.user.domain.User;
-import com.team05.linkup.domain.user.dto.ActivityResponseDTO;
-import com.team05.linkup.domain.user.dto.MyMatchingPageDTO;
-import com.team05.linkup.domain.user.dto.ProfilePageDTO;
+import com.team05.linkup.domain.user.dto.*;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -85,6 +82,71 @@ public class ProfileController {
 
         return ResponseEntity.ok(ApiResponse.success(builder.build()));
     }
+
+    @GetMapping("/{nickname}/activity/more-details")
+    public ResponseEntity<ApiResponse<?>> getMoreDetails(
+            @PathVariable String nickname,
+            @RequestParam("type") String type,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size   // size 파라미터 추가
+    ) {
+        return switch (type) {
+            // 재능 목록 more-details
+            case "my-talents" -> {
+                Page<CommunityTalentSummaryDTO> result =
+                        mentorProfileService.getCommunityTalentsPaged(nickname, page, size);
+                yield ResponseEntity.ok(ApiResponse.success(result));
+            }
+
+            // 내가 쓴 게시글 more-details
+            case "my-posts" -> {
+                Page<MyPostResponseDTO> result =
+                        profileService.getMyPostsPaged(nickname, page, size);
+                yield ResponseEntity.ok(ApiResponse.success(result));
+            }
+
+            // 내가 쓴 댓글 more-details
+            case "my-comments" -> {
+                Page<MyCommentResponseDTO> result =
+                        profileService.getMyCommentsPaged(nickname, page, size);
+                yield ResponseEntity.ok(ApiResponse.success(result));
+            }
+
+            default -> ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "유효하지 않은 type 파라미터입니다."));
+        };
+    }
+
+    private final InterestMoreDetailsService interestMoreDetailsService;
+
+    // 관심 목록 더보기 API
+    @GetMapping("/{nickname}/activity/more-details/interests")
+    public ResponseEntity<ApiResponse<?>> getInterestMoreDetails(
+            @PathVariable String nickname,
+            @RequestParam("filter") String filter, // bookmarked | liked | all
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        // 유효하지 않은 filter 처리
+        if (!filter.equals("bookmarked") && !filter.equals("liked") && !filter.equals("all")) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "유효하지 않은 filter 파라미터입니다."));
+        }
+
+        // 서비스 호출
+        Page<?> result = interestMoreDetailsService.getInterestPosts(nickname, filter, page, size);
+
+        // 성공 응답 반환
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+
+
+
+
+
 
 //    // 멘토 매칭 현황
 //    @GetMapping("/{nickname}/matching")

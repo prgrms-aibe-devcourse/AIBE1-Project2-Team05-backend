@@ -13,6 +13,9 @@ import com.team05.linkup.domain.user.infrastructure.SigunguRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,6 +100,24 @@ public class ProfileService {
                 .collect(Collectors.toList());
     }
 
+    // 🔧 내가 작성한 커뮤니티 게시글 - 페이징
+    public Page<MyPostResponseDTO> getMyPostsPaged(String nickname, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Object[]> resultPage = communityRepository.findCommunityPostsWithPaging(nickname, pageable);
+
+        return resultPage.map(obj -> new MyPostResponseDTO(
+                (String) obj[0],                                      // id
+                ((Timestamp) obj[1]).toLocalDateTime(),              // updated_at
+                (String) obj[2],                                      // category
+                (String) obj[3],                                      // title
+                (String) obj[4],                                      // content
+                ((Number) obj[5]).intValue(),                         // view_count
+                ((Number) obj[6]).intValue(),                         // like_count
+                ((Number) obj[7]).intValue()                          // comment_count
+        ));
+    }
+
+
     // 내가 작성한 댓글 조회
     public List<MyCommentResponseDTO> getMyComments(String nickname, int limit) {
         // userId 조회 (닉네임 기반 → ID 추출)
@@ -119,6 +140,29 @@ public class ProfileService {
                 })
                 .collect(Collectors.toList());
     }
+
+    public Page<MyCommentResponseDTO> getMyCommentsPaged(String nickname, int page, int size) {
+        // 1. 닉네임으로 사용자 ID 조회
+        String userId = getUserIdByNickname(nickname);
+        // 2. 페이징 객체 생성
+        Pageable pageable = PageRequest.of(page, size);
+        // 3. native 쿼리 결과 받아오기
+        Page<Object[]> resultPage = communityRepository.findMyCommentsPaged(userId, pageable);
+
+        // 4. Object[] → DTO 매핑
+        return resultPage.map(row -> {
+            Timestamp updatedAt = (Timestamp) row[0];
+            String description = (String) row[1];
+            String commentContent = (String) row[2];
+
+            return new MyCommentResponseDTO(
+                    updatedAt != null ? updatedAt.toLocalDateTime() : null,
+                    description,
+                    commentContent
+            );
+        });
+    }
+
 
     // 내가 북마크한 게시글 조회
      public List<MyBookmarkResponseDTO> getMyBookmarks(String nickname, int limit) {
