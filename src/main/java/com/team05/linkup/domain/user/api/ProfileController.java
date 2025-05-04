@@ -15,12 +15,12 @@ import com.team05.linkup.domain.user.dto.MyMatchingPageDTO;
 import com.team05.linkup.domain.user.dto.ProfilePageDTO;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Optional;
 
-@Slf4j
 @RestController
 @RequestMapping("/v1/users")
 @RequiredArgsConstructor
@@ -42,22 +41,21 @@ public class ProfileController {
     private final MenteeProfileService menteeProfileService;
 
     @GetMapping("/{nickname}")
-    public ResponseEntity<ApiResponse<ProfilePageDTO>> getProfile(@PathVariable String nickname) {
+    @Transactional(readOnly = true)
+    public ResponseEntity<ApiResponse<ProfilePageDTO>> getProfile(@PathVariable String nickname, @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         Optional<User> userOpt = userRepository.findByNickname(nickname);
         if (userOpt.isEmpty())
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다."));
 
-
-        ProfilePageDTO profilePageDTO = profileService.getProfile(userOpt.get());
+        ProfilePageDTO profilePageDTO = profileService.getProfile(userOpt.get(), userPrincipal);
 
         return ResponseEntity.ok(ApiResponse.success(profilePageDTO));
     }
 
-
     @GetMapping("/{nickname}/activity")
-    public ResponseEntity<ApiResponse> getActivity(@PathVariable String nickname) {
+    public ResponseEntity<ApiResponse<ActivityResponseDTO>> getActivity(@PathVariable String nickname) {
         // 1. 사용자의 역할(멘토/멘티) 확인
         Optional<User> userOpt = userRepository.findByNickname(nickname);
         if (userOpt.isEmpty())
@@ -70,7 +68,6 @@ public class ProfileController {
         // 공통 조회 항목 - Controller에서는 입출력과 역할 분기만 담당
         ActivityResponseDTO.ActivityResponseDTOBuilder builder =
                 profileService.getCommonActivityDTO(nickname).toBuilder();
-
 
         if (profile.getRole().equals(Role.ROLE_MENTOR)) {
             // 멘토의 경우, 커뮤니티 재능나눔 게시글 작성 내역 조회하여 반환
