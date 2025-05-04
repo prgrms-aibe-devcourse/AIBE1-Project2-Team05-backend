@@ -10,6 +10,7 @@ import com.team05.linkup.domain.user.application.MentorProfileService;
 import com.team05.linkup.domain.user.application.ProfileService;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.dto.ActivityResponseDTO;
+import com.team05.linkup.domain.user.dto.MyMatchingPageDTO;
 import com.team05.linkup.domain.user.dto.ProfilePageDTO;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -82,5 +85,63 @@ public class ProfileController {
         }
 
         return ResponseEntity.ok(ApiResponse.success(builder.build()));
+    }
+
+
+    // 임시로 주석 상태로 유지 - 추후 삭제 예정
+//    @GetMapping("/{nickname}/matching")
+//    public ResponseEntity<ApiResponse<MyMatchingPageDTO>> getMatchingPage(@PathVariable String nickname) {
+//        Optional<User> userOpt = userRepository.findByNickname(nickname);
+//        if (userOpt.isEmpty()) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "사용자를 찾을 수 없습니다."));
+//        }
+//
+//        User user = userOpt.get();
+//
+//        // 🔒 보호 로직: 멘토만 접근 가능
+//        if (!user.getRole().equals(Role.ROLE_MENTOR)) {
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+//                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, "멘토만 매칭 현황을 조회할 수 있습니다."));
+//        }
+//
+//        MyMatchingPageDTO matchingPageData = profileService.getMatchingPageData(user);
+//        return ResponseEntity.ok(ApiResponse.success(matchingPageData));
+//    }
+
+
+    // 멘토 매칭 현황
+    @GetMapping("/{nickname}/matching")
+    public ResponseEntity<ApiResponse<MyMatchingPageDTO>> getMatchingPage(@PathVariable String nickname) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // ✅ 현재 로그인한 사용자의 닉네임
+        String currentUserNickname = authentication.getName(); // nickname이 principal로 설정돼 있어야 함
+        logger.debug("✅ 현재 로그인한 사용자 닉네임: {}", currentUserNickname);
+
+        // ✅ 본인 여부 확인
+        if (!currentUserNickname.equals(nickname)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, "본인의 매칭 정보만 조회할 수 있습니다."));
+        }
+
+        // ✅ 사용자 조회
+        Optional<User> userOpt = userRepository.findByNickname(nickname);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다."));
+        }
+
+        User user = userOpt.get();
+
+        // ✅ 멘토인지 확인
+        if (!user.getRole().equals(Role.ROLE_MENTOR)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "멘토만 매칭 정보를 조회할 수 있습니다."));
+        }
+
+        // ✅ 서비스 로직 위임
+        MyMatchingPageDTO result = profileService.getMatchingPageData(user);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 }
