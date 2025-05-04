@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -24,25 +25,19 @@ public class ProfileService {
     private static final Logger logger = LogManager.getLogger();
     private final SigunguRepository sigunguRepository;
 
+    @Transactional(readOnly = true)
     public ProfilePageDTO getProfile(User user) {
         // Area 객체에서 지역 이름을 가져옵니다
-        String areaName = null;
-        String sigungu = null;
+        String areaName = Optional.ofNullable(user.getArea())
+                .map(Area::getAreaName)
+                .orElse(null);
 
-        if (user.getArea() != null) {
-            Area area = user.getArea();
-            areaName = area.getAreaName();
-
-            // 사용자의 sigunguCode가 있으면 해당 시군구 정보를 가져옵니다
-            if (user.getSigunguCode() != null) {
-                // 람다 표현식 없이 직접 처리
-                Optional<Sigungu> sigunguOpt = sigunguRepository.findByIdAreacodeAndIdSigungucode(
-                    area.getAreacode(), user.getSigunguCode());
-                if (sigunguOpt.isPresent()) {
-                    sigungu = sigunguOpt.get().getSigunguname();
-                }
-            }
-        }
+        // 사용자의 sigunguCode가 있으면 해당 시군구 정보를 가져옵니다
+        String sigungu = Optional.ofNullable(user.getArea())
+                .flatMap(area -> Optional.ofNullable(user.getSigunguCode())
+                        .flatMap(code -> sigunguRepository.findByIdAreacodeAndIdSigungucode(area.getAreacode(), code))
+                        .map(Sigungu::getSigunguname))
+                .orElse(null);
 
         boolean isCurrentUser = isCurrentUser(user);
 
@@ -59,6 +54,7 @@ public class ProfileService {
                 .me(isCurrentUser) // 현재 사용자와 비교해 설정 (예: SecurityContext에서 가져오기)
                 .build();
     }
+
     private static boolean isCurrentUser(User user) {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String currentProviderId = null;
