@@ -121,13 +121,16 @@ public class ProfileController {
 //    }
 
     // 멘토 매칭 현황 -> swagger 테스트용 코드(배포 시 위에 주석으로 되어있는 코드 활성화 후 지금 코드 삭제 예정)
+    // ⭐⭐⭐ 배포 시 이 코드로 적용할 시 인증 우회가 가능하기 때문에 절대 이 코드 사용하면 안됨.
     @GetMapping("/{nickname}/matching")
     public ResponseEntity<ApiResponse<MyMatchingPageDTO>> getMatchingPage(
             @PathVariable String nickname,
-            @AuthenticationPrincipal UserPrincipal userPrincipal // ✅ 기본 인증 방식
+            @AuthenticationPrincipal UserPrincipal userPrincipal // 기본 인증 방식
     ) {
-        // ✅ Swagger 등에서 인증 객체가 null일 때 테스트용 fallback
+        // Swagger 등에서 인증 객체가 null일 때 테스트용 fallback
         if (userPrincipal == null) {
+            // 인증 객체 없이 요청한 경우: Swagger 테스트 중일 수 있음
+            // 닉네임으로 사용자 조회 → 임시 인증 객체 생성
             logger.warn("⚠️ 인증 객체가 null입니다. Swagger 테스트 중일 수 있습니다.");
             Optional<User> fallbackUserOpt = userRepository.findByNickname(nickname);
             if (fallbackUserOpt.isEmpty()) {

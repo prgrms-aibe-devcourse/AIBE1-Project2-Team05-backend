@@ -3,7 +3,8 @@ package com.team05.linkup.domain.user.application;
 import com.team05.linkup.domain.community.dto.CommunityTalentSummaryDTO;
 import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
 import com.team05.linkup.domain.enums.Interest;
-import com.team05.linkup.domain.enums.MentoringStatus;
+import com.team05.linkup.domain.mentoring.domain.MentorStatisticsView;
+import com.team05.linkup.domain.mentoring.infrastructure.MentorStatisticsRepository;
 import com.team05.linkup.domain.mentoring.infrastructure.MentoringRepository;
 import com.team05.linkup.domain.user.dto.InterestCountDTO;
 import com.team05.linkup.domain.user.dto.MentorStatsDTO;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class MentorProfileService {
     private final CommunityRepository communityRepository;
     private final MentoringRepository mentoringRepository; // 🔧 추가
+    private final MentorStatisticsRepository mentorStatisticsRepository;
 
     public List<CommunityTalentSummaryDTO> getCommunityTalents(String nickname, int limit) {
         // Object[]로 반환된 raw 데이터 받아오기 (native query 사용)
@@ -42,16 +44,18 @@ public class MentorProfileService {
                 .collect(Collectors.toList());
     }
 
-    // 🔧 추가: 멘토링 통계 DTO 반환 메서드
+    // (리팩토링된) 멘토링 통계 조회 메서드 (DB View 기반)
     public MentorStatsDTO getMentoringStats(UUID mentorId) {
-        Long totalCount = mentoringRepository.countByMentor_Id(mentorId.toString());
-        Long ongoingCount = mentoringRepository.countByMentor_IdAndStatusIn(
-                mentorId.toString(),
-                List.of(MentoringStatus.IN_PROGRESS)
-        );
+        String mentorUserId = mentorId.toString();
 
-        // ⬇️ interest별 통계 (interest + count)
-        List<Object[]> rawResults = mentoringRepository.countMentoringByInterest(mentorId.toString());
+        // 1. 뷰에서 총 멘토링 수, 진행 중 수, 평균 별점 가져오기
+        MentorStatisticsView statsView = mentorStatisticsRepository.findByMentorUserId(mentorUserId);
+        if (statsView == null) {
+            throw new IllegalArgumentException("멘토링 통계 정보를 찾을 수 없습니다.");
+        }
+
+        // 2. 관심 분야별 멘토링 횟수 (기존 쿼리 그대로 유지)
+        List<Object[]> rawResults = mentoringRepository.countMentoringByInterest(mentorUserId);
         List<InterestCountDTO> interestStats = rawResults.stream()
                 .map(row -> InterestCountDTO.builder()
                         .interest(((Interest) row[0]).name())
@@ -60,12 +64,10 @@ public class MentorProfileService {
                 .collect(Collectors.toList());
 
         return MentorStatsDTO.builder()
-                .totalMentoringCount(totalCount)
-                .ongoingMentoringCount(ongoingCount)
-                .averageRating(0.0) // 리뷰 도입 전까지는 0으로 유지
+                .totalMentoringCount(statsView.getTotalSessions())
+                .ongoingMentoringCount(statsView.getOngoingSessions())
+                .averageRating(statsView.getAverageRating())
                 .mentoringCategories(interestStats)
                 .build();
     }
-
-
 }
