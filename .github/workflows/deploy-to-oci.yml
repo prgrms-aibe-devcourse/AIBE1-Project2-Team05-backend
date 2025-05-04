@@ -84,7 +84,7 @@ jobs:
               -e NAVER_CLIENT_SECRET=${{secrets.NAVER_CLIENT_SECRET}} \
               -e JWT_SECRET=${{secrets.JWT_SECRET}} \
               -e GEMINI_API_KEY=${{secrets.GEMINI_API_KEY}} \
-              ${{ secrets.DOCKER_USERNAME }}/my-repo:latest
+              euegenechoi/my-repo:latest
             echo "새 컨테이너 실행 시도 완료"
             
             # 사용하지 않는 이미지 정리
