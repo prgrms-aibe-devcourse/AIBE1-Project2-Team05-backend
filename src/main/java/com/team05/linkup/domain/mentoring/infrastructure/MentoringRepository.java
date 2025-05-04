@@ -15,4 +15,7 @@ public interface MentoringRepository extends JpaRepository<MentoringSessions, St
 
     @Query("SELECT m FROM MentoringSessions m WHERE m.mentee.id = :menteeId AND m.status = :status")
     List<MentoringSessions> findByMenteeIdAndStatus(@Param("menteeId") String menteeId, @Param("status") MentoringStatus status);
+
+    @Query(value = "SELECT * FROM mentoring_sessions WHERE id = :id", nativeQuery = true)
+    Optional<MentoringSessions> findMentoringSessionById(@org.springframework.data.repository.query.Param("id") String id);
 }

@@ -11,6 +11,7 @@ import lombok.*;
 import java.math.BigDecimal;
 
 @Entity
+@Table(name = "review")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
