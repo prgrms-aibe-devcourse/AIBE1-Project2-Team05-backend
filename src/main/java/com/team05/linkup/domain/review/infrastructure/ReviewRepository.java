@@ -1,14 +1,15 @@
-package com.team05.linkup.domain.mentoring.infrastructure;
+package com.team05.linkup.domain.review.infrastructure;
 
-import com.team05.linkup.domain.mentoring.domain.Review;
+import com.team05.linkup.domain.review.domain.Review;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface ReviewRepository extends JpaRepository<Review, String> {
-
     @Query(value = """
         SELECT 
             u.name AS reviewer_name,
