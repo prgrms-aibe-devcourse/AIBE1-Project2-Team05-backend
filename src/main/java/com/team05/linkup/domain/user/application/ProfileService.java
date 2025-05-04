@@ -2,6 +2,7 @@ package com.team05.linkup.domain.user.application;
 
 import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
+import com.team05.linkup.domain.mentoring.application.OngoingMatchingService;
 import com.team05.linkup.domain.mentoring.dto.ReceivedReviewDTO;
 import com.team05.linkup.domain.mentoring.infrastructure.ReviewRepository;
 import com.team05.linkup.domain.user.domain.Area;
@@ -181,12 +182,14 @@ public class ProfileService {
     }
 
     private final MentorProfileService mentorProfileService;
+    private final OngoingMatchingService ongoingMatchingService;
 
     public MyMatchingPageDTO getMatchingPageData(User mentor) {
         return MyMatchingPageDTO.builder()
                 .reviews(getReviewsForMentor(mentor.getId(), 2))
                 .communityQnAs(getRecentQnAByInterest(mentor.getInterest().name(), 2))
-//                .ongoingMatchings(getOngoingMatchings(mentor.getId()))
+                .ongoingMatchings(
+                        ongoingMatchingService.getOngoingMatchingsForMentor(mentor.getId(), 2))
                 .stats(mentorProfileService.getMentoringStats(UUID.fromString(mentor.getId())))
                 .build();
     }

@@ -5,6 +5,7 @@ import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.domain.community.dto.CommunityTalentSummaryDTO;
 import com.team05.linkup.domain.enums.Role;
+import com.team05.linkup.domain.mentoring.application.OngoingMatchingService;
 import com.team05.linkup.domain.mentoring.dto.MatchedMentorProfileDto;
 import com.team05.linkup.domain.user.application.MenteeProfileService;
 import com.team05.linkup.domain.user.application.MentorProfileService;
@@ -39,6 +40,7 @@ public class ProfileController {
     private final ProfileService profileService;
     private final MentorProfileService mentorProfileService;
     private final MenteeProfileService menteeProfileService;
+    private final OngoingMatchingService ongoingMatchingService;
 
     @GetMapping("/{nickname}")
     @Transactional(readOnly = true)
