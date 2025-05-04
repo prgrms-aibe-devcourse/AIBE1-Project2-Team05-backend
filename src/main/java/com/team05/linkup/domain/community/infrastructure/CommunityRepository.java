@@ -3,6 +3,7 @@ package com.team05.linkup.domain.community.infrastructure;
 import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.domain.CommunityCategory;
 import com.team05.linkup.domain.community.dto.CommunitySummaryResponse;
+import com.team05.linkup.domain.community.infra.CommunityRepositoryCustom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-public interface CommunityRepository extends JpaRepository<Community, String> {
+public interface CommunityRepository extends JpaRepository<Community, String>, CommunityRepositoryCustom {
 
     // 기본 정렬 쿼리 유지
 
@@ -185,6 +186,31 @@ public interface CommunityRepository extends JpaRepository<Community, String> {
     LIMIT :limit
 """, nativeQuery = true)
     List<Object[]> findByMyLikePosts(@Param("user") String user, @Param("limit") int limit);
+
+
+//    QueryDSL 방식으로 변경 (일단 nativeQuery 버전은 주석으로 임시 유지)
+//    // 멘토 마이페이지_매칭 현황 - (인기 QnA 조회 쿼리)
+//    @Query(value = """
+//    SELECT
+//        c.id,
+//        c.updated_at,
+//        c.title,
+//        CASE
+//            WHEN CHAR_LENGTH(c.content) > 55 THEN CONCAT(LEFT(c.content, 55), '...')
+//            ELSE c.content
+//        END AS content
+//    FROM community c
+//    WHERE
+//        c.category = 'QUESTION'
+//        AND c.community_tag_id = :interestTag
+//    ORDER BY c.updated_at DESC
+//    LIMIT :limit
+//""", nativeQuery = true)
+//    List<Object[]> findPopularQnAPostsByInterest(
+//            @Param("interestTag") String interestTag,
+//            @Param("limit") int limit
+//    );
+
 
 
 }
