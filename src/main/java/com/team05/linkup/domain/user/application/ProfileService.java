@@ -3,7 +3,7 @@ package com.team05.linkup.domain.user.application;
 import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
 import com.team05.linkup.domain.mentoring.dto.ReceivedReviewDTO;
-import com.team05.linkup.domain.mentoring.infrastructure.ReviewRepository;
+import com.team05.linkup.domain.review.infrastructure.ReviewRepository;
 import com.team05.linkup.domain.user.domain.Area;
 import com.team05.linkup.domain.user.domain.Sigungu;
 import com.team05.linkup.domain.user.domain.User;
@@ -61,7 +61,7 @@ public class ProfileService {
                 .build();
     }
 
-    private static boolean isCurrentUser(User user, UserPrincipal userPrincipal) {
+    public static boolean isCurrentUser(User user, UserPrincipal userPrincipal) {
         if (userPrincipal == null) {
             return false;
         }

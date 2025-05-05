@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-@Entity
-@Table(name = "review")
+//@Entity
+//@Table(name = "review")
 @Getter
 @NoArgsConstructor
 public class Review extends BaseEntity {
