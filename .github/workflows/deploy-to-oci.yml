@@ -12,6 +12,11 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+    # 🔽 GitHub Packages‧소스 읽기 권한 선언
+    permissions:
+      packages: read     # GitHub Packages(PKG) 다운로드
+      contents: read     # 리포지토리 checkout
+
     steps:
       # 소스코드 체크아웃
       - name: Checkout code
