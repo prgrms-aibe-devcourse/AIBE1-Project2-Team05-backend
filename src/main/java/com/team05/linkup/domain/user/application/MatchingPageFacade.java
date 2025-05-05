@@ -8,6 +8,9 @@ import com.team05.linkup.domain.user.dto.CommunityQnAPostDTO;
 import com.team05.linkup.domain.user.dto.CommunityQnAPostResponseDTO;
 import com.team05.linkup.domain.user.dto.MyMatchingPageDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -65,4 +68,21 @@ public class MatchingPageFacade {
                 .map(String::trim)
                 .collect(Collectors.toList());
     }
+
+    public Page<CommunityQnAPostResponseDTO> getRecentQnAPostsByInterestPaged(String interest, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<CommunityQnAPostDTO> rawResults = communityRepository.findRecentQnAPostsByInterestPaged(interest, pageable);
+
+        return rawResults.map(dto -> CommunityQnAPostResponseDTO.builder()
+                .postId(dto.getPostId())
+                .nickname(dto.getNickname())
+                .profileImageUrl(dto.getProfileImageUrl())
+                .createdAt(dto.getCreatedAt())
+                .title(dto.getTitle())
+                .content(dto.getContent())
+                .tags(parseTags(dto.getTagName()))
+                .commentCount(dto.getCommentCount())
+                .build());
+    }
+
 }

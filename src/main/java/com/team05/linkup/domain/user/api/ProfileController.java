@@ -186,5 +186,29 @@ public class ProfileController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    @GetMapping("/{nickname}/matching/more-details")
+    public ResponseEntity<ApiResponse<?>> getMatchingMoreDetails(
+            @PathVariable String nickname,
+            @RequestParam("type") String type,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        if (!type.equals("interest-qna")) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "유효하지 않은 type 파라미터입니다."));
+        }
+
+        // 닉네임으로 관심 태그 조회
+        String interest = String.valueOf(userRepository.findInterestByNickname(nickname));
+        if (interest == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "관심 태그 정보를 찾을 수 없습니다."));
+        }
+
+        Page<CommunityQnAPostResponseDTO> result = matchingPageFacade.getRecentQnAPostsByInterestPaged(interest, page, size);
+
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
 
 }
