@@ -26,7 +26,12 @@ public enum ResponseCode {
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 댓글을 찾을 수 없습니다."),
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 카테고리를 찾을 수 없습니다."),
     NO_EDIT_PERMISSION(HttpStatus.FORBIDDEN, "수정 권한이 없습니다."),
-    NO_DELETE_PERMISSION(HttpStatus.FORBIDDEN, "삭제 권한이 없습니다.");
+    NO_DELETE_PERMISSION(HttpStatus.FORBIDDEN, "삭제 권한이 없습니다."),
+
+    // 리뷰 관련 오류
+    CONFLICT(HttpStatus.CONFLICT, "이미 존재하는 리소스입니다."),
+    INVALID_MENTORING_SESSION(HttpStatus.BAD_REQUEST, "유효하지 않은 멘토링 세션입니다.");
+
 
     // 추가적인 도메인별 에러 코드 정의 가능
 

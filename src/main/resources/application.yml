@@ -1,5 +1,5 @@
 server:
-  port: 8080 # 충돌 문제 시 수정
+  port: ${PORT:8080} # 충돌 문제 시 수정
 spring:
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
@@ -7,7 +7,7 @@ spring:
       maximum-pool-size: 10 # 최대 커넥션 수
       minimum-idle: 5 # 최소 유휴 커넥션 수
   profiles:
-    active: dev
+    active: ${SPRING_PROFILES_ACTIVE}
   springdoc:
     swagger-ui:
       path: /swagger-ui.html
