@@ -84,5 +84,4 @@ public class MatchingPageFacade {
                 .commentCount(dto.getCommentCount())
                 .build());
     }
-
 }

@@ -7,6 +7,8 @@ import com.team05.linkup.domain.community.dto.CommunityTalentSummaryDTO;
 import com.team05.linkup.domain.enums.Role;
 import com.team05.linkup.domain.mentoring.application.OngoingMatchingService;
 import com.team05.linkup.domain.mentoring.dto.MatchedMentorProfileDto;
+import com.team05.linkup.domain.review.application.ReviewService;
+import com.team05.linkup.domain.review.dto.ReceivedReviewDTO;
 import com.team05.linkup.domain.user.application.*;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.dto.*;
@@ -186,6 +188,10 @@ public class ProfileController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    // 리뷰 서비스 주입
+    private final ReviewService reviewService;
+
+    // 매칭 현황 - 더보기 API
     @GetMapping("/{nickname}/matching/more-details")
     public ResponseEntity<ApiResponse<?>> getMatchingMoreDetails(
             @PathVariable String nickname,
@@ -193,22 +199,48 @@ public class ProfileController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size
     ) {
-        if (!type.equals("interest-qna")) {
+        // ✅ 유효하지 않은 타입 방지
+        if (!type.equals("interest-qna") && !type.equals("received-reviews")) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "유효하지 않은 type 파라미터입니다."));
         }
 
-        // 닉네임으로 관심 태그 조회
-        String interest = String.valueOf(userRepository.findInterestByNickname(nickname));
-        if (interest == null) {
+        // ✅ 사용자 검증
+        Optional<User> userOpt = userRepository.findByNickname(nickname);
+        if (userOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "관심 태그 정보를 찾을 수 없습니다."));
+                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "사용자를 찾을 수 없습니다."));
         }
 
-        Page<CommunityQnAPostResponseDTO> result = matchingPageFacade.getRecentQnAPostsByInterestPaged(interest, page, size);
+        User user = userOpt.get();
 
-        return ResponseEntity.ok(ApiResponse.success(result));
+        // ✅ 타입 분기 처리
+        switch (type) {
+            case "interest-qna" -> {
+                String interest = String.valueOf(userRepository.findInterestByNickname(nickname));
+                if (interest == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "관심 태그 정보를 찾을 수 없습니다."));
+                }
+
+                Page<CommunityQnAPostResponseDTO> result =
+                        matchingPageFacade.getRecentQnAPostsByInterestPaged(interest, page, size);
+                return ResponseEntity.ok(ApiResponse.success(result));
+            }
+
+            case "received-reviews" -> {
+                Page<ReceivedReviewDTO> result =
+                        reviewService.getReceivedReviewsPaged(user.getId(), page, size);
+                return ResponseEntity.ok(ApiResponse.success(result));
+            }
+
+            default -> {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "지원하지 않는 type입니다."));
+            }
+        }
     }
+
 
 }
