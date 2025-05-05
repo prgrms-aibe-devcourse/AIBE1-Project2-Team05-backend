@@ -1,6 +1,8 @@
-package com.team05.linkup.domain.community.infra;
+package com.team05.linkup.domain.community.infrastructure;
 
 import com.team05.linkup.domain.user.dto.CommunityQnAPostDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -14,4 +16,6 @@ public interface CommunityRepositoryCustom {
      * @return 게시글 요약 DTO 목록
      */
     List<CommunityQnAPostDTO> findRecentQnAPostsByInterest(String interest, int limit);
+
+    Page<CommunityQnAPostDTO> findRecentQnAPostsByInterestPaged(String interest, Pageable pageable);
 }
