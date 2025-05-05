@@ -37,6 +37,8 @@ public class QCommunity extends EntityPathBase<Community> {
 
     public final StringPath id = createString("id");
 
+    public final ListPath<Image, QImage> images = this.<Image, QImage>createList("images", Image.class, QImage.class, PathInits.DIRECT2);
+
     public final NumberPath<Long> likeCount = createNumber("likeCount", Long.class);
 
     public final StringPath title = createString("title");
