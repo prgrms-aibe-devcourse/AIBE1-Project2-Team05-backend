@@ -7,6 +7,7 @@ import com.team05.linkup.domain.community.dto.CommunityTalentSummaryDTO;
 import com.team05.linkup.domain.enums.Role;
 import com.team05.linkup.domain.mentoring.application.OngoingMatchingService;
 import com.team05.linkup.domain.mentoring.dto.MatchedMentorProfileDto;
+import com.team05.linkup.domain.mentoring.dto.OngoingMatchingDTO;
 import com.team05.linkup.domain.review.application.ReviewService;
 import com.team05.linkup.domain.review.dto.ReceivedReviewDTO;
 import com.team05.linkup.domain.user.application.*;
@@ -17,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -199,14 +202,14 @@ public class ProfileController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size
     ) {
-        // ✅ 유효하지 않은 타입 방지
-        if (!type.equals("interest-qna") && !type.equals("received-reviews")) {
+        // ✅ 유효한 타입인지 확인
+        if (!List.of("interest-qna", "received-reviews", "ongoing").contains(type)) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "유효하지 않은 type 파라미터입니다."));
         }
 
-        // ✅ 사용자 검증
+        // ✅ 사용자 조회
         Optional<User> userOpt = userRepository.findByNickname(nickname);
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -214,33 +217,35 @@ public class ProfileController {
         }
 
         User user = userOpt.get();
+        Pageable pageable = PageRequest.of(page, size);
 
-        // ✅ 타입 분기 처리
-        switch (type) {
+        return switch (type) {
             case "interest-qna" -> {
                 String interest = String.valueOf(userRepository.findInterestByNickname(nickname));
                 if (interest == null) {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    yield ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "관심 태그 정보를 찾을 수 없습니다."));
                 }
 
                 Page<CommunityQnAPostResponseDTO> result =
                         matchingPageFacade.getRecentQnAPostsByInterestPaged(interest, page, size);
-                return ResponseEntity.ok(ApiResponse.success(result));
+                yield ResponseEntity.ok(ApiResponse.success(result));
             }
 
             case "received-reviews" -> {
                 Page<ReceivedReviewDTO> result =
                         reviewService.getReceivedReviewsPaged(user.getId(), page, size);
-                return ResponseEntity.ok(ApiResponse.success(result));
+                yield ResponseEntity.ok(ApiResponse.success(result));
             }
 
-            default -> {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "지원하지 않는 type입니다."));
+            case "ongoing" -> {
+                Page<OngoingMatchingDTO> result =
+                        matchingPageFacade.getOngoingMatchingsPaged(user.getId(), pageable);
+                yield ResponseEntity.ok(ApiResponse.success(result));
             }
-        }
+
+            default -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "지원하지 않는 type입니다."));
+        };
     }
-
-
 }
