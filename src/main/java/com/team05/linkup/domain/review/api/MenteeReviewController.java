@@ -136,4 +136,22 @@ public class MenteeReviewController {
                     .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, ex.getMessage()));
         }
     }
+
+    @GetMapping("/review/list/{nickname}")
+    public ResponseEntity<ApiResponse<List<ReviewResponseDTO>>> getReviewHistory(@AuthenticationPrincipal UserPrincipal userPrincipal, @PathVariable String nickname) {
+        Optional<User> userOpt = userRepository.findByProviderAndProviderId(
+                userPrincipal.provider(), userPrincipal.providerId());
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다."));
+
+        try {
+            List<ReviewResponseDTO> reviews = reviewService.getReviewHistory(userOpt.get(), userPrincipal);
+            return ResponseEntity.ok(ApiResponse.success(reviews));
+        } catch (IllegalArgumentException e) {
+            // 리뷰 조회 권환이 업을 때
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, e.getMessage()));
+        }
+    }
 }

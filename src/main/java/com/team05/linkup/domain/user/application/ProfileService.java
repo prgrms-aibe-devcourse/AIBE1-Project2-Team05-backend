@@ -61,7 +61,7 @@ public class ProfileService {
                 .build();
     }
 
-    private static boolean isCurrentUser(User user, UserPrincipal userPrincipal) {
+    public static boolean isCurrentUser(User user, UserPrincipal userPrincipal) {
         if (userPrincipal == null) {
             return false;
         }

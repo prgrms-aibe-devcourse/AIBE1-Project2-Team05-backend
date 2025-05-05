@@ -1,5 +1,6 @@
 package com.team05.linkup.domain.review.application;
 
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.enums.MentoringStatus;
 import com.team05.linkup.domain.mentoring.domain.MentoringSessions;
 import com.team05.linkup.domain.mentoring.infrastructure.MentoringRepository;
@@ -8,6 +9,7 @@ import com.team05.linkup.domain.review.dto.MyCompletedMentoringDTO;
 import com.team05.linkup.domain.review.dto.ReviewRequestDTO;
 import com.team05.linkup.domain.review.dto.ReviewResponseDTO;
 import com.team05.linkup.domain.review.infrastructure.ReviewRepository;
+import com.team05.linkup.domain.user.application.ProfileService;
 import com.team05.linkup.domain.user.domain.User;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -16,6 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 import jakarta.validation.Validator;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +32,7 @@ public class ReviewService {
     private static final Logger logger = LogManager.getLogger();
     private final MentoringRepository mentoringRepository;
     private final ReviewRepository reviewRepository;
+    private final ProfileService profileService;
     private final Validator validator;
 
     public List<MyCompletedMentoringDTO> getCompletedMentoringSessions(User user) {
@@ -159,5 +163,32 @@ public class ReviewService {
 
         // 4. 리뷰 삭제
         reviewRepository.delete(review);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReviewResponseDTO> getReviewHistory(User user, UserPrincipal userPrincipal) {
+        // 1. 현재 사용자가 요청한 사용자와 동일한지 확인
+        if (!profileService.isCurrentUser(user, userPrincipal)) {
+            throw new IllegalStateException("리뷰 조회 권한이 없습니다.");
+        }
+
+        // 2. 사용자의 ID로 멘토링 세션 조회 (멘토, 멘티 정보 함께 로딩)
+        List<MentoringSessions> sessions = mentoringRepository.findByMenteeIdWithMentorAndMentee(user.getId());
+
+        // 3. 멘토링 세션 ID를 기준으로 리뷰 조회
+        List<Review> reviews = reviewRepository.findByMentoringSessionIdIn(
+                sessions.stream().map(MentoringSessions::getId).collect(Collectors.toList())
+        );
+
+        // 4. 리뷰 엔티티를 DTO로 변환
+        return reviews.stream()
+                .map(review -> ReviewResponseDTO.builder()
+                        .mentoringSessionId(review.getMentoringSessionId())
+                        .title(review.getTitle())
+                        .content(review.getContent())
+                        .star(review.getStar())
+                        .interest(review.getInterest())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
