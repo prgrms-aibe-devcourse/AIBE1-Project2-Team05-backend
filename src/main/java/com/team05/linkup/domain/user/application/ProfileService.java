@@ -2,9 +2,6 @@ package com.team05.linkup.domain.user.application;
 
 import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
-import com.team05.linkup.domain.mentoring.application.OngoingMatchingService;
-import com.team05.linkup.domain.mentoring.dto.ReceivedReviewDTO;
-import com.team05.linkup.domain.review.infrastructure.ReviewRepository;
 import com.team05.linkup.domain.user.domain.Area;
 import com.team05.linkup.domain.user.domain.Sigungu;
 import com.team05.linkup.domain.user.domain.User;
@@ -19,9 +16,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -225,62 +223,6 @@ public class ProfileService {
                 .build();
     }
 
-    private final MentorProfileService mentorProfileService;
-    private final OngoingMatchingService ongoingMatchingService;
-
-    public MyMatchingPageDTO getMatchingPageData(User mentor) {
-        return MyMatchingPageDTO.builder()
-                .reviews(getReviewsForMentor(mentor.getId(), 2))
-                .communityQnAs(getRecentQnAByInterest(mentor.getInterest().name(), 2))
-                .ongoingMatchings(
-                        ongoingMatchingService.getOngoingMatchingsForMentor(mentor.getId(), 2))
-                .stats(mentorProfileService.getMentoringStats(UUID.fromString(mentor.getId())))
-                .build();
-    }
-
-    private final ReviewRepository reviewRepository;
-
-    // 받은 리뷰 조회 메서드 (멘토만 대상)
-    public List<ReceivedReviewDTO> getReviewsForMentor(String mentorId, int limit) {
-        // 쿼리 결과 받아오기
-        List<Object[]> rawResults = reviewRepository.findReceivedReviewsByMentorId(mentorId, limit);
-
-        // DTO로 매핑
-        return rawResults.stream()
-                .map(obj -> ReceivedReviewDTO.builder()
-                        .reviewerName((String) obj[0])  // 리뷰 작성자 이름
-                        .reviewerProfileImageUrl((String) obj[1])   //  리뷰 작성자 프로필 사진
-                        .reviewDate(((Timestamp) obj[2]).toLocalDateTime().toLocalDate().toString())
-                        .star(BigDecimal.valueOf(((Number) obj[3]).doubleValue()))  // 별점
-                        .content((String) obj[4])   // 리뷰 내용
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    // 최근 QnA 조회 (QueryDSL 결과 → 후처리)
-    public List<CommunityQnAPostResponseDTO> getRecentQnAByInterest(String interest, int limit) {
-        List<CommunityQnAPostDTO> rawResults = communityRepository.findRecentQnAPostsByInterest(interest, limit);
-
-        return rawResults.stream()
-                .map(dto -> CommunityQnAPostResponseDTO.builder()
-                        .postId(dto.getPostId())
-                        .nickname(dto.getNickname())
-                        .profileImageUrl(dto.getProfileImageUrl())
-                        .createdAt(dto.getCreatedAt())
-                        .title(dto.getTitle())
-                        .content(dto.getContent())
-                        .tags(parseTags(dto.getTagName()))   // 후처리
-                        .commentCount(dto.getCommentCount())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    // 태그 문자열 → List<String> 변환
-    private List<String> parseTags(String tagString) {
-        if (tagString == null || tagString.isBlank()) return List.of();
-        return Arrays.stream(tagString.split(","))
-                .map(String::trim)
-                .toList();
-    }
+    // 매칭 현황 관련 로직 -> MatchingPageFacade로 이전
 
 }

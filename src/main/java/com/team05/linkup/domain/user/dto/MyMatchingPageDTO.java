@@ -1,7 +1,7 @@
 package com.team05.linkup.domain.user.dto;
 
 import com.team05.linkup.domain.mentoring.dto.OngoingMatchingDTO;
-import com.team05.linkup.domain.mentoring.dto.ReceivedReviewDTO;
+import com.team05.linkup.domain.review.dto.ReceivedReviewDTO;
 import lombok.Builder;
 import lombok.Getter;
 

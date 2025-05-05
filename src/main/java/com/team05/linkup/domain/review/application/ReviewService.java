@@ -6,6 +6,7 @@ import com.team05.linkup.domain.mentoring.domain.MentoringSessions;
 import com.team05.linkup.domain.mentoring.infrastructure.MentoringRepository;
 import com.team05.linkup.domain.review.domain.Review;
 import com.team05.linkup.domain.review.dto.MyCompletedMentoringDTO;
+import com.team05.linkup.domain.review.dto.ReceivedReviewDTO;
 import com.team05.linkup.domain.review.dto.ReviewRequestDTO;
 import com.team05.linkup.domain.review.dto.ReviewResponseDTO;
 import com.team05.linkup.domain.review.infrastructure.ReviewRepository;
@@ -20,6 +21,8 @@ import org.springframework.stereotype.Service;
 import jakarta.validation.Validator;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -191,4 +194,23 @@ public class ReviewService {
                         .build())
                 .collect(Collectors.toList());
     }
+
+
+    // 받은 리뷰 조회 메서드 (멘토만 대상)
+    public List<ReceivedReviewDTO> getReviewsForMentor(String mentorId, int limit) {
+        // 쿼리 결과 받아오기
+        List<Object[]> rawResults = reviewRepository.findReceivedReviewsByMentorId(mentorId, limit);
+
+        // DTO로 매핑
+        return rawResults.stream()
+                .map(obj -> ReceivedReviewDTO.builder()
+                        .reviewerName((String) obj[0])  // 리뷰 작성자 이름
+                        .reviewerProfileImageUrl((String) obj[1])   //  리뷰 작성자 프로필 사진
+                        .reviewDate(((Timestamp) obj[2]).toLocalDateTime().toLocalDate().toString())
+                        .star(BigDecimal.valueOf(((Number) obj[3]).doubleValue()))  // 별점
+                        .content((String) obj[4])   // 리뷰 내용
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 }

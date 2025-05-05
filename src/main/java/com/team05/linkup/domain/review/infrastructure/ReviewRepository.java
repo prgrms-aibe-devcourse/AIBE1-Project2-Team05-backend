@@ -12,7 +12,7 @@ import java.util.List;
 public interface ReviewRepository extends JpaRepository<Review, String> {
     @Query(value = """
         SELECT 
-            u.name AS reviewer_name,
+            u.nickname AS reviewer_name,
             u.profile_image_url AS reviewer_profile_image_url,
             r.created_at AS review_date,
             r.star AS star,
