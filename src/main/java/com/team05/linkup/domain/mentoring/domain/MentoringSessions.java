@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
+@Table(name = "mentoring_sessions")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)

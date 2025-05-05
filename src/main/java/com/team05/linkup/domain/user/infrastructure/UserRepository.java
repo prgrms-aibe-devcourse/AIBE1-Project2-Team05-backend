@@ -56,4 +56,9 @@ public interface UserRepository extends JpaRepository<User, String> {
                                                     @Param("providerId") String providerId,
                                                     @Param("interest") Interest interest);
 
+
+    @Query("SELECT u.interest FROM User u WHERE u.nickname = :nickname")
+    Interest findInterestByNickname(@Param("nickname") String nickname);
+
+
 }
