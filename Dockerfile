@@ -2,6 +2,12 @@
 FROM gradle:7.6.2-jdk17-alpine AS build
 WORKDIR /app
 
+# 환경 변수 설정
+ARG SUPABASE_GPR_USER
+ARG SUPABASE_GPR_TOKEN
+ENV SUPABASE_GPR_USER=$SUPABASE_GPR_USER
+ENV SUPABASE_GPR_TOKEN=$SUPABASE_GPR_TOKEN
+
 # 의존성 캐시 활용
 COPY build.gradle settings.gradle ./
 COPY gradle ./gradle

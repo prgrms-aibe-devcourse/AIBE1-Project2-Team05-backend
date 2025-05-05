@@ -57,6 +57,9 @@ jobs:
           tags: ${{ env.DOCKER_REPO }}:${{ github.sha }},${{ env.DOCKER_REPO }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            SUPABASE_GPR_USER=${{ secrets.SUPABASE_GPR_USER }}
+            SUPABASE_GPR_TOKEN=${{ secrets.SUPABASE_GPR_TOKEN }}
 
       # 서버에 SSH로 접속하여 컨테이너 업데이트
       - name: Deploy to server
