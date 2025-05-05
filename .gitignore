@@ -41,3 +41,6 @@ out/
 
 ### sample.sql
 sampledata.sql
+
+### Supabase Token ###
+gradle.properties

@@ -2,6 +2,7 @@ package com.team05.linkup.domain.community.api;
 
 import com.team05.linkup.common.dto.ApiResponse;
 import com.team05.linkup.common.dto.UserPrincipal;
+import com.team05.linkup.domain.community.application.CommunityImageService;
 import com.team05.linkup.domain.community.application.CommunityService;
 import com.team05.linkup.domain.community.domain.CommunityCategory;
 import com.team05.linkup.domain.community.dto.CommunityDto;
@@ -13,9 +14,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -30,6 +33,8 @@ import java.util.List;
 @Tag(name = "커뮤니티 API", description = "커뮤니티 관련 API")
 public class CommunityController {
     private final CommunityService communityService;
+    private final CommunityImageService communityImageService;
+
     // private final CommentService commentService; // 댓글 관련 기능 필요 시 주입
 
     /**
@@ -128,4 +133,18 @@ public class CommunityController {
         communityService.deleteCommunity(userId, communityId);
         return ApiResponse.success();
     }
+
+    @PostMapping("/{postId}/images")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<List<String>> uploadImages(
+            @PathVariable String postId,
+            @RequestPart List<MultipartFile> images,
+            @AuthenticationPrincipal String userId) {
+
+        List<String> objectPaths = communityImageService.uploadImages(userId, images);
+        communityService.attachImages(postId, objectPaths);
+
+        return ApiResponse.success(objectPaths);
+    }
+
 }

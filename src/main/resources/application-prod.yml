@@ -65,3 +65,9 @@ jwt:
 api:
   Key:
     gemini: ${GEMINI_API_KEY}
+
+  # 이미지 스토리지
+supabase:
+  url: ${SUPABASE_URL}
+  service-key: ${SUPABASE_KEY}
+  bucket: community-images

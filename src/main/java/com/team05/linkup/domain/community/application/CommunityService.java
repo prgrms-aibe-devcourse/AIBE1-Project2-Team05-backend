@@ -3,11 +3,13 @@ package com.team05.linkup.domain.community.application;
 import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.domain.CommunityCategory;
+import com.team05.linkup.domain.community.domain.Image;
 import com.team05.linkup.domain.community.dto.CommunityCreatedEventDTO;
 import com.team05.linkup.domain.community.dto.CommunityDto;
 import com.team05.linkup.domain.community.dto.CommunitySummaryResponse;
 import com.team05.linkup.domain.community.infrastructure.CommentRepository;
 import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
+import com.team05.linkup.domain.community.infrastructure.ImageRepository;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -33,11 +35,13 @@ import java.util.List;
 public class CommunityService {
 
     private final CommunityRepository communityRepository;
+    private final ImageRepository imageRepository;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     // private final LikeRepository likeRepository;
     // private final BookmarkRepository bookmarkRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final CommunityImageService communityImageService;
 
     private CommunityCategory parseCategory(String raw) {
         try {
@@ -116,6 +120,12 @@ public class CommunityService {
         // boolean isLiked = likeRepository.existsByUserIdAndCommunityId(userId, communityId);
         // boolean isBookmarked = bookmarkRepository.existsByUserIdAndCommunityId(userId, communityId);
 
+        /* 이미지 objectPath 가져온 뒤 → 60초짜리 서명 URL 변환 */
+        List<String> imageUrls = imageRepository.findByCommunityId(communityId).stream()
+                .map(Image::getImageUrl)
+                .map(p -> communityImageService.getSignedUrl(p, 60))
+                .toList();
+
         return CommunityDto.DetailResponse.builder()
                 .id(community.getId())
                 .userId(community.getUser().getId())
@@ -130,6 +140,7 @@ public class CommunityService {
                 .commentCount(commentCount)
                 // .isLiked(isLiked)
                 // .isBookmarked(isBookmarked)
+                .imageUrls(imageUrls)
                 .createdAt(community.getCreatedAt())
                 .updatedAt(community.getUpdatedAt())
                 .build();
@@ -217,4 +228,23 @@ public class CommunityService {
                 .updatedAt(community.getUpdatedAt())
                 .build();
     }
+
+    /* 이미지 첨부 – objectPath 리스트를 저장                            */
+    @Transactional
+    public void attachImages(String postId, List<String> objectPaths) {
+
+        Community community = communityRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
+
+        /* 🟢 Image 엔티티로 변환 → 일괄 저장 */
+        List<Image> images = objectPaths.stream()
+                .map(path -> Image.builder()
+                        .community(community)
+                        .imageUrl(path)      // Supabase object path 그대로
+                        .build())
+                .toList();
+
+        imageRepository.saveAll(images);
+    }
+
 }
