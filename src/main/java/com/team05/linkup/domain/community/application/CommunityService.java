@@ -14,21 +14,26 @@ import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 커뮤니티 게시글 관련 비즈니스 로직을 처리하는 애플리케이션 서비스 클래스입니다.
  * 주로 조회(read) 작업을 수행하며, 클래스 레벨에 @Transactional(readOnly = true)이 적용되어 있습니다.
  * {@link CommunityRepository}를 사용하여 데이터베이스와 상호작용합니다.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -204,29 +209,83 @@ public class CommunityService {
         communityRepository.delete(community);
     }
 
-    // 게시글 검색 상세
-    public CommunityDto.DetailResponse searchCommunityDetail(CommunityDto.SearchDetailRequest request) {
-        Community community = communityRepository.findById(request.getId())
-                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
+    /**
+     * 게시글 상세 검색 - ID로 특정 게시글을 조회하거나 다양한 조건으로 게시글을 검색합니다.
+     * ID가 제공된 경우 해당 게시글을 조회하고, 그렇지 않은 경우 고급 검색을 수행합니다.
+     *
+     * @param request 검색 조건 (ID 또는 다양한 검색 조건)
+     * @param pageable 페이징 정보 (고급 검색 시에만 사용)
+     * @return ID 검색 시 특정 게시글 상세 정보, 고급 검색 시 게시글 목록
+     */
+    @Transactional(readOnly = true)
+    public Object searchCommunityDetail(CommunityDto.SearchDetailRequest request, Pageable pageable) {
+        // ID가 제공된 경우: 특정 게시글 상세 조회
+        if (StringUtils.hasText(request.getId())) {
+            Community community = communityRepository.findById(request.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
 
-        // long likeCount = likeRepository.countByCommunityId(request.getId());
-        int commentCount = commentRepository.countByCommunityId(request.getId());
+            int commentCount = commentRepository.countByCommunityId(request.getId());
 
-        return CommunityDto.DetailResponse.builder()
-                .id(community.getId())
-                .userId(community.getUser().getId())
-                .nickname(community.getUser().getNickname())
-                .profileImageUrl(community.getUser().getProfileImageUrl())
-                .title(community.getTitle())
-                .category(community.getCategory().name())
-                .communityTag(community.getCommunityTag())
-                .content(community.getContent())
-                .viewCount(community.getViewCount().intValue())
-                // .likeCount((int) likeCount)
-                .commentCount(commentCount)
-                .createdAt(community.getCreatedAt())
-                .updatedAt(community.getUpdatedAt())
-                .build();
+            return CommunityDto.DetailResponse.builder()
+                    .id(community.getId())
+                    .userId(community.getUser().getId())
+                    .nickname(community.getUser().getNickname())
+                    .profileImageUrl(community.getUser().getProfileImageUrl())
+                    .title(community.getTitle())
+                    .category(community.getCategory().name())
+                    .communityTag(community.getCommunityTag())
+                    .content(community.getContent())
+                    .viewCount(community.getViewCount().intValue())
+                    .likeCount(community.getLikeCount() != null ? community.getLikeCount().intValue() : 0)
+                    .commentCount(commentCount)
+                    .createdAt(community.getCreatedAt())
+                    .updatedAt(community.getUpdatedAt())
+                    .build();
+        }
+        // 그 외의 경우: 고급 검색 수행
+        else {
+            // 카테고리 변환 (문자열 -> Enum)
+            CommunityCategory category = null;
+            if (StringUtils.hasText(request.getCategory())) {
+                try {
+                    category = CommunityCategory.valueOf(request.getCategory().toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    log.warn("Invalid category: {}", request.getCategory());
+                    // 잘못된 카테고리인 경우 무시
+                }
+            }
+
+            // 고급 검색 실행
+            Page<Community> communities = communityRepository.advancedSearch(
+                    request.getKeyword(),
+                    request.getNickname(),
+                    category,
+                    request.getUserRole(),
+                    request.getTag(),
+                    pageable
+            );
+
+            // 응답 DTO 변환
+            List<CommunitySummaryResponse> responseList = communities.getContent().stream()
+                    .map(community -> {
+                        // 댓글 수 조회
+                        int commentCount = commentRepository.countByCommunityId(community.getId());
+
+                        return new CommunitySummaryResponse(
+                                community.getId(),
+                                community.getUser().getNickname(),
+                                community.getTitle(),
+                                community.getCategory(),
+                                community.getCreatedAt(),
+                                community.getViewCount(),
+                                community.getLikeCount(),
+                                Long.valueOf(commentCount)
+                        );
+                    })
+                    .collect(Collectors.toList());
+
+            return new PageImpl<>(responseList, pageable, communities.getTotalElements());
+        }
     }
 
     /* 이미지 첨부 – objectPath 리스트를 저장                            */
@@ -246,5 +305,4 @@ public class CommunityService {
 
         imageRepository.saveAll(images);
     }
-
 }
