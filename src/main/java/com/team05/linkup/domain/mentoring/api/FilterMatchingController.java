@@ -4,6 +4,9 @@ import com.team05.linkup.common.dto.ApiResponse;
 import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.domain.mentoring.application.FilterMatchingService;
+import com.team05.linkup.domain.mentoring.dto.MentorCardDTO;
+import com.team05.linkup.domain.mentoring.dto.MentorFilterDTO;
+import com.team05.linkup.domain.mentoring.dto.MentorProfileDTO;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -41,6 +45,38 @@ public class FilterMatchingController {
         } catch (Exception ex) {
             logger.error("매칭 생성 중 알 수 없는 오류 발생: {}", ex.getMessage());
             return ResponseEntity.ok(ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."));
+        }
+    }
+
+    @GetMapping("/{nickname}")
+    @PreAuthorize("hasAuthority('ROLE_MENTEE')")
+    public ResponseEntity<ApiResponse<MentorProfileDTO>> getMentorProfile(@PathVariable String nickname) {
+        Optional<User> userOpt = userRepository.findUserWithAreaByNickname(nickname);
+        if (userOpt.isEmpty())
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "멘토 프로필을 찾을 수 없습니다."));
+
+        try {
+            MentorProfileDTO mentorProfile = filterMatchingService.getMentor(userOpt.get());
+            return ResponseEntity.ok(ApiResponse.success(mentorProfile));
+        } catch (IllegalArgumentException ex) {
+            // 잘못된 요청 처리
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, ex.getMessage()));
+        } catch (Exception ex) {
+            logger.error("멘토 프로필 조회 중 알 수 없는 오류 발생: {}", ex.getMessage());
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."));
+        }
+    }
+
+    @PostMapping("/list")
+    @PreAuthorize("hasAuthority('ROLE_MENTEE')")
+    public ResponseEntity<ApiResponse<List<MentorCardDTO>>> filterMentors(@RequestBody MentorFilterDTO mentorFilterDTO) {
+        try {
+            List<MentorCardDTO> mentors = filterMatchingService.filterMentors(mentorFilterDTO);
+            return ResponseEntity.ok(ApiResponse.success(mentors));
+        } catch (Exception ex) {
+            logger.error("멘토 필터링 중 오류 발생: {}", ex.getMessage());
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR,
+                    "멘토 목록을 가져오는 중 오류가 발생했습니다."));
         }
     }
 }
