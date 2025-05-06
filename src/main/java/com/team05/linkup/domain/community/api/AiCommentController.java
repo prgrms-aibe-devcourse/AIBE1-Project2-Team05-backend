@@ -26,13 +26,16 @@ public class AiCommentController {
     @GetMapping("/ai/{communityId}")
     @Operation(summary = "제미니 답변", description = "이벤트 리스너로 등록된 답변")
     public ResponseEntity<ApiResponse<AiCommentResponseDTO>> AiViewController(@AuthenticationPrincipal UserPrincipal userPrincipal,
-                                                                              @PathVariable String communityId) throws Exception {
-
-        if (userPrincipal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
+                                                                              @PathVariable String communityId) {
+     try {
+            if (userPrincipal == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
+            }
+            AiCommentResponseDTO data = aiCommentService.getAiComment(communityId);
+            return ResponseEntity.ok(ApiResponse.success(data));
+        } catch (Exception e) {
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR));
         }
-        AiCommentResponseDTO data = aiCommentService.getAiComment(communityId);
-        return ResponseEntity.ok(ApiResponse.success(data));
     }
 }

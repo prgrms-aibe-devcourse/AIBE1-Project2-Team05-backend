@@ -1,5 +1,6 @@
 package com.team05.linkup.domain.mentoring.application;
 
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.common.exception.DuplicateMentoringMatchException;
 import com.team05.linkup.common.exception.UserNotfoundException;
 import com.team05.linkup.domain.enums.MentoringStatus;
@@ -22,8 +23,10 @@ public class AiMatchingSelectorServiceImpl implements MatchingService {
     private final CustomUserRepositoryImpl customUserRepositoryImpl;
 
     @Override
-    public void matchingMentor(String provider, String providerId, String nickname) throws Exception {
+    public void matchingMentor(UserPrincipal userPrincipal, String nickname) throws Exception {
         try {
+            String provider = userPrincipal.provider();
+            String providerId = userPrincipal.providerId();
             User mentee = userRepository.findByProviderAndProviderId(provider, providerId)
                     .orElseThrow(() -> new UserNotfoundException("Mentee not found"));
 

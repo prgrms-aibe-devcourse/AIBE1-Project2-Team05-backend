@@ -1,5 +1,6 @@
 package com.team05.linkup.domain.mentoring.application;
 
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.common.exception.UserNotfoundException;
 import com.team05.linkup.common.util.ApiUtils;
 import com.team05.linkup.domain.enums.Interest;
@@ -23,17 +24,16 @@ import java.util.stream.Collectors;
 public class AiMatchingListServiceImpl implements AiMatchingService {
     private static final Logger logger = LogManager.getLogger();
     private final UserRepository userRepository;
-//    private final CustomUserRepositoryImpl customUserRepositoryImpl;
     private final ApiUtils apiUtils;
     private final RecommendationLogic recommendationLogic;
 
     @Override
-    public AiMatchingResponseDTO matchMentor(String provider, String providerId) {
+    public AiMatchingResponseDTO matchMentor(UserPrincipal userPrincipal){
         try {
+            String provider = userPrincipal.provider();
+            String providerId = userPrincipal.providerId();
             ProfileTagInterestDTO result = userRepository.findProfileTagAndInterestByProviderAndProviderId(provider,providerId);
-//            if (result[0] == null || result[1] == null ) {
-//                throw new UserNotfoundException("User profile data not found");
-//            }
+//
             logger.debug(result);
 
             String myProfileTag = result.profileTag();
