@@ -275,7 +275,7 @@ public class ProfileService {
     }
 
 
-
+    @Transactional(readOnly = true)
     public ProfileSettingsResponseDTO getProfileSettings(String nickname, UserPrincipal principal) {
         // 🔐 본인만 조회 가능
         validateAccess(nickname, principal);
