@@ -26,6 +26,6 @@ public class MatchedMentorProfileDto {
         private String interest;
         private String activityTime;
         private String activityType;
-
+        private String contactLink;
     }
 }

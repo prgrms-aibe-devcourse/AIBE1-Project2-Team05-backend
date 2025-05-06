@@ -33,7 +33,9 @@ public class MenteeProfileService {
                                 .interest(session.getMentor().getInterest().getDisplayName())
                                 .activityTime(session.getMentor().getActivityTime().getDisplayName())
                                 .activityType(session.getMentor().getActivityType().getDisplayName())
+                                .contactLink(session.getMentor().getContactLink())
                                 .build())
                         .build())
-                .toList();    }
+                .toList();
+    }
 }
