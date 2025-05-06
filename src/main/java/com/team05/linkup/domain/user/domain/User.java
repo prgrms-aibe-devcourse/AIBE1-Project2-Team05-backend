@@ -101,4 +101,7 @@ public class User extends BaseEntity {
         this.profileImageUrl = imageUrl;
     }
 
+    public void setMatchStatus(Boolean status) {
+        this.matchStatus = status;
+    }
 }
