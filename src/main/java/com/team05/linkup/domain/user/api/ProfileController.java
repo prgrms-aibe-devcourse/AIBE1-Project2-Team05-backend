@@ -5,7 +5,6 @@ import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.domain.community.dto.CommunityTalentSummaryDTO;
 import com.team05.linkup.domain.enums.Role;
-import com.team05.linkup.domain.mentoring.application.OngoingMatchingService;
 import com.team05.linkup.domain.mentoring.dto.MatchedMentorProfileDto;
 import com.team05.linkup.domain.mentoring.dto.OngoingMatchingDTO;
 import com.team05.linkup.domain.review.application.ReviewService;
@@ -14,6 +13,8 @@ import com.team05.linkup.domain.user.application.*;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.dto.*;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,6 +33,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/v1/users")
 @RequiredArgsConstructor
+@Tag(name = "프로필(마이페이지) API", description = "프로필 조회와 마이페이지 관련 API")
 public class ProfileController {
 
     private static final Logger logger = LogManager.getLogger();
@@ -39,9 +41,9 @@ public class ProfileController {
     private final ProfileService profileService;
     private final MentorProfileService mentorProfileService;
     private final MenteeProfileService menteeProfileService;
-    private final OngoingMatchingService ongoingMatchingService;
 
     @GetMapping("/{nickname}")
+    @Operation(summary = "회원 페이지 조회", description = "멘토/멘티 프로필 페이지(마이페이지 조회) 관련 데이터를 조회합니다.")
     @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<ProfilePageDTO>> getProfile(@PathVariable String nickname, @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
@@ -56,6 +58,7 @@ public class ProfileController {
     }
 
     @GetMapping("/{nickname}/activity")
+    @Operation(summary = "나의 활동 내역 조회(멘토, 멘티 공통)", description = "멘토: 내가 등록한 재능 목록, 멘티: 내가 신청한 매칭, 내가 작성한 커뮤니티 게시글, 내가 작성한 댓글, 관심 목록 데이터를 조회합니다.")
     public ResponseEntity<ApiResponse<ActivityResponseDTO>> getActivity(@PathVariable String nickname) {
         // 1. 사용자의 역할(멘토/멘티) 확인
         Optional<User> userOpt = userRepository.findByNickname(nickname);
@@ -86,6 +89,7 @@ public class ProfileController {
     }
 
     @GetMapping("/{nickname}/activity/more-details")
+    @Operation(summary = "나의 활동 내역 조회 more-details [매칭/재능/게시글/댓글]", description = "내가 신청한 매칭(my-matches), 내가 등록한 재능 목록(my-talents), 내가 작성한 게시글(my-posts), 내가 작성한 댓글(my-comments) 타입에 따라 관련 데이터를 자세히 조회합니다.")
     public ResponseEntity<ApiResponse<?>> getMoreDetails(
             @PathVariable String nickname,
             @RequestParam("type") String type,
@@ -114,6 +118,13 @@ public class ProfileController {
                 yield ResponseEntity.ok(ApiResponse.success(result));
             }
 
+            // 내가 신청한 매칭 more-details
+            case "my-matches" -> {
+                Page<MatchedMentorProfileDto> result =
+                        menteeProfileService.getMyMatchesPaged(nickname, page, size);
+                yield ResponseEntity.ok(ApiResponse.success(result));
+            }
+
             default -> ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "유효하지 않은 type 파라미터입니다."));
@@ -124,6 +135,7 @@ public class ProfileController {
 
     // 관심 목록 더보기 API
     @GetMapping("/{nickname}/activity/more-details/interests")
+    @Operation(summary = "나의 활동 내역 조회 more-details [관심 목록(북마크/좋아요)]", description = "북마크(bookmarked), 좋아요(liked), 전체(all) 옵션에 따라 관련 데이터를 자세히 조회합니다.")
     public ResponseEntity<ApiResponse<?>> getInterestMoreDetails(
             @PathVariable String nickname,
             @RequestParam("filter") String filter, // bookmarked | liked | all
@@ -148,6 +160,7 @@ public class ProfileController {
 
     // ✅ 매칭 현황 API - Swagger 테스트용 (배포 시 주석 처리 필요)
     @GetMapping("/{nickname}/matching")
+    @Operation(summary = "매칭 현황(멘토)", description = "받은 리뷰, 커뮤니티 질문 답변, 나의 멘토링 통계, 진행 중인 매칭 멘토의 매칭 관련 데이터를 조회합니다.")
     public ResponseEntity<ApiResponse<MyMatchingPageDTO>> getMatchingPage(
             @PathVariable String nickname,
             @AuthenticationPrincipal UserPrincipal userPrincipal
@@ -196,6 +209,7 @@ public class ProfileController {
 
     // 매칭 현황 - 더보기 API
     @GetMapping("/{nickname}/matching/more-details")
+    @Operation(summary = "매칭 현황 조회 more-details", description = "받은 리뷰(received-reviews), 커뮤니티 질문 답변(interest-qna), 진행 중인 매칭(ongoing) 타입에 따라 관련 데이터를 자세히 조회합니다.")
     public ResponseEntity<ApiResponse<?>> getMatchingMoreDetails(
             @PathVariable String nickname,
             @RequestParam("type") String type,
