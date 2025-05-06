@@ -8,9 +8,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "mentoring_sessions")
+@Table(name = "mentoring_sessions", indexes = {
+        @Index(name = "idx_mentoring_mentor", columnList = "mentor_user_id"),
+        @Index(name = "idx_mentoring_mentee", columnList = "mentee_user_id")
+})
 @Getter
-@NoArgsConstructor(access = AccessLevel.PUBLIC)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 public class MentoringSessions extends BaseEntity {

@@ -5,26 +5,26 @@ import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.domain.community.dto.CommunityTalentSummaryDTO;
 import com.team05.linkup.domain.enums.Role;
+import com.team05.linkup.domain.mentoring.application.OngoingMatchingService;
 import com.team05.linkup.domain.mentoring.dto.MatchedMentorProfileDto;
-import com.team05.linkup.domain.user.application.MenteeProfileService;
-import com.team05.linkup.domain.user.application.MentorProfileService;
-import com.team05.linkup.domain.user.application.ProfileService;
+import com.team05.linkup.domain.mentoring.dto.OngoingMatchingDTO;
+import com.team05.linkup.domain.review.application.ReviewService;
+import com.team05.linkup.domain.review.dto.ReceivedReviewDTO;
+import com.team05.linkup.domain.user.application.*;
 import com.team05.linkup.domain.user.domain.User;
-import com.team05.linkup.domain.user.dto.ActivityResponseDTO;
-import com.team05.linkup.domain.user.dto.MyMatchingPageDTO;
-import com.team05.linkup.domain.user.dto.ProfilePageDTO;
+import com.team05.linkup.domain.user.dto.*;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +39,7 @@ public class ProfileController {
     private final ProfileService profileService;
     private final MentorProfileService mentorProfileService;
     private final MenteeProfileService menteeProfileService;
+    private final OngoingMatchingService ongoingMatchingService;
 
     @GetMapping("/{nickname}")
     @Transactional(readOnly = true)
@@ -84,39 +85,90 @@ public class ProfileController {
         return ResponseEntity.ok(ApiResponse.success(builder.build()));
     }
 
+    @GetMapping("/{nickname}/activity/more-details")
+    public ResponseEntity<ApiResponse<?>> getMoreDetails(
+            @PathVariable String nickname,
+            @RequestParam("type") String type,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size   // size 파라미터 추가
+    ) {
+        return switch (type) {
+            // 재능 목록 more-details
+            case "my-talents" -> {
+                Page<CommunityTalentSummaryDTO> result =
+                        mentorProfileService.getCommunityTalentsPaged(nickname, page, size);
+                yield ResponseEntity.ok(ApiResponse.success(result));
+            }
 
-    // 임시로 주석 상태로 유지 - 추후 삭제 예정
-//    @GetMapping("/{nickname}/matching")
-//    public ResponseEntity<ApiResponse<MyMatchingPageDTO>> getMatchingPage(@PathVariable String nickname) {
-//        Optional<User> userOpt = userRepository.findByNickname(nickname);
-//        if (userOpt.isEmpty()) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-//                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "사용자를 찾을 수 없습니다."));
-//        }
-//
-//        User user = userOpt.get();
-//
-//        // 🔒 보호 로직: 멘토만 접근 가능
-//        if (!user.getRole().equals(Role.ROLE_MENTOR)) {
-//            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-//                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, "멘토만 매칭 현황을 조회할 수 있습니다."));
-//        }
-//
-//        MyMatchingPageDTO matchingPageData = profileService.getMatchingPageData(user);
-//        return ResponseEntity.ok(ApiResponse.success(matchingPageData));
-//    }
+            // 내가 쓴 게시글 more-details
+            case "my-posts" -> {
+                Page<MyPostResponseDTO> result =
+                        profileService.getMyPostsPaged(nickname, page, size);
+                yield ResponseEntity.ok(ApiResponse.success(result));
+            }
 
+            // 내가 쓴 댓글 more-details
+            case "my-comments" -> {
+                Page<MyCommentResponseDTO> result =
+                        profileService.getMyCommentsPaged(nickname, page, size);
+                yield ResponseEntity.ok(ApiResponse.success(result));
+            }
 
-    // 멘토 매칭 현황
+            default -> ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "유효하지 않은 type 파라미터입니다."));
+        };
+    }
+
+    private final InterestMoreDetailsService interestMoreDetailsService;
+
+    // 관심 목록 더보기 API
+    @GetMapping("/{nickname}/activity/more-details/interests")
+    public ResponseEntity<ApiResponse<?>> getInterestMoreDetails(
+            @PathVariable String nickname,
+            @RequestParam("filter") String filter, // bookmarked | liked | all
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        // 유효하지 않은 filter 처리
+        if (!filter.equals("bookmarked") && !filter.equals("liked") && !filter.equals("all")) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "유효하지 않은 filter 파라미터입니다."));
+        }
+
+        // 서비스 호출
+        Page<?> result = interestMoreDetailsService.getInterestPosts(nickname, filter, page, size);
+
+        // 성공 응답 반환
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    private final MatchingPageFacade matchingPageFacade;
+
+    // ✅ 매칭 현황 API - Swagger 테스트용 (배포 시 주석 처리 필요)
     @GetMapping("/{nickname}/matching")
     public ResponseEntity<ApiResponse<MyMatchingPageDTO>> getMatchingPage(
             @PathVariable String nickname,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        logger.debug("✅ 현재 로그인한 사용자 provider = {}, providerId = {}", userPrincipal.provider(), userPrincipal.providerId());
+//         여기부터 주석 또는 삭제
+        if (userPrincipal == null) {
+            logger.warn("⚠️ 인증 객체가 null입니다. Swagger 테스트 중일 수 있습니다.");
+            Optional<User> fallbackUserOpt = userRepository.findByNickname(nickname);
+            if (fallbackUserOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "사용자를 찾을 수 없습니다."));
+            }
 
-        // provider + providerId로 현재 로그인한 사용자 조회
-        Optional<User> userOpt = userRepository.findByProviderAndProviderId(userPrincipal.provider(), userPrincipal.providerId());
+            User fallbackUser = fallbackUserOpt.get();
+            userPrincipal = new UserPrincipal(fallbackUser.getProviderId(), fallbackUser.getProvider());
+        }
+        // 여기까지
+
+        Optional<User> userOpt = userRepository.findByProviderAndProviderId(
+                userPrincipal.provider(), userPrincipal.providerId()
+        );
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "사용자를 찾을 수 없습니다."));
@@ -124,21 +176,76 @@ public class ProfileController {
 
         User user = userOpt.get();
 
-        // nickname 비교로 본인 확인
         if (!user.getNickname().equals(nickname)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, "본인의 매칭 정보만 조회할 수 있습니다."));
         }
 
-        // 멘토 권한 확인
         if (!user.getRole().equals(Role.ROLE_MENTOR)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error(ResponseCode.ACCESS_DENIED, "멘토만 매칭 정보를 조회할 수 있습니다."));
         }
 
-        // 매칭 데이터 조회
-        MyMatchingPageDTO result = profileService.getMatchingPageData(user);
+        // ✨ 기존: profileService → 변경: matchingPageFacade
+        MyMatchingPageDTO result = matchingPageFacade.getMatchingPageData(user);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    // 리뷰 서비스 주입
+    private final ReviewService reviewService;
+
+    // 매칭 현황 - 더보기 API
+    @GetMapping("/{nickname}/matching/more-details")
+    public ResponseEntity<ApiResponse<?>> getMatchingMoreDetails(
+            @PathVariable String nickname,
+            @RequestParam("type") String type,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        // ✅ 유효한 타입인지 확인
+        if (!List.of("interest-qna", "received-reviews", "ongoing").contains(type)) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "유효하지 않은 type 파라미터입니다."));
+        }
+
+        // ✅ 사용자 조회
+        Optional<User> userOpt = userRepository.findByNickname(nickname);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "사용자를 찾을 수 없습니다."));
+        }
+
+        User user = userOpt.get();
+        Pageable pageable = PageRequest.of(page, size);
+
+        return switch (type) {
+            case "interest-qna" -> {
+                String interest = String.valueOf(userRepository.findInterestByNickname(nickname));
+                if (interest == null) {
+                    yield ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "관심 태그 정보를 찾을 수 없습니다."));
+                }
+
+                Page<CommunityQnAPostResponseDTO> result =
+                        matchingPageFacade.getRecentQnAPostsByInterestPaged(interest, page, size);
+                yield ResponseEntity.ok(ApiResponse.success(result));
+            }
+
+            case "received-reviews" -> {
+                Page<ReceivedReviewDTO> result =
+                        reviewService.getReceivedReviewsPaged(user.getId(), page, size);
+                yield ResponseEntity.ok(ApiResponse.success(result));
+            }
+
+            case "ongoing" -> {
+                Page<OngoingMatchingDTO> result =
+                        matchingPageFacade.getOngoingMatchingsPaged(user.getId(), pageable);
+                yield ResponseEntity.ok(ApiResponse.success(result));
+            }
+
+            default -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "지원하지 않는 type입니다."));
+        };
+    }
 }

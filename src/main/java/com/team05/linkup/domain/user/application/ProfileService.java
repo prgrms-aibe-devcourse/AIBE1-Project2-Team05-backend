@@ -2,21 +2,21 @@ package com.team05.linkup.domain.user.application;
 
 import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
-import com.team05.linkup.domain.mentoring.dto.ReceivedReviewDTO;
-import com.team05.linkup.domain.review.infrastructure.ReviewRepository;
 import com.team05.linkup.domain.user.domain.Area;
 import com.team05.linkup.domain.user.domain.Sigungu;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.dto.*;
 import com.team05.linkup.domain.user.infrastructure.SigunguRepository;
+import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
@@ -100,6 +100,24 @@ public class ProfileService {
                 .collect(Collectors.toList());
     }
 
+    // 🔧 내가 작성한 커뮤니티 게시글 - 페이징
+    public Page<MyPostResponseDTO> getMyPostsPaged(String nickname, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Object[]> resultPage = communityRepository.findCommunityPostsWithPaging(nickname, pageable);
+
+        return resultPage.map(obj -> new MyPostResponseDTO(
+                (String) obj[0],                                      // id
+                ((Timestamp) obj[1]).toLocalDateTime(),              // updated_at
+                (String) obj[2],                                      // category
+                (String) obj[3],                                      // title
+                (String) obj[4],                                      // content
+                ((Number) obj[5]).intValue(),                         // view_count
+                ((Number) obj[6]).intValue(),                         // like_count
+                ((Number) obj[7]).intValue()                          // comment_count
+        ));
+    }
+
+
     // 내가 작성한 댓글 조회
     public List<MyCommentResponseDTO> getMyComments(String nickname, int limit) {
         // userId 조회 (닉네임 기반 → ID 추출)
@@ -122,6 +140,29 @@ public class ProfileService {
                 })
                 .collect(Collectors.toList());
     }
+
+    public Page<MyCommentResponseDTO> getMyCommentsPaged(String nickname, int page, int size) {
+        // 1. 닉네임으로 사용자 ID 조회
+        String userId = getUserIdByNickname(nickname);
+        // 2. 페이징 객체 생성
+        Pageable pageable = PageRequest.of(page, size);
+        // 3. native 쿼리 결과 받아오기
+        Page<Object[]> resultPage = communityRepository.findMyCommentsPaged(userId, pageable);
+
+        // 4. Object[] → DTO 매핑
+        return resultPage.map(row -> {
+            Timestamp updatedAt = (Timestamp) row[0];
+            String description = (String) row[1];
+            String commentContent = (String) row[2];
+
+            return new MyCommentResponseDTO(
+                    updatedAt != null ? updatedAt.toLocalDateTime() : null,
+                    description,
+                    commentContent
+            );
+        });
+    }
+
 
     // 내가 북마크한 게시글 조회
      public List<MyBookmarkResponseDTO> getMyBookmarks(String nickname, int limit) {
@@ -184,58 +225,40 @@ public class ProfileService {
                 .build();
     }
 
-    public MyMatchingPageDTO getMatchingPageData(User mentor) {
-        return MyMatchingPageDTO.builder()
-                .reviews(getReviewsForMentor(mentor.getId(), 2))
-                .communityQnAs(getRecentQnAByInterest(mentor.getInterest().name(), 2))
-//                .ongoingMatchings(getOngoingMatchings(mentor.getId()))
-//                .stats(getMentoringStats(mentor.getId()))
-                .build();
+    // 매칭 현황 관련 로직 -> MatchingPageFacade로 이전
+
+    private final UserRepository userRepository;
+
+    public Page<CommunityQnAPostResponseDTO> getPopularQnAByInterest(String nickname, int page, int size) {
+        // 1. 관심 태그 조회
+        String interest = String.valueOf(userRepository.findInterestByNickname(nickname));
+        if (interest == null) {
+            throw new IllegalArgumentException("해당 사용자의 관심 태그가 없습니다.");
+        }
+
+        // 2. QnA 조회 (페이징)
+        Pageable pageable = PageRequest.of(page, size);
+        Page<CommunityQnAPostDTO> rawResults = communityRepository.findRecentQnAPostsByInterestPaged(interest, pageable);
+
+        // 3. DTO 매핑
+        return rawResults.map(dto -> CommunityQnAPostResponseDTO.builder()
+                .postId(dto.getPostId())
+                .nickname(dto.getNickname())
+                .profileImageUrl(dto.getProfileImageUrl())
+                .createdAt(dto.getCreatedAt())
+                .title(dto.getTitle())
+                .content(dto.getContent())
+                .tags(parseTags(dto.getTagName())) // comma-separated → List<String>
+                .commentCount(dto.getCommentCount())
+                .build());
     }
 
-    private final ReviewRepository reviewRepository;
-
-    // 받은 리뷰 조회 메서드 (멘토만 대상)
-    public List<ReceivedReviewDTO> getReviewsForMentor(String mentorId, int limit) {
-        // 쿼리 결과 받아오기
-        List<Object[]> rawResults = reviewRepository.findReceivedReviewsByMentorId(mentorId, limit);
-
-        // DTO로 매핑
-        return rawResults.stream()
-                .map(obj -> ReceivedReviewDTO.builder()
-                        .reviewerName((String) obj[0])  // 리뷰 작성자 이름
-                        .reviewerProfileImageUrl((String) obj[1])   //  리뷰 작성자 프로필 사진
-                        .reviewDate(((Timestamp) obj[2]).toLocalDateTime().toLocalDate().toString())
-                        .star(BigDecimal.valueOf(((Number) obj[3]).doubleValue()))  // 별점
-                        .content((String) obj[4])   // 리뷰 내용
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    // 최근 QnA 조회 (QueryDSL 결과 → 후처리)
-    public List<CommunityQnAPostResponseDTO> getRecentQnAByInterest(String interest, int limit) {
-        List<CommunityQnAPostDTO> rawResults = communityRepository.findRecentQnAPostsByInterest(interest, limit);
-
-        return rawResults.stream()
-                .map(dto -> CommunityQnAPostResponseDTO.builder()
-                        .postId(dto.getPostId())
-                        .nickname(dto.getNickname())
-                        .profileImageUrl(dto.getProfileImageUrl())
-                        .createdAt(dto.getCreatedAt())
-                        .title(dto.getTitle())
-                        .content(dto.getContent())
-                        .tags(parseTags(dto.getTagName()))   // 후처리
-                        .commentCount(dto.getCommentCount())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    // 태그 문자열 → List<String> 변환
+    // 🔧 태그 문자열을 리스트로 변환하는 메서드 (기존 MatchingPageFacade 참고)
     private List<String> parseTags(String tagString) {
         if (tagString == null || tagString.isBlank()) return List.of();
         return Arrays.stream(tagString.split(","))
                 .map(String::trim)
-                .toList();
+                .collect(Collectors.toList());
     }
 
 }

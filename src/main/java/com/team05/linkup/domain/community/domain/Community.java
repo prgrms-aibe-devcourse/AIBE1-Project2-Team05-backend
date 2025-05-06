@@ -5,6 +5,9 @@ import com.team05.linkup.domain.baseEntity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 커뮤니티 게시글 엔티티
  * 사용자가 작성한 게시글을 나타냅니다.
@@ -87,4 +90,13 @@ public class Community extends BaseEntity {
             this.likeCount -= 1;
         }
     }
+
+    /*
+    * 양-방향 이미지 필드
+    **/
+    @OneToMany(mappedBy = "community",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    @Builder.Default                 // builder 사용 시 NPE 방지
+    private List<Image> images = new ArrayList<>();
 }

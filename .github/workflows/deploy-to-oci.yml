@@ -12,6 +12,11 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+    # 🔽 GitHub Packages‧소스 읽기 권한 선언
+    permissions:
+      packages: read     # GitHub Packages(PKG) 다운로드
+      contents: read     # 리포지토리 checkout
+
     steps:
       # 소스코드 체크아웃
       - name: Checkout code
@@ -28,6 +33,9 @@ jobs:
       # Gradle 빌드 (테스트 스킵)
       - name: Build with Gradle
         run: ./gradlew build -x test
+        env:
+          SUPABASE_GPR_USER: ${{ secrets.SUPABASE_GPR_USER }}
+          SUPABASE_GPR_TOKEN: ${{ secrets.SUPABASE_GPR_TOKEN }}
 
       # Docker Hub 로그인
       - name: Login to Docker Hub
@@ -49,6 +57,9 @@ jobs:
           tags: ${{ env.DOCKER_REPO }}:${{ github.sha }},${{ env.DOCKER_REPO }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            SUPABASE_GPR_USER=${{ secrets.SUPABASE_GPR_USER }}
+            SUPABASE_GPR_TOKEN=${{ secrets.SUPABASE_GPR_TOKEN }}
 
       # 서버에 SSH로 접속하여 컨테이너 업데이트
       - name: Deploy to server
@@ -85,6 +96,8 @@ jobs:
               -e SPRING_PROFILES_ACTIVE="${{secrets.SPRING_PROFILES_ACTIVE}}" \
               -e GEMINI_API_KEY="${{secrets.GEMINI_API_KEY}}" \
               -e SERVER_PORT="${{secrets.PORT}}" \
+              -e SUPABASE_URL="${{secrets.SUPABASE_URL}}" \
+              -e SUPABASE_KEY="${{secrets.SUPABASE_KEY}}" \
               ${{ env.DOCKER_REPO }}:latest
             
             echo "새 컨테이너 실행 시도 완료"
