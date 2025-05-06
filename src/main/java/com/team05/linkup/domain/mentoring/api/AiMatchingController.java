@@ -25,7 +25,7 @@ public class AiMatchingController {
     private final AiMatchingListServiceImpl aiMatchingServiceImpl;
     private final AiMatchingSelectorServiceImpl aiMatchingSelectorServiceImpl;
 
-    @GetMapping("/recommendation")
+    @GetMapping("/recommendations")
     @PreAuthorize("hasAuthority('ROLE_MENTEE')")
     @Operation(description = "ai 매칭 멘토 리스트 결과")
 
@@ -47,7 +47,7 @@ public class AiMatchingController {
         }
     }
 
-    @PostMapping("/{nickname}")
+    @PostMapping("/recommendations/{nickname}")
     @Operation(description = "ai 매칭 멘토 선택")
     @PreAuthorize("hasAuthority('ROLE_MENTEE')")
     public ResponseEntity<ApiResponse> matchMentor(@PathVariable String nickname,
