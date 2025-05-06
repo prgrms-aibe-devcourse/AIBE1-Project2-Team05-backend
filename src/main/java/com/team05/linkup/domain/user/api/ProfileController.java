@@ -248,4 +248,15 @@ public class ProfileController {
                     .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "지원하지 않는 type입니다."));
         };
     }
+
+    @GetMapping("/check-nickname")
+    public ResponseEntity<ApiResponse<NicknameCheckResponseDTO>> checkNicknameDuplication(
+            @RequestParam("nickname") String nickname) {
+
+        boolean isDuplicated = userRepository.existsByNickname(nickname);
+        NicknameCheckResponseDTO response = new NicknameCheckResponseDTO(isDuplicated);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
 }
