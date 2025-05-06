@@ -259,4 +259,14 @@ public class ProfileController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @GetMapping("/{nickname}/profile")
+    public ResponseEntity<ApiResponse<ProfileSettingsResponseDTO>> getProfileSettings(
+            @PathVariable String nickname,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        ProfileSettingsResponseDTO response = profileService.getProfileSettings(nickname, principal);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+
 }

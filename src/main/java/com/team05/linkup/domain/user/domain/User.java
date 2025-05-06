@@ -66,4 +66,15 @@ public class User extends BaseEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<RefreshToken> refreshToken;
+
+    public List<String> parseTags() {
+        if (profileTag == null || profileTag.isBlank()) {
+            return List.of();
+        }
+        return List.of(profileTag.split(",")).stream()
+                .map(String::trim)
+                .filter(tag -> !tag.isEmpty())
+                .toList();
+    }
+
 }

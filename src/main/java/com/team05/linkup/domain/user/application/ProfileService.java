@@ -8,12 +8,14 @@ import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.dto.*;
 import com.team05.linkup.domain.user.infrastructure.SigunguRepository;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -259,6 +261,44 @@ public class ProfileService {
         return Arrays.stream(tagString.split(","))
                 .map(String::trim)
                 .collect(Collectors.toList());
+    }
+
+
+    public void validateAccess(String nickname, UserPrincipal principal) {
+        User user = userRepository.findByProviderAndProviderId(
+                principal.provider(), principal.providerId()
+        ).orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        if (!nickname.equals(user.getNickname())) {
+            throw new AccessDeniedException("본인의 프로필만 조회할 수 있습니다.");
+        }
+    }
+
+
+
+    public ProfileSettingsResponseDTO getProfileSettings(String nickname, UserPrincipal principal) {
+        // 🔐 본인만 조회 가능
+        validateAccess(nickname, principal);
+
+        // 🔍 사용자 조회
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        return ProfileSettingsResponseDTO.builder()
+                .nickname(user.getNickname())
+                .profileImageUrl(user.getProfileImageUrl())
+                .introduction(user.getIntroduction())
+                .interest(user.getInterest())
+                .activityTime(user.getActivityTime())
+                .activityType(user.getActivityType())
+                .area(user.getArea() != null ? user.getArea().getAreaName() : null)
+                .sigungu(user.getSigunguCode())
+                .tags(user.parseTags())
+
+                // 🔹 멘토 전용 필드
+                .contactLink(user.getContactLink())
+                .isAcceptingRequests(user.isMatchStatus())
+                .build();
     }
 
 }
