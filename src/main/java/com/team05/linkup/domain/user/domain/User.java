@@ -5,6 +5,7 @@ import com.team05.linkup.domain.enums.ActivityTime;
 import com.team05.linkup.domain.enums.ActivityType;
 import com.team05.linkup.domain.enums.Interest;
 import com.team05.linkup.domain.enums.Role;
+import com.team05.linkup.domain.user.dto.ProfileUpdateRequestDTO;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -75,6 +76,29 @@ public class User extends BaseEntity {
                 .map(String::trim)
                 .filter(tag -> !tag.isEmpty())
                 .toList();
+    }
+
+    // ✅ 1. 프로필 정보 수정 메서드 추가 (🔧 추가)
+    public void updateProfileFields(ProfileUpdateRequestDTO dto) {
+        this.nickname = dto.getNickname();
+        this.introduction = dto.getIntroduction();
+        this.interest = dto.getInterest();
+        this.activityTime = dto.getActivityTime();
+        this.activityType = dto.getActivityType();
+        this.contactLink = dto.getContactLink();
+        this.matchStatus = dto.getOpenToMatching() != null ? dto.getOpenToMatching() : this.matchStatus;
+
+        // Area, sigungu 변경 (nullable 보호는 Service에서 검증할 것)
+        this.area = area;
+        this.sigunguCode = dto.getSigunguCode();
+
+        // 태그 String 처리
+        this.profileTag = dto.getTags() != null ? String.join(",", dto.getTags()) : null;
+    }
+
+    // ✅ 2. 프로필 이미지 URL만 업데이트 (🔧 추가)
+    public void updateProfileImage(String imageUrl) {
+        this.profileImageUrl = imageUrl;
     }
 
 }

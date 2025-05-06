@@ -6,6 +6,7 @@ import com.team05.linkup.domain.user.domain.Area;
 import com.team05.linkup.domain.user.domain.Sigungu;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.dto.*;
+import com.team05.linkup.domain.user.infrastructure.AreaRepository;
 import com.team05.linkup.domain.user.infrastructure.SigunguRepository;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -300,5 +301,34 @@ public class ProfileService {
                 .isAcceptingRequests(user.isMatchStatus())
                 .build();
     }
+
+
+    private final AreaRepository areaRepository;
+
+    @Transactional
+    public void updateProfileFields(String nickname, ProfileUpdateRequestDTO dto, UserPrincipal userPrincipal) {
+        // 🔍 1. 로그인한 사용자 정보로 User 조회
+        User user = userRepository.findByProviderAndProviderId(
+                userPrincipal.provider(), userPrincipal.providerId()
+        ).orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // ✅ 2. nickname 일치 여부 최종 검증 (추가 안전장치)
+        if (!user.getNickname().equals(nickname)) {
+            throw new AccessDeniedException("프로필 수정 권한이 없습니다.");
+        }
+
+        // 📦 3. Area 연관 엔티티 조회 (nullable 허용)
+        Area area = null;
+        if (dto.getAreaCode() != null) {
+            area = areaRepository.findById(dto.getAreaCode())
+                    .orElseThrow(() -> new EntityNotFoundException("해당 지역 정보를 찾을 수 없습니다."));
+        }
+
+        // 🔁 5. User 객체 업데이트
+        user.updateProfileFields(dto);
+
+        // ✅ 6. 저장은 @Transactional로 처리 완료
+    }
+
 
 }

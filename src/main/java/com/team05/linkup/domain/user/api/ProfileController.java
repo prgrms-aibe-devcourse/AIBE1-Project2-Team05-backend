@@ -14,6 +14,7 @@ import com.team05.linkup.domain.user.application.*;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.dto.*;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,6 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -266,6 +268,32 @@ public class ProfileController {
     ) {
         ProfileSettingsResponseDTO response = profileService.getProfileSettings(nickname, principal);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PatchMapping("/{nickname}/profile")
+    public ResponseEntity<ApiResponse<?>> updateProfileSettings(
+            @PathVariable String nickname,
+            @RequestBody ProfileUpdateRequestDTO requestDTO,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        try {
+            // 🔐 사용자 권한 검증
+            profileService.validateAccess(nickname, userPrincipal);
+
+            // 🧾 프로필 수정 처리
+            profileService.updateProfileFields(nickname, requestDTO, userPrincipal);
+
+            return ResponseEntity.ok(ApiResponse.success("프로필이 성공적으로 수정되었습니다."));
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED));
+        }
     }
 
 
