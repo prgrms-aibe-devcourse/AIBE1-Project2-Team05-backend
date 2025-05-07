@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
 @Tag(name = "Authentication", description = "인증 관련 API")
@@ -43,13 +44,18 @@ public class AuthController {
             logger.info("토큰 {}", token);
             // 요청의 도메인 확인 (프론트엔드의 Origin 헤더 확인)
             String origin = request.getHeader("Origin");
-            boolean isLocal = origin != null && origin.contains("localhost");  // 로컬 개발 환경인지 확인
-            boolean isSecure = "https".equals(request.getScheme());  // HTTPS 프로토콜인지 확인
 
-            // 로컬 환경에서는 localhost, 배포 환경에서는 실제 도메인으로 쿠키 설정
-            String domain = isLocal ? "localhost" : "eastern-rowena-jack6767-df59f302.koyeb.app";
+            // 허용된 Origin 리스트
+            List<String> allowedOrigins = List.of(
+                    "http://localhost:3000",
+                    "http://localhost:8080",
+                    "https://eastern-rowena-jack6767-df59f302.koyeb.app"
+            );
 
-            if (token != null && !token.isEmpty()) {
+            if (origin != null && allowedOrigins.contains(origin)) {
+                boolean isSecure = "https".equals(request.getScheme());
+                String domain = origin.contains("localhost") ? "localhost" : "eastern-rowena-jack6767-df59f302.koyeb.app";
+                if (token != null && !token.isEmpty()) {
                     // If valid, we can also extract and return some user information
                     Claims claims = jwtUtils.parseTokenWithoutExpiredAtValidation(token);
                     String providerId =  claims.getSubject();
@@ -65,10 +71,10 @@ public class AuthController {
                             .build();
                     return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(response);
                 }
-
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
