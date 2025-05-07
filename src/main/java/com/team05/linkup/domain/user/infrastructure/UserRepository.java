@@ -48,7 +48,8 @@ public interface UserRepository extends JpaRepository<User, String> {
                        u.nickname,
                        u.profileTag,
                        u.profileImageUrl,
-                       u.providerId
+                       u.providerId,
+                       u.contactLink
         FROM User u, Area area, Sigungu sigungu
         WHERE u.providerId <> :providerId AND u.provider = :provider AND u.interest = :interest
     """)

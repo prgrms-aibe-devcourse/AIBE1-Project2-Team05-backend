@@ -1,5 +1,6 @@
 package com.team05.linkup.domain.mentoring.application;
 
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.common.exception.UserNotfoundException;
 import com.team05.linkup.common.util.ApiUtils;
 import com.team05.linkup.domain.enums.Interest;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,17 +25,16 @@ import java.util.stream.Collectors;
 public class AiMatchingListServiceImpl implements AiMatchingService {
     private static final Logger logger = LogManager.getLogger();
     private final UserRepository userRepository;
-//    private final CustomUserRepositoryImpl customUserRepositoryImpl;
     private final ApiUtils apiUtils;
     private final RecommendationLogic recommendationLogic;
 
     @Override
-    public AiMatchingResponseDTO matchMentor(String provider, String providerId) {
+    public AiMatchingResponseDTO matchMentor(UserPrincipal userPrincipal) throws TimeoutException {
         try {
+            String provider = userPrincipal.provider();
+            String providerId = userPrincipal.providerId();
             ProfileTagInterestDTO result = userRepository.findProfileTagAndInterestByProviderAndProviderId(provider,providerId);
-//            if (result[0] == null || result[1] == null ) {
-//                throw new UserNotfoundException("User profile data not found");
-//            }
+//
             logger.debug(result);
 
             String myProfileTag = result.profileTag();
@@ -52,11 +53,12 @@ public class AiMatchingListServiceImpl implements AiMatchingService {
                                 (String) obj[4],   // nickname
                                 (String) obj[5],   // profileTag
                                 (String) obj[6],   // profileImageUrl
-                                (String) obj[7]    // providerId
+                                (String) obj[7],    // providerId
+                                (String) obj[8]
                             )).collect(Collectors.toList());
 
             AiMatchingRequestDTO requestDTO = new AiMatchingRequestDTO(myProfileTag, otherProfiles);
-            String url = "http://localhost:5000/word-similarity";
+            String url = "https://aibe1-project2-team05-embedding.fly.dev/word-similarity";
 
             Optional<AiMatchingResponseDTO> responseOpt = apiUtils.getApiResponse(url, "POST", requestDTO, AiMatchingResponseDTO.class);
 
