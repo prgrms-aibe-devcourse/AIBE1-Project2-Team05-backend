@@ -54,6 +54,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             response.setStatus(HttpServletResponse.SC_OK);
+            response.setHeader("Set-Cookie", cookie.toString());
             response.getWriter().write(objectMapper.writeValueAsString(Map.of(
                     "loggedIn", true,
                     "socialType", provider)));
