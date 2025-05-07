@@ -35,10 +35,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
             // 요청 헤더에서 실제 호스트 정보 가져오기
             String host = request.getHeader("X-Forwarded-Host");
+            String xForwardedProto = request.getHeader("X-Forwarded-Proto");
             if (host == null || host.isEmpty()) {
                 host = request.getServerName();
             }
-
+            logger.info("X-Forwarded-Host: {}", host);
+            logger.info("X-Forwarded-Proto: {}", xForwardedProto);
             logger.info("Detected host for redirection: {}", host);
 
             // 쿠키 도메인 설정
@@ -48,6 +50,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             } else {
                 cookieDomain = host;
             }
+            logger.info("Setting cookie domain to: {}", cookieDomain);
+
 
             // SameSite=None 설정 (크로스 사이트 요청에서 쿠키 전송을 허용)
             ResponseCookie cookie = ResponseCookie.from("jwt_token", token)
