@@ -34,6 +34,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             String token = jwtServiceImpl.generateAccessToken(authentication);
             String refreshToken = refreshTokenServiceImpl.createRefreshToken(authentication);
 
+            String domain = request.getServerName().contains("localhost") ? "localhost" : "eastern-rowena-jack6767-df59f302.koyeb.app";
+
             // SameSite=None 설정 (크로스 사이트 요청에서 쿠키 전송을 허용)
             ResponseCookie cookie = ResponseCookie.from("jwt_token", token)
                     .sameSite("None")  // 크로스 사이트 요청에서도 쿠키 전송
@@ -41,6 +43,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .secure(true)  // HTTPS에서만 전송 (개발 환경에서는 false일 수 있음)
                     .path("/")         // 모든 경로에서 사용 가능
                     .maxAge(60 * 60)   // 1시간
+                    .domain(domain)
                     .build();
 
             // 쿠키 헤더 추가
