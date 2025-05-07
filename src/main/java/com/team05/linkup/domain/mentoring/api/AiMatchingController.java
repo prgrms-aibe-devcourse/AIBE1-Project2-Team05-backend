@@ -16,6 +16,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.concurrent.TimeoutException;
+
 @RestController
 @RequestMapping("/v1/matching")
 @RequiredArgsConstructor
@@ -40,6 +42,8 @@ public class AiMatchingController {
                 AiMatchingResponseDTO responseDTO = aiMatchingServiceImpl.matchMentor(userPrincipal);
                 return ResponseEntity.ok(ApiResponse.success(responseDTO));
 
+        } catch (TimeoutException e) {
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.TIMEOUT));
         } catch (UserNotfoundException e){
             return ResponseEntity.ok(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND));
         }

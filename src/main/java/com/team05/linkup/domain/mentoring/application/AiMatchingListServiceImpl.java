@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,7 +29,7 @@ public class AiMatchingListServiceImpl implements AiMatchingService {
     private final RecommendationLogic recommendationLogic;
 
     @Override
-    public AiMatchingResponseDTO matchMentor(UserPrincipal userPrincipal){
+    public AiMatchingResponseDTO matchMentor(UserPrincipal userPrincipal) throws TimeoutException {
         try {
             String provider = userPrincipal.provider();
             String providerId = userPrincipal.providerId();
@@ -52,11 +53,12 @@ public class AiMatchingListServiceImpl implements AiMatchingService {
                                 (String) obj[4],   // nickname
                                 (String) obj[5],   // profileTag
                                 (String) obj[6],   // profileImageUrl
-                                (String) obj[7]    // providerId
+                                (String) obj[7],    // providerId
+                                (String) obj[8]
                             )).collect(Collectors.toList());
 
             AiMatchingRequestDTO requestDTO = new AiMatchingRequestDTO(myProfileTag, otherProfiles);
-            String url = "http://localhost:5000/word-similarity";
+            String url = "https://aibe1-project2-team05-embedding.fly.dev/word-similarity";
 
             Optional<AiMatchingResponseDTO> responseOpt = apiUtils.getApiResponse(url, "POST", requestDTO, AiMatchingResponseDTO.class);
 

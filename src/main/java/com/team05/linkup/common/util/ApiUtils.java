@@ -9,7 +9,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.Optional;
 
 @Component
@@ -17,7 +16,7 @@ public class ApiUtils {
     private static final Logger logger = LogManager.getLogger(ApiUtils.class);
 
     private static final HttpClient client = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(5))
+//            .connectTimeout(Duration.ofSeconds(10))
             .build();
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -32,7 +31,7 @@ public class ApiUtils {
 
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                     .uri(URI.create(apiUrl))
-                    .timeout(Duration.ofSeconds(5))
+//                    .timeout(Duration.ofSeconds(10))
                     .header("Accept", "application/json")
                     .header("Content-Type", "application/json");
 
