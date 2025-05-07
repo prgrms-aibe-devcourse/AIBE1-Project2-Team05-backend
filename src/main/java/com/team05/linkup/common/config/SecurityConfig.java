@@ -107,7 +107,8 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(
                 "http://localhost:3000",
                 "http://localhost:8080",
-                "https://eastern-rowena-jack6767-df59f302.koyeb.app"
+                "https://eastern-rowena-jack6767-df59f302.koyeb.app",
+                "https://dev-linkup.duckdns.org"
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Content-Type"));
