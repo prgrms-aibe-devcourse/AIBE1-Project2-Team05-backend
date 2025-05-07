@@ -41,6 +41,14 @@ public class AuthController {
         try {
             String token = jwtUtils.extractToken(request);
             logger.info("토큰 {}", token);
+            // 요청의 도메인 확인 (프론트엔드의 Origin 헤더 확인)
+            String origin = request.getHeader("Origin");
+            boolean isLocal = origin != null && origin.contains("localhost");  // 로컬 개발 환경인지 확인
+            boolean isSecure = "https".equals(request.getScheme());  // HTTPS 프로토콜인지 확인
+
+            // 로컬 환경에서는 localhost, 배포 환경에서는 실제 도메인으로 쿠키 설정
+            String domain = isLocal ? "localhost" : "eastern-rowena-jack6767-df59f302.koyeb.app";
+
             if (token != null && !token.isEmpty()) {
                     // If valid, we can also extract and return some user information
                     Claims claims = jwtUtils.parseTokenWithoutExpiredAtValidation(token);
@@ -49,10 +57,11 @@ public class AuthController {
                     RefreshTokenResponseDTO response = refreshTokenServiceImpl.regenerateAccessAndRefreshToken(provider, providerId);
                     ResponseCookie cookie = ResponseCookie.from("jwt_token", response.accessToken())
                             .httpOnly(true)
-                            .secure(true)
+                            .secure(isSecure)
                             .path("/")
-                            .maxAge(Duration.ofHours(1))
+                            .maxAge(Duration.ofDays(1))
                             .sameSite("None")  // 이게 핵심!
+                            .domain(domain)
                             .build();
                     return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(response);
                 }

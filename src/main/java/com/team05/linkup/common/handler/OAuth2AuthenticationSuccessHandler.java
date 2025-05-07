@@ -29,20 +29,24 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             String token = jwtServiceImpl.generateAccessToken(authentication);
             String refreshToken = refreshTokenServiceImpl.createRefreshToken(authentication);
 
-//            response.setHeader("Authorization", "Bearer " + token);
+            // 요청의 도메인 확인 (프론트엔드의 Origin 헤더 확인)
+            String origin = request.getHeader("Origin");
+            boolean isLocal = origin != null && origin.contains("localhost");  // 로컬 개발 환경인지 확인
+            boolean isSecure = "https".equals(request.getScheme());  // HTTPS 프로토콜인지 확인
 
+            // 로컬 환경에서는 localhost, 배포 환경에서는 실제 도메인으로 쿠키 설정
+            String domain = isLocal ? "localhost" : "eastern-rowena-jack6767-df59f302.koyeb.app";
 
             ResponseCookie cookie = ResponseCookie.from("jwt_token", token)
-                    .sameSite("None")
-                    .httpOnly(true)
-                    .secure(true)
-                    .path("/")
-                    .maxAge(60 * 60)
-                    .build();
+                            .sameSite("None")
+                            .httpOnly(true)
+                            .secure(isSecure)
+                            .domain(domain)
+                            .path("/")
+                            .maxAge(60 * 60)
+                            .build();
 
             response.addHeader("Set-Cookie", cookie.toString());
-
-//            clearAuthenticationAttributes(request); // 이게 중요합니다!
 
             String targetUrl = UriComponentsBuilder.fromUriString("/").build().toUriString();
             getRedirectStrategy().sendRedirect(request, response, targetUrl);
