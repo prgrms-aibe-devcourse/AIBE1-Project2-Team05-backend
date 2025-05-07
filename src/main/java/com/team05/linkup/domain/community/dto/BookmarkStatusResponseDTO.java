@@ -5,5 +5,5 @@ package com.team05.linkup.domain.community.dto;
  *
  * @param bookmarked 북마크 상태 (true: 북마크됨, false: 북마크 안됨)
  */
-public record BookmarkStatusResponse(boolean bookmarked) {
+public record BookmarkStatusResponseDTO(boolean bookmarked) {
 }

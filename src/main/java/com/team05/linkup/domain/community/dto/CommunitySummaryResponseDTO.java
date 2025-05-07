@@ -15,9 +15,11 @@ import java.time.ZonedDateTime;
  * @param createdAt 게시물이 작성된 날짜 및 시간.
  * @param viewCount 게시물이 받은 조회수.
  * @param likeCount 게시물이 받은 좋아요 수.
+ * @param content 게시물 내용.
+ * @param profileImageUrl 게시물을 만든 사용자의 프로필 이미지 URL.
  * @param commentCount 게시물과 연결된 총 댓글 수.
  */
-public record CommunitySummaryResponse(
+public record CommunitySummaryResponseDTO(
         String id,
         String nickname,
         String title,
@@ -25,6 +27,8 @@ public record CommunitySummaryResponse(
         ZonedDateTime createdAt,
         Long viewCount,
         Long likeCount,
+        String content,
+        String profileImageUrl,
         Long commentCount
 ) {
 }
