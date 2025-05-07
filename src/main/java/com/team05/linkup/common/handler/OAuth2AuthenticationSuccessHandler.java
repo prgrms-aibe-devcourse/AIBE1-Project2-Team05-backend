@@ -1,5 +1,6 @@
 package com.team05.linkup.common.handler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team05.linkup.common.application.JwtServiceImpl;
 import com.team05.linkup.common.application.RefreshTokenServiceImpl;
 import com.team05.linkup.common.util.JwtUtils;
@@ -23,6 +24,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final JwtServiceImpl jwtServiceImpl;
     private final RefreshTokenServiceImpl refreshTokenServiceImpl;
     private final JwtUtils jwtUtils;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final static Logger logger = LogManager.getLogger(OAuth2AuthenticationSuccessHandler.class);
 
     @Override
@@ -46,11 +48,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             logger.info("JWT Cookie set: {}", cookie);
             String provider = jwtUtils.parseToken(token).get("provider").toString();
 
-            // 홈페이지로 리다이렉트
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
             response.setStatus(HttpServletResponse.SC_OK);
-            response.getWriter().write(Map.of(
+            response.getWriter().write(objectMapper.writeValueAsString(Map.of(
                     "loggedIn", true,
-                    "socialType", provider).toString());
+                    "socialType", provider)));
 
         } catch (Exception e) {
             logger.error("during onAuthenticationSuccess Exception error {}", e.getMessage(), e);
