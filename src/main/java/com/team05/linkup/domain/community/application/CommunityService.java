@@ -6,7 +6,8 @@ import com.team05.linkup.domain.community.domain.CommunityCategory;
 import com.team05.linkup.domain.community.domain.Image;
 import com.team05.linkup.domain.community.dto.CommunityCreatedEventDTO;
 import com.team05.linkup.domain.community.dto.CommunityDto;
-import com.team05.linkup.domain.community.dto.CommunitySummaryResponse;
+import com.team05.linkup.domain.community.dto.CommunitySummaryResponseDTO;
+import com.team05.linkup.domain.community.dto.CommunityWeeklyPopularDTO;
 import com.team05.linkup.domain.community.infrastructure.CommentRepository;
 import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
 import com.team05.linkup.domain.community.infrastructure.ImageRepository;
@@ -63,11 +64,11 @@ public class CommunityService {
      *
      * @param category 조회할 게시글 카테고리 (선택 사항, null일 경우 전체 카테고리 조회).
      * @param pageable 페이징 및 정렬 정보 (페이지 번호, 페이지 크기, 정렬 기준). Spring Data Web Support에 의해 Controller에서 생성됩니다.
-     * @return 조건에 맞는 게시글 요약 정보({@link CommunitySummaryResponse})를 담고 있는 {@link Page} 객체.
+     * @return 조건에 맞는 게시글 요약 정보({@link CommunitySummaryResponseDTO})를 담고 있는 {@link Page} 객체.
      * 결과가 없을 경우 빈 Page 객체가 반환됩니다.
      * @see CommunityRepository#findCommunitySummaries(CommunityCategory, Pageable)
      */
-    public Page<CommunitySummaryResponse> findCommunities(CommunityCategory category, Pageable pageable) {
+    public Page<CommunitySummaryResponseDTO> findCommunities(CommunityCategory category, Pageable pageable) {
         return communityRepository.findCommunitySummaries(
                 category,
                 pageable
@@ -81,16 +82,35 @@ public class CommunityService {
      *
      * @param limit 조회할 최대 인기 게시글 수.
      * @param day   인기 게시글을 선정할 최근 기간(일 단위). 예를 들어 7이면 최근 7일간의 게시글을 대상으로 함
-     * @return 인기 게시글 요약 정보({@link CommunitySummaryResponse})의 {@link List}. 결과는 'limit' 수만큼 제한되며, 없을 경우 빈 리스트가 반환
+     * @return 인기 게시글 요약 정보({@link CommunitySummaryResponseDTO})의 {@link List}. 결과는 'limit' 수만큼 제한되며, 없을 경우 빈 리스트가 반환
      * @see CommunityRepository#findPopularSince(ZonedDateTime, Pageable)
      */
-    public List<CommunitySummaryResponse> findPopularCommunities(int limit, int day) {
+    public List<CommunitySummaryResponseDTO> findPopularCommunities(int limit, int day) {
         // 1. 조회 시작 시점 계산
         ZonedDateTime daysAgo = ZonedDateTime.now().minusDays(day);
         // 2. 결과 개수 제한 설정
         Pageable topLimit = PageRequest.of(0, limit);
         // 3. Repository 메소드 호출
         return communityRepository.findPopularSince(daysAgo, topLimit);
+    }
+
+    /**
+     * 최근 일정 기간 동안 작성된 게시글 중 인기 게시글 목록을 조회
+     * 인기도는 Repository 쿼리 내의 정렬 기준(조회수, 좋아요 수, 최신순)에 따라 결정
+     * 이 메소드는 읽기 전용 트랜잭션으로 실행
+     *
+     * @param limit 조회할 최대 인기 게시글 수.
+     * @param day   인기 게시글을 선정할 최근 기간(일 단위). 예를 들어 7이면 최근 7일간의 게시글을 대상으로 함
+     * @return 인기 게시글 요약 정보({@link CommunitySummaryResponseDTO})의 {@link List}. 결과는 'limit' 수만큼 제한되며, 없을 경우 빈 리스트가 반환
+     * @see CommunityRepository#findPopularSince(ZonedDateTime, Pageable)
+     */
+    public List<CommunityWeeklyPopularDTO> findWeeklyPopularCommunities(int limit, int day) {
+        // 1. 조회 시작 시점 계산
+        ZonedDateTime daysAgo = ZonedDateTime.now().minusDays(day);
+        // 2. 결과 개수 제한 설정
+        Pageable topLimit = PageRequest.of(0, limit);
+        // 3. Repository 메소드 호출
+        return communityRepository.findWeeklyPopular(daysAgo, topLimit);
     }
 
     /**
@@ -101,7 +121,7 @@ public class CommunityService {
      * @param pageable 페이징 및 정렬 정보.
      * @return 검색된 게시글 요약 정보 Page 객체.
      */
-    public Page<CommunitySummaryResponse> searchCommunities(String keyword, Pageable pageable) {
+    public Page<CommunitySummaryResponseDTO> searchCommunities(String keyword, Pageable pageable) {
         if (keyword == null || keyword.isBlank()) {
             return Page.empty(pageable);
         }
@@ -266,12 +286,12 @@ public class CommunityService {
             );
 
             // 응답 DTO 변환
-            List<CommunitySummaryResponse> responseList = communities.getContent().stream()
+            List<CommunitySummaryResponseDTO> responseList = communities.getContent().stream()
                     .map(community -> {
                         // 댓글 수 조회
                         int commentCount = commentRepository.countByCommunityId(community.getId());
 
-                        return new CommunitySummaryResponse(
+                        return new CommunitySummaryResponseDTO(
                                 community.getId(),
                                 community.getUser().getNickname(),
                                 community.getTitle(),
@@ -279,6 +299,8 @@ public class CommunityService {
                                 community.getCreatedAt(),
                                 community.getViewCount(),
                                 community.getLikeCount(),
+                                community.getContent(),
+                                community.getUser().getProfileImageUrl(),
                                 Long.valueOf(commentCount)
                         );
                     })
