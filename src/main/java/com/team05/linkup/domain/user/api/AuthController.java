@@ -47,7 +47,7 @@ public class AuthController {
                             .secure(true)
                             .path("/")
                             .maxAge(Duration.ofHours(1))
-                            .sameSite("Strict")  // 이게 핵심!
+                            .sameSite("None")  // 이게 핵심!
                             .build();
                     return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(response);
                 }

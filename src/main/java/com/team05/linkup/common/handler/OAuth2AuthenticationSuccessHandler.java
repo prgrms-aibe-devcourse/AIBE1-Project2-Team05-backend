@@ -33,7 +33,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
 
             ResponseCookie cookie = ResponseCookie.from("jwt_token", token)
-                    .sameSite("strict")
+                    .sameSite("None")
                     .httpOnly(true)
                     .secure(true)
                     .path("/")
