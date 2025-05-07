@@ -33,34 +33,55 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             String token = jwtServiceImpl.generateAccessToken(authentication);
             String refreshToken = refreshTokenServiceImpl.createRefreshToken(authentication);
 
-            String domain = request.getServerName().contains("localhost") ? "localhost" : "eastern-rowena-jack6767-df59f302.koyeb.app";
+            // 요청 헤더에서 실제 호스트 정보 가져오기
+            String host = request.getHeader("X-Forwarded-Host");
+            if (host == null || host.isEmpty()) {
+                host = request.getServerName();
+            }
+
+            logger.info("Detected host for redirection: {}", host);
+
+            // 쿠키 도메인 설정
+            String cookieDomain;
+            if (host.contains("localhost")) {
+                cookieDomain = "localhost";
+            } else {
+                cookieDomain = host;
+            }
 
             // SameSite=None 설정 (크로스 사이트 요청에서 쿠키 전송을 허용)
             ResponseCookie cookie = ResponseCookie.from("jwt_token", token)
                     .sameSite("None")  // 크로스 사이트 요청에서도 쿠키 전송
                     .httpOnly(true)    // JavaScript에서 접근 불가
-                    .secure(true)  // HTTPS에서만 전송 (개발 환경에서는 false일 수 있음)
+                    .secure(true)      // HTTPS에서만 전송
                     .path("/")         // 모든 경로에서 사용 가능
                     .maxAge(60 * 60)   // 1시간
-                    .domain(domain)
+                    .domain(cookieDomain)
                     .build();
 
             // 쿠키 헤더 추가
             String provider = jwtUtils.parseToken(token).get("provider").toString();
-            String scheme = request.getScheme(); // "http" 또는 "https"
+
+            // 프로토콜 감지 (X-Forwarded-Proto 헤더 확인)
+            String scheme = request.getHeader("X-Forwarded-Proto");
+            if (scheme == null || scheme.isEmpty()) {
+                scheme = request.getScheme(); // "http" 또는 "https"
+            }
 
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             response.setStatus(HttpServletResponse.SC_OK);
             response.setHeader("Set-Cookie", cookie.toString());
-            logger.info("JWT Cookie set: {}", cookie);
-            response.sendRedirect("%s://%s/user-type-selection?loggedIn=%s&socialType=%s"
-                    .formatted(scheme, domain, true, provider));
-            logger.info("%s://%s/user-type-selection?loggedIn=%s&socialType=%s"
-                    .formatted(scheme, domain, true, provider));
+
+            // 리디렉션 URL 생성
+            String redirectUrl = String.format("%s://%s/user-type-selection?loggedIn=%s&socialType=%s",
+                    scheme, host, true, provider);
+
+            logger.info("Redirecting to: {}", redirectUrl);
+            response.sendRedirect(redirectUrl);
         } catch (Exception e) {
-            logger.error("during onAuthenticationSuccess Exception error {}", e.getMessage(), e);
-            throw new ServletException("during onAuthenticationSuccess Exception error", e);
+            logger.error("During onAuthenticationSuccess Exception error {}", e.getMessage(), e);
+            throw new ServletException("During onAuthenticationSuccess Exception error", e);
         }
     }
 }
