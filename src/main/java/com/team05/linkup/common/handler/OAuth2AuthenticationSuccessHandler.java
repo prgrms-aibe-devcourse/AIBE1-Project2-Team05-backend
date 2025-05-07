@@ -2,6 +2,7 @@ package com.team05.linkup.common.handler;
 
 import com.team05.linkup.common.application.JwtServiceImpl;
 import com.team05.linkup.common.application.RefreshTokenServiceImpl;
+import com.team05.linkup.common.util.JwtUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,15 +13,16 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final JwtServiceImpl jwtServiceImpl;
     private final RefreshTokenServiceImpl refreshTokenServiceImpl;
+    private final JwtUtils jwtUtils;
     private final static Logger logger = LogManager.getLogger(OAuth2AuthenticationSuccessHandler.class);
 
     @Override
@@ -42,10 +44,13 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             // 쿠키 헤더 추가
             response.addHeader("Set-Cookie", cookie.toString());
             logger.info("JWT Cookie set: {}", cookie);
+            String provider = jwtUtils.parseToken(token).get("provider").toString();
 
             // 홈페이지로 리다이렉트
-            String targetUrl = UriComponentsBuilder.fromUriString("/").build().toUriString();
-            getRedirectStrategy().sendRedirect(request, response, targetUrl);
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write(Map.of(
+                    "loggedIn", true,
+                    "socialType", provider).toString());
 
         } catch (Exception e) {
             logger.error("during onAuthenticationSuccess Exception error {}", e.getMessage(), e);
