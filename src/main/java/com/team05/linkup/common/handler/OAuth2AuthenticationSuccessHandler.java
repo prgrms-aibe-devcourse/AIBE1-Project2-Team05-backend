@@ -74,8 +74,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             response.setHeader("Set-Cookie", cookie.toString());
 
             // 리디렉션 URL 생성
-            String redirectUrl = String.format("%s://%s/user-type-selection?loggedIn=%s&socialType=%s",
-                    scheme, host, true, provider);
+            String redirectUrl = String.format("%s://eastern-rowena-jack6767-df59f302.koyeb.app/user-type-selection?loggedIn=%s&socialType=%s",
+                    scheme, true, provider);
 
             logger.info("Redirecting to: {}", redirectUrl);
             response.sendRedirect(redirectUrl);
