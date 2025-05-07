@@ -46,8 +46,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .build();
 
             // 쿠키 헤더 추가
-            response.addHeader("Set-Cookie", cookie.toString());
-            logger.info("JWT Cookie set: {}", cookie);
             String provider = jwtUtils.parseToken(token).get("provider").toString();
             String scheme = request.getScheme(); // "http" 또는 "https"
 
@@ -55,6 +53,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             response.setCharacterEncoding("UTF-8");
             response.setStatus(HttpServletResponse.SC_OK);
             response.setHeader("Set-Cookie", cookie.toString());
+            logger.info("JWT Cookie set: {}", cookie);
             response.sendRedirect("%s://%s/user-type-selection?loggedIn=%s&socialType=%s"
                     .formatted(scheme, domain, true, provider));
         } catch (Exception e) {
