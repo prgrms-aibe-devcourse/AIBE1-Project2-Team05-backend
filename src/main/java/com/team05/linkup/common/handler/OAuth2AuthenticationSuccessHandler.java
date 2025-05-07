@@ -16,7 +16,6 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -50,15 +49,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             response.addHeader("Set-Cookie", cookie.toString());
             logger.info("JWT Cookie set: {}", cookie);
             String provider = jwtUtils.parseToken(token).get("provider").toString();
+            String scheme = request.getScheme(); // "http" 또는 "https"
 
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             response.setStatus(HttpServletResponse.SC_OK);
             response.setHeader("Set-Cookie", cookie.toString());
-            response.getWriter().write(objectMapper.writeValueAsString(Map.of(
-                    "loggedIn", true,
-                    "socialType", provider)));
-
+            response.sendRedirect("%s://%s/user-type-selection?loggedIn=%s&socialType=%s"
+                    .formatted(scheme, domain, true, provider));
         } catch (Exception e) {
             logger.error("during onAuthenticationSuccess Exception error {}", e.getMessage(), e);
             throw new ServletException("during onAuthenticationSuccess Exception error", e);
