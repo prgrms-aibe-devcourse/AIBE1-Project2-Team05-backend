@@ -56,6 +56,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             logger.info("JWT Cookie set: {}", cookie);
             response.sendRedirect("%s://%s/user-type-selection?loggedIn=%s&socialType=%s"
                     .formatted(scheme, domain, true, provider));
+            logger.info("%s://%s/user-type-selection?loggedIn=%s&socialType=%s"
+                    .formatted(scheme, domain, true, provider));
         } catch (Exception e) {
             logger.error("during onAuthenticationSuccess Exception error {}", e.getMessage(), e);
             throw new ServletException("during onAuthenticationSuccess Exception error", e);
