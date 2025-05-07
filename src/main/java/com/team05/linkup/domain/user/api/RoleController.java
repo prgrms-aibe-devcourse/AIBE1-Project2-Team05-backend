@@ -36,9 +36,6 @@ public class RoleController {
                         .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
             }
 
-            String providerId = userPrincipal.providerId();
-            String provider = userPrincipal.provider();
-
             modifyRoleServiceImpl.modifyRole(userPrincipal, roleRequestDTO.role());
             return ResponseEntity.ok(ApiResponse.success());
 

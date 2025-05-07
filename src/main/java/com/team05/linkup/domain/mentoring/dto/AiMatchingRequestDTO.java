@@ -11,6 +11,7 @@ public record AiMatchingRequestDTO(String profileTag, List<OtherProfile> otherPr
                                 String nickname,
                                 String profileTag,
                                 String profileImageUrl,
-                                String providerId
+                                String providerId,
+                                String contactLink
                                ) {}
 }

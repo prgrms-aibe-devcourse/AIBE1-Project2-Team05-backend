@@ -20,6 +20,7 @@ public enum ResponseCode {
     INVALID_TYPE_VALUE(HttpStatus.BAD_REQUEST, "요청 값의 타입이 올바르지 않습니다."),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증되지 않은 사용자입니다."),
+    TIMEOUT(HttpStatus.REQUEST_TIMEOUT, "요청을 기다리다 서버에서 타임아웃하였습니다"),
 
     // 커뮤니티 관련 오류 (예시)
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."),
