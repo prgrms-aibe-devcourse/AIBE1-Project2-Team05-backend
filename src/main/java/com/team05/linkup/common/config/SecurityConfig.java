@@ -101,7 +101,9 @@ public class SecurityConfig {
                 "http://localhost:3000",
                 "http://localhost:8080",
                 "https://eastern-rowena-jack6767-df59f302.koyeb.app",
-                "https://dev-linkup.duckdns.org"
+                "https://dev-linkup.duckdns.org",
+                "https://aibe1-project2-team05-frontend.onrender.com"
+
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList(
