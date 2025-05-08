@@ -21,6 +21,8 @@ public class MyCommentResponseDTO {
         return description;
     }
 
+    // 이 getter는 명시적으로 호출되지 않아도 JSON 변환 시 사용됨 (e.g., @RestController 응답)
+    // 삭제 시 댓글 내용이 응답에 포함되지 않으므로 유지 필수
     public String getCommentContent() {
         return commentContent;
     }
