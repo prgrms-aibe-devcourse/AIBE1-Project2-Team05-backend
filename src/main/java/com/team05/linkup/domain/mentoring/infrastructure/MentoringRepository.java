@@ -2,10 +2,11 @@ package com.team05.linkup.domain.mentoring.infrastructure;
 
 import com.team05.linkup.domain.enums.MentoringStatus;
 import com.team05.linkup.domain.mentoring.domain.MentoringSessions;
-import org.apache.ibatis.annotations.Param;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -56,4 +57,11 @@ public interface MentoringRepository extends JpaRepository<MentoringSessions, St
     """, nativeQuery = true)
     List<Object[]> getMentorStatisticsFromView(@Param("mentorId") String mentorId);
 
+    // 닉네임으로 menteeId 조회
+    @Query("SELECT u.id FROM User u WHERE u.nickname = :nickname")
+    String findMenteeIdByNickname(@Param("nickname") String nickname);
+
+    // menteeId로 페이징된 매칭 세션 조회
+    @Query("SELECT m FROM MentoringSessions m WHERE m.mentee.id = :menteeId")
+    Page<MentoringSessions> findByMenteeUserIdPaged(@Param("menteeId") String menteeId, Pageable pageable);
 }

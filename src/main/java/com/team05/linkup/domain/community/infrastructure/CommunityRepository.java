@@ -2,7 +2,8 @@ package com.team05.linkup.domain.community.infrastructure;
 
 import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.domain.CommunityCategory;
-import com.team05.linkup.domain.community.dto.CommunitySummaryResponse;
+import com.team05.linkup.domain.community.dto.CommunitySummaryResponseDTO;
+import com.team05.linkup.domain.community.dto.CommunityWeeklyPopularDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,37 +22,51 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
     /**
      * 커뮤니티 요약의 페이지 매김된 목록을 찾습니다.
      */
-    @Query("SELECT new com.team05.linkup.domain.community.dto.CommunitySummaryResponse(" +
-            "c.id, u.nickname, c.title, c.category, c.createdAt, c.viewCount, c.likeCount, " +
-            "CAST((SELECT COUNT(cmt.id) FROM Comment cmt WHERE cmt.communityId = c.id) AS Long)) " +
+    @Query("SELECT new com.team05.linkup.domain.community.dto.CommunitySummaryResponseDTO(" +
+            "c.id, u.nickname, c.title, c.category, c.createdAt, c.viewCount, c.likeCount, c.content, " +
+            "u.profileImageUrl, " +
+            "CAST((SELECT COUNT(cmt.id) FROM Comment cmt WHERE cmt.communityId = c.id) AS Long) AS commentCount) " +
             "FROM Community c JOIN c.user u " +
             "WHERE (:category IS NULL OR c.category = :category)")
-    Page<CommunitySummaryResponse> findCommunitySummaries(
+    Page<CommunitySummaryResponseDTO> findCommunitySummaries(
             @Param("category") CommunityCategory category,
             Pageable pageable);
 
     /**
      * 인기 게시글 조회
      */
-    @Query("SELECT new com.team05.linkup.domain.community.dto.CommunitySummaryResponse(" +
-            "c.id, u.nickname, c.title, c.category, c.createdAt, c.viewCount, c.likeCount, " +
-            "CAST((SELECT COUNT(cmt.id) FROM Comment cmt WHERE cmt.communityId = c.id) AS Long)) " +
+    @Query("SELECT new com.team05.linkup.domain.community.dto.CommunitySummaryResponseDTO(" +
+            "c.id, u.nickname, c.title, c.category, c.createdAt, c.viewCount, c.likeCount, c.content, " +
+            "u.profileImageUrl, " +
+            "CAST((SELECT COUNT(cmt.id) FROM Comment cmt WHERE cmt.communityId = c.id) AS Long) AS commentCount) " +
             "FROM Community c JOIN c.user u " +
             "WHERE c.createdAt > :startDate " +
             "ORDER BY c.viewCount DESC, c.likeCount DESC, c.createdAt DESC")
-    List<CommunitySummaryResponse> findPopularSince(@Param("startDate") ZonedDateTime startDate, Pageable pageable);
+    List<CommunitySummaryResponseDTO> findPopularSince(@Param("startDate") ZonedDateTime startDate, Pageable pageable);
+
+    /**
+     * 주간 인기 게시글 조회
+     */
+    @Query("SELECT new com.team05.linkup.domain.community.dto.CommunityWeeklyPopularDTO(" +
+            "c.id, c.title, c.category) " +
+            "FROM Community c " +
+            "WHERE c.createdAt > :startDate " +
+            "ORDER BY c.viewCount DESC, c.likeCount DESC, c.createdAt DESC"
+    )
+    List<CommunityWeeklyPopularDTO> findWeeklyPopular(@Param("startDate") ZonedDateTime startDate, Pageable pageable);
+
 
     /**
      * 검색 쿼리
      */
-    @Query("SELECT new com.team05.linkup.domain.community.dto.CommunitySummaryResponse(" +
-            "c.id, u.nickname, c.title, c.category, c.createdAt, c.viewCount, c.likeCount, " +
-            "CAST((SELECT COUNT(cmt.id) FROM Comment cmt WHERE cmt.communityId = c.id) AS Long)) " +
+    @Query("SELECT new com.team05.linkup.domain.community.dto.CommunitySummaryResponseDTO(" +
+            "c.id, u.nickname, c.title, c.category, c.createdAt, c.viewCount, c.likeCount, c.content, " +
+            "u.profileImageUrl, " +
+            "CAST((SELECT COUNT(cmt.id) FROM Comment cmt WHERE cmt.communityId = c.id) AS Long) AS commentCount) " +
             "FROM Community c JOIN c.user u " +
             "WHERE c.title LIKE CONCAT('%', :keyword, '%') " +
-            "   OR c.content LIKE CONCAT('%', :keyword, '%') " +
-            "   OR c.communityTag LIKE CONCAT('%', :keyword, '%')")
-    Page<CommunitySummaryResponse> searchSummariesByKeyword(@Param("keyword") String keyword, Pageable pageable);
+            "   OR c.content LIKE CONCAT('%', :keyword, '%')")
+    Page<CommunitySummaryResponseDTO> searchSummariesByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
     // 좋아요 증감 메서드 유지
     @Modifying
@@ -322,6 +337,34 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
 """, nativeQuery = true)
     List<Object[]> findByMyLikePosts(@Param("user") String user, @Param("limit") int limit);
 
+    // 수동 매칭 현황 - 재능 기부 게시글
+    List<Community> findByCategoryAndUserNicknameOrderByUpdatedAtDesc(
+            CommunityCategory category, String nickname);
+
+//    QueryDSL 방식으로 변경 (일단 nativeQuery 버전은 주석으로 임시 유지)
+//    // 멘토 마이페이지_매칭 현황 - (인기 QnA 조회 쿼리)
+//    @Query(value = """
+//    SELECT
+//        c.id,
+//        c.updated_at,
+//        c.title,
+//        CASE
+//            WHEN CHAR_LENGTH(c.content) > 55 THEN CONCAT(LEFT(c.content, 55), '...')
+//            ELSE c.content
+//        END AS content
+//    FROM community c
+//    WHERE
+//        c.category = 'QUESTION'
+//        AND c.community_tag_id = :interestTag
+//    ORDER BY c.updated_at DESC
+//    LIMIT :limit
+//""", nativeQuery = true)
+//    List<Object[]> findPopularQnAPostsByInterest(
+//            @Param("interestTag") String interestTag,
+//            @Param("limit") int limit
+//    );
+
+
     /**
      * 관심 목록 - 내가 좋아요한 게시글 (페이징 지원)
      */
@@ -346,5 +389,4 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
         WHERE l.user_id = :userId
     """, nativeQuery = true)
     Page<Object[]> findLikesByUserId(@Param("userId") String userId, Pageable pageable);
-
 }

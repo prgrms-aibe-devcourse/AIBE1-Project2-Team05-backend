@@ -1,7 +1,9 @@
 package com.team05.linkup.common.handler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team05.linkup.common.application.JwtServiceImpl;
 import com.team05.linkup.common.application.RefreshTokenServiceImpl;
+import com.team05.linkup.common.util.JwtUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,44 +14,71 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final JwtServiceImpl jwtServiceImpl;
     private final RefreshTokenServiceImpl refreshTokenServiceImpl;
+    private final JwtUtils jwtUtils;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final static Logger logger = LogManager.getLogger(OAuth2AuthenticationSuccessHandler.class);
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws ServletException {
+                                        Authentication authentication) throws ServletException, IOException {
         try {
-
             String token = jwtServiceImpl.generateAccessToken(authentication);
             String refreshToken = refreshTokenServiceImpl.createRefreshToken(authentication);
 
-//            response.setHeader("Authorization", "Bearer " + token);
+            // 요청 헤더에서 실제 호스트 정보 가져오기
+            String host = request.getHeader("X-Forwarded-Host");
+            String xForwardedProto = request.getHeader("X-Forwarded-Proto");
+            if (host == null || host.isEmpty()) {
+                host = request.getServerName();
+            }
+            logger.info("X-Forwarded-Host: {}", host);
+            logger.info("X-Forwarded-Proto: {}", xForwardedProto);
+            logger.info("Detected host for redirection: {}", host);
+
+            // 쿠키 도메인 설정
+            String cookieDomain;
+            if (host.contains("localhost")) {
+                cookieDomain = "localhost";
+            } else {
+                cookieDomain = host;
+            }
+            logger.info("Setting cookie domain to: {}", cookieDomain);
 
 
+            // SameSite=None 설정 (크로스 사이트 요청에서 쿠키 전송을 허용)
             ResponseCookie cookie = ResponseCookie.from("jwt_token", token)
-                    .sameSite("strict")
-                    .httpOnly(true)
-                    .secure(true)
-                    .path("/")
-                    .maxAge(60 * 60)
+                    .sameSite("None")  // 크로스 사이트 요청에서도 쿠키 전송
+                    .httpOnly(true)    // JavaScript에서 접근 불가
+                    .secure(true)      // HTTPS에서만 전송
+                    .path("/")         // 모든 경로에서 사용 가능
+                    .maxAge(60 * 60)   // 1시간
+                    .domain(".duckdns.org")
                     .build();
+            logger.info("cookie: {}", cookie.toString());
+            // 쿠키 헤더 추가
+            String provider = jwtUtils.parseToken(token).get("provider").toString();
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.setHeader("Set-Cookie", cookie.toString());
 
-            response.addHeader("Set-Cookie", cookie.toString());
+            // 리디렉션 URL 생성
+            String redirectUrl = String.format("https://front-likup.duckdns.org/user-type-selection?loggedIn=%s&socialType=%s",
+                    true, provider);
 
-//            clearAuthenticationAttributes(request); // 이게 중요합니다!
-
-            String targetUrl = UriComponentsBuilder.fromUriString("/").build().toUriString();
-            getRedirectStrategy().sendRedirect(request, response, targetUrl);
-
+            logger.info("Redirecting to: {}", redirectUrl);
+            response.sendRedirect(redirectUrl);
         } catch (Exception e) {
-            logger.error("during onAuthenticationSuccess Exception error {}", e.getMessage());
-            throw new ServletException("during onAuthenticationSuccess Exception error", e);
+            logger.error("During onAuthenticationSuccess Exception error {}", e.getMessage(), e);
+            throw new ServletException("During onAuthenticationSuccess Exception error", e);
         }
     }
 }

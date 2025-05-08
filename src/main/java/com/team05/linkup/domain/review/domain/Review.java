@@ -1,8 +1,7 @@
 package com.team05.linkup.domain.review.domain;
 
 import com.team05.linkup.domain.baseEntity.BaseEntity;
-import com.team05.linkup.domain.enums.*;
-import com.team05.linkup.domain.user.domain.User;
+import com.team05.linkup.domain.enums.Interest;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -13,13 +12,14 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "review")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PUBLIC)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 public class Review extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = 36)
     private String id;  // 리뷰 ID (UUID)
 
     @Column(nullable = false, length = 36)

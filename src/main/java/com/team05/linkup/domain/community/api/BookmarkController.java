@@ -4,7 +4,7 @@ import com.team05.linkup.common.dto.ApiResponse;
 import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.domain.community.application.BookmarkService;
-import com.team05.linkup.domain.community.dto.BookmarkStatusResponse;
+import com.team05.linkup.domain.community.dto.BookmarkStatusResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,7 @@ public class BookmarkController {
      */
     @Operation(summary = "게시글 북마크 토글", description = "특정 커뮤니티 게시글의 북마크 상태를 변경(토글).")
     @PostMapping("{communityId}/bookmark")
-    public ResponseEntity<ApiResponse<BookmarkStatusResponse>> toggleBookmark(
+    public ResponseEntity<ApiResponse<BookmarkStatusResponseDTO>> toggleBookmark(
             @PathVariable String communityId,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
@@ -49,7 +49,7 @@ public class BookmarkController {
         boolean isBookmarked = bookmarkService.toggleBookmark(provider, providerId, communityId);
 
         // 성공 응답 반환 (최종 상태 포함)
-        return ResponseEntity.ok(ApiResponse.success(new BookmarkStatusResponse(isBookmarked)));
+        return ResponseEntity.ok(ApiResponse.success(new BookmarkStatusResponseDTO(isBookmarked)));
     }
 
 }

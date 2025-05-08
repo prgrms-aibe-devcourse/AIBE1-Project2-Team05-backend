@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -25,6 +24,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity // 스프링 시큐리티 필터가 스프링 필터체인에 등록이 된다
@@ -52,7 +53,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomLogoutSuccessHandler customLogoutSuccessHandler) throws Exception {
         http.
-                cors(Customizer.withDefaults()) // ✅ CORS 활성화
+                cors(cors -> cors.configurationSource(corsConfigurationSource()))  // CORS 설정 적용
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session
                         -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -81,12 +82,6 @@ public class SecurityConfig {
                             response.getWriter().write("Access Denied: " + accessDeniedException.getMessage());
                         })
                 )
-                .formLogin(form -> form
-                        .loginProcessingUrl("/login")  // 로그인 요청 URL
-                        .defaultSuccessUrl("/", true)  // 로그인 성공 후 리디렉션할 페이지 설정
-                        .failureUrl("/?error=true")  // 로그인 실패 시 리디렉션할 페이지 설정
-                        .permitAll()  // 로그인 페이지는 누구나 접근 가능
-                )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessHandler(customLogoutSuccessHandler)
@@ -102,9 +97,23 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOriginPattern("*"); // 프론트/Swagger UI가 어디서 호출되든 허용
-        config.addAllowedMethod("*");
-        config.addAllowedHeader("*");
+        config.setAllowedOrigins(Arrays.asList(
+                "http://localhost:3000",
+                "http://localhost:8080",
+                "https://dev-linkup.duckdns.org",
+                "https://front-likup.duckdns.org"
+
+        ));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "Content-Type",
+                "X-Requested-With",
+                "Accept",
+                "Origin",
+                "X-CSRF-Token",
+                "Cookie",
+                "Set-Cookie"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -121,15 +130,6 @@ public class SecurityConfig {
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-//    @Bean
-//    public RoleHierarchy roleHierarchy() {
-//        return RoleHierarchyImpl.fromHierarchy("""
-//                    ROLE_ADMIN > ROLE_DB\s
-//                    ROLE_DB > ROLE_USER
-//                    ROLE_USER > ROLE_ANONYMOUS
-//               \s""");
-//    }
 
 
 }

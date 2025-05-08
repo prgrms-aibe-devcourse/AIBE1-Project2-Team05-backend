@@ -96,6 +96,8 @@ jobs:
               -e SPRING_PROFILES_ACTIVE="${{secrets.SPRING_PROFILES_ACTIVE}}" \
               -e GEMINI_API_KEY="${{secrets.GEMINI_API_KEY}}" \
               -e SERVER_PORT="${{secrets.PORT}}" \
+              -e SUPABASE_URL="${{secrets.SUPABASE_URL}}" \
+              -e SUPABASE_KEY="${{secrets.SUPABASE_KEY}}" \
               ${{ env.DOCKER_REPO }}:latest
             
             echo "새 컨테이너 실행 시도 완료"

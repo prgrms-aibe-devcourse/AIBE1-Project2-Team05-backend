@@ -4,7 +4,7 @@ import com.team05.linkup.common.dto.ApiResponse;
 import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.domain.community.application.LikeService;
-import com.team05.linkup.domain.community.dto.LikeStatusResponse;
+import com.team05.linkup.domain.community.dto.LikeStatusResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,7 @@ public class LikeController {
      */
     @Operation(summary = "게시글 좋아요 토글", description = "특정 커뮤니티 게시글의 좋아요 상태를 변경(토글)합니다.")
     @PostMapping
-    public ResponseEntity<ApiResponse<LikeStatusResponse>> toggleLike(
+    public ResponseEntity<ApiResponse<LikeStatusResponseDTO>> toggleLike(
             @PathVariable String communityId,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
@@ -47,6 +47,6 @@ public class LikeController {
 
 
         boolean liked = likeService.toggleLike(provider, providerId, communityId);
-        return ResponseEntity.ok(ApiResponse.success(new LikeStatusResponse(liked)));
+        return ResponseEntity.ok(ApiResponse.success(new LikeStatusResponseDTO(liked)));
     }
 }
