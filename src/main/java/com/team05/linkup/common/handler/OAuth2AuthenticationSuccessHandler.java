@@ -55,7 +55,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             response.setStatus(HttpServletResponse.SC_OK);
             response.setHeader("Set-Cookie", cookie.toString());
             if ((Role.ROLE_TEMP).equals(Role.valueOf(authorities.iterator().next().getAuthority())) ) {
-                response.sendRedirect("https://frontend.linkup.o-r.kr/ser-type-selection?loggedIn=true&socialType=%s".formatted(provider));
+                response.sendRedirect("https://frontend.linkup.o-r.kr/user-type-selection?loggedIn=true&socialType=%s".formatted(provider));
                 return;
             }
             response.sendRedirect("https://frontend.linkup.o-r.kr/");
