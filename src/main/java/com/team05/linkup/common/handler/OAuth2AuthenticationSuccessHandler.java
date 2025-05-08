@@ -60,7 +60,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .secure(true)      // HTTPS에서만 전송
                     .path("/")         // 모든 경로에서 사용 가능
                     .maxAge(60 * 60)   // 1시간
-                    .domain("aibe1-project2-team05-frontend.onrender.com")
+                    .domain("front-linkup.duckdns.org")
                     .build();
 
             // 쿠키 헤더 추가
@@ -78,7 +78,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             response.setHeader("Set-Cookie", cookie.toString());
 
             // 리디렉션 URL 생성
-            String redirectUrl = String.format("%s://aibe1-project2-team05-frontend.onrender.com/user-type-selection?loggedIn=%s&socialType=%s",
+            String redirectUrl = String.format("%s://front-linkup.duckdns.org/user-type-selection?loggedIn=%s&socialType=%s",
                     scheme, true, provider);
 
             logger.info("Redirecting to: {}", redirectUrl);
