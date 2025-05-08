@@ -65,21 +65,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             logger.info("cookie: {}", cookie.toString());
             // 쿠키 헤더 추가
             String provider = jwtUtils.parseToken(token).get("provider").toString();
-
-            // 프로토콜 감지 (X-Forwarded-Proto 헤더 확인)
-            String scheme = request.getHeader("X-Forwarded-Proto");
-            if (scheme == null || scheme.isEmpty()) {
-                scheme = request.getScheme(); // "http" 또는 "https"
-            }
-
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             response.setStatus(HttpServletResponse.SC_OK);
             response.setHeader("Set-Cookie", cookie.toString());
 
             // 리디렉션 URL 생성
-            String redirectUrl = String.format("%s://front-likup.duckdns.org/user-type-selection?loggedIn=%s&socialType=%s",
-                    scheme, true, provider);
+            String redirectUrl = String.format("https://front-likup.duckdns.org/user-type-selection?loggedIn=%s&socialType=%s",
+                    true, provider);
 
             logger.info("Redirecting to: {}", redirectUrl);
             response.sendRedirect(redirectUrl);
