@@ -101,7 +101,7 @@ public class SecurityConfig {
                 "http://localhost:3000",
                 "http://localhost:8080",
                 "https://dev-linkup.duckdns.org",
-                "https://front-linkup.duckdns.org"
+                "https://front-likup.duckdns.org"
 
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
