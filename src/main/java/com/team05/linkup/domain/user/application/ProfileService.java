@@ -6,18 +6,22 @@ import com.team05.linkup.domain.user.domain.Area;
 import com.team05.linkup.domain.user.domain.Sigungu;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.dto.*;
+import com.team05.linkup.domain.user.infrastructure.AreaRepository;
 import com.team05.linkup.domain.user.infrastructure.SigunguRepository;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -89,7 +93,7 @@ public class ProfileService {
         return rawResults.stream()
                 .map(obj -> new MyPostResponseDTO(
                         (String) obj[0],                                      // id
-                        ((Timestamp) obj[1]).toLocalDateTime(),              // updated_at
+                        ((Timestamp) obj[1]).toInstant().atZone(ZoneOffset.UTC),              // updated_at
                         (String) obj[2],                                      // category
                         (String) obj[3],                                      // title
                         (String) obj[4],                                      // content
@@ -100,14 +104,14 @@ public class ProfileService {
                 .collect(Collectors.toList());
     }
 
-    // 🔧 내가 작성한 커뮤니티 게시글 - 페이징
+    // 내가 작성한 커뮤니티 게시글 - 페이징
     public Page<MyPostResponseDTO> getMyPostsPaged(String nickname, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Object[]> resultPage = communityRepository.findCommunityPostsWithPaging(nickname, pageable);
 
         return resultPage.map(obj -> new MyPostResponseDTO(
                 (String) obj[0],                                      // id
-                ((Timestamp) obj[1]).toLocalDateTime(),              // updated_at
+                ((Timestamp) obj[1]).toInstant().atZone(ZoneOffset.UTC),              // updated_at
                 (String) obj[2],                                      // category
                 (String) obj[3],                                      // title
                 (String) obj[4],                                      // content
@@ -133,7 +137,7 @@ public class ProfileService {
                         String commentContent = (String) row[2];
 
                         return new MyCommentResponseDTO(
-                                updatedAt != null ? updatedAt.toLocalDateTime() : null, // Timestamp가 null일 경우 NPE 방지
+                                updatedAt != null ? updatedAt.toInstant().atZone(ZoneOffset.UTC) : null, // Timestamp가 null일 경우 NPE 방지
                                 description,
                                 commentContent
                         );
@@ -156,7 +160,7 @@ public class ProfileService {
             String commentContent = (String) row[2];
 
             return new MyCommentResponseDTO(
-                    updatedAt != null ? updatedAt.toLocalDateTime() : null,
+                    updatedAt != null ? updatedAt.toInstant().atZone(ZoneOffset.UTC) : null,
                     description,
                     commentContent
             );
@@ -181,7 +185,7 @@ public class ProfileService {
                     String content = (String) obj[2];
 
                     return new MyBookmarkResponseDTO(
-                            updatedAt != null ? updatedAt.toLocalDateTime() : null, // Timestamp가 null일 경우 NPE 방지
+                            updatedAt != null ? updatedAt.toInstant().atZone(ZoneOffset.UTC) : null, // Timestamp가 null일 경우 NPE 방지
                             title,
                             content
                     );
@@ -206,7 +210,7 @@ public class ProfileService {
                     String content = (String) obj[2];
 
                     return new MyLikeResponseDTO(
-                            updatedAt != null ? updatedAt.toLocalDateTime() : null,
+                            updatedAt != null ? updatedAt.toInstant().atZone(ZoneOffset.UTC) : null,
                             title,
                             content
                     );
@@ -253,12 +257,85 @@ public class ProfileService {
                 .build());
     }
 
-    // 🔧 태그 문자열을 리스트로 변환하는 메서드 (기존 MatchingPageFacade 참고)
+    // 태그 문자열을 리스트로 변환하는 메서드 (기존 MatchingPageFacade 참고)
     private List<String> parseTags(String tagString) {
         if (tagString == null || tagString.isBlank()) return List.of();
         return Arrays.stream(tagString.split(","))
                 .map(String::trim)
                 .collect(Collectors.toList());
     }
+
+
+    public void validateAccess(String nickname, UserPrincipal principal) {
+        User user = userRepository.findByProviderAndProviderId(
+                principal.provider(), principal.providerId()
+        ).orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        if (!nickname.equals(user.getNickname())) {
+            throw new AccessDeniedException("본인의 프로필만 조회할 수 있습니다.");
+        }
+    }
+
+
+    @Transactional(readOnly = true)
+    public ProfileSettingsResponseDTO getProfileSettings(String nickname, UserPrincipal principal) {
+        // 본인만 조회 가능
+        validateAccess(nickname, principal);
+
+        // 사용자 조회
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        return ProfileSettingsResponseDTO.builder()
+                .nickname(user.getNickname())
+                .profileImageUrl(user.getProfileImageUrl())
+                .introduction(user.getIntroduction())
+                .interest(user.getInterest())
+                .activityTime(user.getActivityTime())
+                .activityType(user.getActivityType())
+                .area(user.getArea() != null ? user.getArea().getAreaName() : null)
+                .sigungu(user.getSigunguCode())
+                .tags(user.parseTags())
+
+                // 🔹 멘토 전용 필드
+                .contactLink(user.getContactLink())
+                .isAcceptingRequests(user.isMatchStatus())
+                .build();
+    }
+
+
+    private final AreaRepository areaRepository;
+
+    @Transactional
+    public void updateProfileFields(String nickname, ProfileUpdateRequestDTO dto, UserPrincipal userPrincipal) {
+        // 1. 로그인한 사용자 정보로 User 조회
+        User user = userRepository.findByProviderAndProviderId(
+                userPrincipal.provider(), userPrincipal.providerId()
+        ).orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 2. nickname 일치 여부 최종 검증 (추가 안전장치)
+        if (!user.getNickname().equals(nickname)) {
+            throw new AccessDeniedException("프로필 수정 권한이 없습니다.");
+        }
+
+        // 3. Area 연관 엔티티 조회 (nullable 허용)
+        Area area = null;
+        if (dto.getAreaCode() != null) {
+            area = areaRepository.findById(dto.getAreaCode())
+                    .orElseThrow(() -> new EntityNotFoundException("해당 지역 정보를 찾을 수 없습니다."));
+        }
+
+        // 4. 닉네임 중복 검사 (본인의 닉네임이 아닐 경우에만 검사)
+        if (!user.getNickname().equals(dto.getNickname()) &&
+                userRepository.existsByNickname(dto.getNickname())) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+        }
+
+        // 5. User 객체 업데이트
+        user.updateProfileFields(dto, area);
+
+        // 6. 저장은 @Transactional로 처리 완료
+    }
+
 
 }

@@ -6,11 +6,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Immutable;
 
 @Entity
 @Table(name = "mentor_statistics") // 멘토링 통계 뷰
 @Getter
 @NoArgsConstructor
+@Immutable
 public class MentorStatisticsView {
 
     @Id
