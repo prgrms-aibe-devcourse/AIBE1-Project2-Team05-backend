@@ -289,6 +289,28 @@ public class ProfileController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PatchMapping("/{nickname}/profile")
+    @Operation(summary = "프로필 정보 수정", description = "자기 자신의 프로필 정보를 수정합니다.")
+    public ResponseEntity<ApiResponse<String>> updateProfileFields(
+            @PathVariable String nickname,
+            @RequestBody ProfileUpdateRequestDTO dto,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        try {
+            profileService.updateProfileFields(nickname, dto, principal);
+            return ResponseEntity.ok(ApiResponse.success("프로필 정보가 수정되었습니다."));
+        } catch (AccessDeniedException e) {
+            logger.warn("🚫 접근 거부: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED));
+        } catch (Exception e) {
+            logger.error("❌ 서버 오류 발생", e);
+            return ResponseEntity.internalServerError()
+                    .body(ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR));
+        }
+    }
+
+
     @Autowired
     private ProfileImageService profileImageService;
 
