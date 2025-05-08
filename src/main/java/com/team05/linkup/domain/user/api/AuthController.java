@@ -1,6 +1,8 @@
 package com.team05.linkup.domain.user.api;
 
 import com.team05.linkup.common.application.RefreshTokenServiceImpl;
+import com.team05.linkup.common.dto.ApiResponse;
+import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.common.util.JwtUtils;
 import com.team05.linkup.domain.user.dto.RefreshTokenResponseDTO;
 import io.jsonwebtoken.Claims;
@@ -14,6 +16,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -58,5 +63,20 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @GetMapping("/status")
+    public ResponseEntity<ApiResponse> getStatus(HttpServletRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isLoggedIn = authentication != null &&
+                authentication.isAuthenticated() &&
+                !(authentication instanceof AnonymousAuthenticationToken);
+
+        if (!isLoggedIn) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success());
     }
 }
