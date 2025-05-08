@@ -1,7 +1,6 @@
 package com.team05.linkup.common.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team05.linkup.common.application.CustomOAuth2User;
 import com.team05.linkup.common.application.JwtServiceImpl;
 import com.team05.linkup.common.application.RefreshTokenServiceImpl;
 import com.team05.linkup.common.util.JwtUtils;
@@ -37,10 +36,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             String token = jwtServiceImpl.generateAccessToken(authentication);
             String refreshToken = refreshTokenServiceImpl.createRefreshToken(authentication);
 
-            CustomOAuth2User user = (CustomOAuth2User) authentication.getPrincipal();
-            Collection<? extends GrantedAuthority> authorities = user.getAuthorities();
-            boolean isNewUser = user.isNewUser();
-
+            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
             // SameSite=None 설정 (크로스 사이트 요청에서 쿠키 전송을 허용)
             ResponseCookie cookie = ResponseCookie.from("jwt_token", token)
