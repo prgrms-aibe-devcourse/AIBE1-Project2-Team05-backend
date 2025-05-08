@@ -4,6 +4,7 @@ import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.domain.CommunityCategory;
 import com.team05.linkup.domain.community.domain.Image;
+import com.team05.linkup.domain.community.domain.Tag;
 import com.team05.linkup.domain.community.dto.CommunityCreatedEventDTO;
 import com.team05.linkup.domain.community.dto.CommunityDto;
 import com.team05.linkup.domain.community.dto.CommunitySummaryResponseDTO;
@@ -11,6 +12,7 @@ import com.team05.linkup.domain.community.dto.CommunityWeeklyPopularDTO;
 import com.team05.linkup.domain.community.infrastructure.CommentRepository;
 import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
 import com.team05.linkup.domain.community.infrastructure.ImageRepository;
+import com.team05.linkup.domain.community.infrastructure.TagRepository;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -26,7 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +52,7 @@ public class CommunityService {
     // private final BookmarkRepository bookmarkRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final CommunityImageService communityImageService;
+    private final TagRepository tagRepository;
 
     private CommunityCategory parseCategory(String raw) {
         try {
@@ -56,6 +61,34 @@ public class CommunityService {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("지원하지 않는 카테고리입니다: " + raw);
         }
+    }
+
+    /**
+     * 태그 이름 목록을 받아 기존 Tag 엔티티를 조회하거나 새로 생성하여 Set<Tag> 형태로 반환합니다.
+     * 이 메서드는 쓰기 트랜잭션이 필요할 수 있으므로, 호출하는 메서드에 @Transactional을 명시해야 합니다.
+     * (현재 클래스 레벨에 @Transactional(readOnly=true) 이므로, 쓰기 작업이 있는 메서드는 개별적으로 @Transactional 명시 필요)
+     *
+     * @param tagNames 태그 이름 목록 (String List).
+     * @return 처리된 Tag 엔티티 Set.
+     */
+    @Transactional // Tag 생성/저장 로직이 포함될 수 있으므로 쓰기 트랜잭션 명시
+    protected Set<Tag> processTags(List<String> tagNames) {
+        if (tagNames == null || tagNames.isEmpty()) {
+            return new HashSet<>();
+        }
+        Set<Tag> tags = new HashSet<>();
+        for (String tagName : tagNames) {
+            if (tagName == null || tagName.trim().isEmpty()) continue;
+            String trimmedTagName = tagName.trim();
+            // 기존 태그 조회 또는 새로 생성
+            Tag tag = tagRepository.findByName(trimmedTagName)
+                    .orElseGet(() -> {
+                        log.info("새로운 태그 '{}'를 생성합니다.", trimmedTagName);
+                        return tagRepository.save(Tag.builder().name(trimmedTagName).build());
+                    });
+            tags.add(tag);
+        }
+        return tags;
     }
 
     /**
@@ -128,7 +161,14 @@ public class CommunityService {
         return communityRepository.searchSummariesByKeyword(keyword, pageable);
     }
 
-    // 게시글 상세 조회
+    /**
+     * 게시글 ID로 특정 게시글의 상세 정보를 조회합니다. 조회 시 조회수가 증가합니다.
+     *
+     * @param userId 현재 조회하는 사용자의 ID (좋아요, 북마크 상태 확인 등에 사용될 수 있음). 없을 경우 null.
+     * @param communityId 조회할 게시글 ID.
+     * @return 게시글 상세 정보 DTO ({@link CommunityDto.DetailResponse}).
+     * @throws EntityNotFoundException 해당 ID의 게시글이 없을 경우 발생.
+     */
     @Transactional
     public CommunityDto.DetailResponse getCommunityDetail(String userId, String communityId) {
         Community community = communityRepository.findById(communityId)
@@ -151,6 +191,11 @@ public class CommunityService {
                 .map(p -> communityImageService.getSignedUrl(p, 60))
                 .toList();
 
+        // 태그 이름 목록 추출
+        List<String> tagNames = community.getTags().stream()
+                .map(Tag::getName)
+                .toList();
+
         return CommunityDto.DetailResponse.builder()
                 .id(community.getId())
                 .userId(community.getUser().getId())
@@ -158,7 +203,7 @@ public class CommunityService {
                 .profileImageUrl(community.getUser().getProfileImageUrl())
                 .title(community.getTitle())
                 .category(community.getCategory().name())
-                .communityTag(community.getCommunityTag())
+                .tags(tagNames)
                 .content(community.getContent())
                 .viewCount(community.getViewCount().intValue())
                 // .likeCount((int) likeCount)
@@ -171,58 +216,93 @@ public class CommunityService {
                 .build();
     }
 
-    // 게시글 생성
+    /**
+     * 새로운 커뮤니티 게시글을 생성합니다.
+     *
+     * @param userPrincipal 현재 인증된 사용자의 정보.
+     * @param request 게시글 생성 요청 데이터 DTO ({@link CommunityDto.Request}).
+     * @return 생성된 게시글의 기본 정보 DTO ({@link CommunityDto.Response}).
+     * @throws EntityNotFoundException 요청한 사용자를 찾을 수 없을 경우 발생.
+     */
     @Transactional
     public CommunityDto.Response createCommunity(UserPrincipal userPrincipal, CommunityDto.Request request) {
         User user = userRepository.findByProviderAndProviderId(userPrincipal.provider(), userPrincipal.providerId())
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
+        Set<Tag> processedTags = processTags(request.getTags());
+
+
         Community community = Community.builder()
                 .user(user)
                 .title(request.getTitle())
                 .category(parseCategory(request.getCategory()))
-                .communityTag(request.getCommunityTag())
                 .content(request.getContent())
-                .viewCount(0L)
+                .tags(processedTags)
                 .build();
 
         Community savedCommunity = communityRepository.save(community);
 
-        eventPublisher.publishEvent(new CommunityCreatedEventDTO(savedCommunity)); /* 이벤트 비동기 리스너 생성
-                                                                                     질문 카테고리 ai 답변*/
+        // AI 답변 생성 등 추가 로직을 위한 이벤트 발행
+        if (savedCommunity.getCategory() == CommunityCategory.QUESTION) {
+            eventPublisher.publishEvent(new CommunityCreatedEventDTO(savedCommunity));
+        }
 
         return CommunityDto.Response.from(savedCommunity);
     }
 
-    // 게시글 수정
+    /**
+     * 기존 커뮤니티 게시글을 수정합니다.
+     *
+     * @param userPrincipal 수정 요청을 한 사용자의 인증 정보 (권한 확인용).
+     * @param communityId 수정할 게시글의 ID.
+     * @param request 게시글 수정 요청 데이터 DTO ({@link CommunityDto.Request}).
+     * @return 수정된 게시글의 기본 정보 DTO ({@link CommunityDto.Response}).
+     * @throws EntityNotFoundException 해당 ID의 게시글이 없거나, 사용자를 찾을 수 없을 경우.
+     * @throws IllegalArgumentException 수정 권한이 없는 경우.
+     */
     @Transactional
-    public CommunityDto.Response updateCommunity(String userId, String communityId, CommunityDto.Request request) {
+    public CommunityDto.Response updateCommunity(UserPrincipal userPrincipal, String communityId, CommunityDto.Request request) {
         Community community = communityRepository.findById(communityId)
                 .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
 
+        User user = community.getUser();
+
         // 게시글 작성자만 수정 가능
-        if (!community.getUser().getId().equals(userId)) {
+        if (!user.getProvider().equals(userPrincipal.provider()) || !user.getProviderId().equals(userPrincipal.providerId())) {
             throw new IllegalArgumentException("게시글 수정 권한이 없습니다.");
         }
+
+        // DTO의 tagNames를 기반으로 Set<Tag>를 준비
+        Set<Tag> processedTags = processTags(request.getTags()); // DTO 필드명이 tags로 변경되었다고 가정
+
 
         community.update(
                 request.getTitle(),
                 request.getContent(),
                 parseCategory(request.getCategory()),
-                request.getCommunityTag()
+                processedTags
         );
 
         return CommunityDto.Response.from(community);
     }
 
-    // 게시글 삭제
+    /**
+     * 지정된 ID의 커뮤니티 게시글을 삭제합니다.
+     *
+     * @param userPrincipal 삭제 요청을 한 사용자의 인증 정보 (권한 확인용).
+     * @param communityId 삭제할 게시글의 ID.
+     * @throws EntityNotFoundException 해당 ID의 게시글이 없거나, 사용자를 찾을 수 없을 경우.
+     * @throws IllegalArgumentException 삭제 권한이 없는 경우.
+     */
     @Transactional
-    public void deleteCommunity(String userId, String communityId) {
+    public void deleteCommunity(UserPrincipal userPrincipal, String communityId) {
         Community community = communityRepository.findById(communityId)
                 .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
 
+        User user = community.getUser();
+
         // 게시글 작성자만 삭제 가능
-        if (!community.getUser().getId().equals(userId)) {
+        if (!user.getProvider().equals(userPrincipal.provider()) || !user.getProviderId().equals(userPrincipal.providerId())) {
             throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
         }
 
@@ -235,7 +315,8 @@ public class CommunityService {
      *
      * @param request 검색 조건 (ID 또는 다양한 검색 조건)
      * @param pageable 페이징 정보 (고급 검색 시에만 사용)
-     * @return ID 검색 시 특정 게시글 상세 정보, 고급 검색 시 게시글 목록
+     * @return ID 검색 시 {@link CommunityDto.DetailResponse}, 고급 검색 시 {@link Page<CommunitySummaryResponseDTO>}.
+     * @throws EntityNotFoundException ID로 검색 시 해당 게시글이 없을 경우.
      */
     @Transactional(readOnly = true)
     public Object searchCommunityDetail(CommunityDto.SearchDetailRequest request, Pageable pageable) {
@@ -246,6 +327,9 @@ public class CommunityService {
 
             int commentCount = commentRepository.countByCommunityId(request.getId());
 
+            List<String> tagNames = community.getTags().stream().map(Tag::getName).toList();
+
+
             return CommunityDto.DetailResponse.builder()
                     .id(community.getId())
                     .userId(community.getUser().getId())
@@ -253,7 +337,7 @@ public class CommunityService {
                     .profileImageUrl(community.getUser().getProfileImageUrl())
                     .title(community.getTitle())
                     .category(community.getCategory().name())
-                    .communityTag(community.getCommunityTag())
+                    .tags(tagNames)
                     .content(community.getContent())
                     .viewCount(community.getViewCount().intValue())
                     .likeCount(community.getLikeCount() != null ? community.getLikeCount().intValue() : 0)
@@ -274,6 +358,14 @@ public class CommunityService {
                     // 잘못된 카테고리인 경우 무시
                 }
             }
+            // Tag 엔티티 조회 (단일 태그 검색)
+            Tag tagEntity = null;
+            if (StringUtils.hasText(request.getTag())) {
+                tagEntity = tagRepository.findByName(request.getTag().trim()).orElse(null);
+                // 만약 존재하지 않는 태그로 검색 시 결과가 없도록 하려면,
+                // tagEntity가 null일 때 빈 페이지를 반환하거나, 리포지토리 쿼리가 이를 처리하도록 해야 함.
+                // 여기서는 tagEntity가 null이면 해당 조건은 무시되도록 리포지토리에서 처리한다고 가정.
+            }
 
             // 고급 검색 실행
             Page<Community> communities = communityRepository.advancedSearch(
@@ -281,7 +373,7 @@ public class CommunityService {
                     request.getNickname(),
                     category,
                     request.getUserRole(),
-                    request.getTag(),
+                    tagEntity,
                     pageable
             );
 
