@@ -27,9 +27,11 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
             "u.profileImageUrl, " +
             "CAST((SELECT COUNT(cmt.id) FROM Comment cmt WHERE cmt.communityId = c.id) AS Long) AS commentCount) " +
             "FROM Community c JOIN c.user u " +
-            "WHERE (:category IS NULL OR c.category = :category)")
+            "WHERE (:category IS NULL OR c.category = :category) " +
+            "  AND (:tagName IS NULL OR EXISTS (SELECT t_sub FROM c.tags t_sub WHERE t_sub.name = :tagName))")
     Page<CommunitySummaryResponseDTO> findCommunitySummaries(
             @Param("category") CommunityCategory category,
+            @Param("tagName") String tagName,
             Pageable pageable);
 
     /**

@@ -5,10 +5,7 @@ import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.domain.CommunityCategory;
 import com.team05.linkup.domain.community.domain.Image;
 import com.team05.linkup.domain.community.domain.Tag;
-import com.team05.linkup.domain.community.dto.CommunityCreatedEventDTO;
-import com.team05.linkup.domain.community.dto.CommunityDto;
-import com.team05.linkup.domain.community.dto.CommunitySummaryResponseDTO;
-import com.team05.linkup.domain.community.dto.CommunityWeeklyPopularDTO;
+import com.team05.linkup.domain.community.dto.*;
 import com.team05.linkup.domain.community.infrastructure.CommentRepository;
 import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
 import com.team05.linkup.domain.community.infrastructure.ImageRepository;
@@ -91,6 +88,12 @@ public class CommunityService {
         return tags;
     }
 
+    public List<TagDTO> findPopularTags(int limit, int days) {
+        ZonedDateTime sinceDate = ZonedDateTime.now().minusDays(days);
+        Pageable pageable = PageRequest.of(0, limit);
+        return tagRepository.findPopularTagsSince(sinceDate, pageable);
+    }
+
     /**
      * 지정된 조건(카테고리 필터링, 페이징, 정렬)에 맞는 게시글 요약 목록을 조회합니다.
      * 이 메소드는 읽기 전용 트랜잭션으로 실행됩니다.
@@ -101,9 +104,14 @@ public class CommunityService {
      * 결과가 없을 경우 빈 Page 객체가 반환됩니다.
      * @see CommunityRepository#findCommunitySummaries(CommunityCategory, Pageable)
      */
-    public Page<CommunitySummaryResponseDTO> findCommunities(CommunityCategory category, Pageable pageable) {
+    public Page<CommunitySummaryResponseDTO> findCommunities(CommunityCategory category, String tagName, Pageable pageable) {
+        String trimmedTagName = null;
+        if (StringUtils.hasText(tagName)) {
+            trimmedTagName = tagName.trim();
+        }
         return communityRepository.findCommunitySummaries(
                 category,
+                trimmedTagName,
                 pageable
         );
     }

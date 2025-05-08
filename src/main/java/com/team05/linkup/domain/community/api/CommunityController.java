@@ -6,10 +6,7 @@ import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.domain.community.application.CommunityImageService;
 import com.team05.linkup.domain.community.application.CommunityService;
 import com.team05.linkup.domain.community.domain.CommunityCategory;
-import com.team05.linkup.domain.community.dto.CommunityDto;
-import com.team05.linkup.domain.community.dto.CommunitySummaryResponseDTO;
-import com.team05.linkup.domain.community.dto.CommunityWeeklyPopularDTO;
-import com.team05.linkup.domain.community.dto.ImageDto;
+import com.team05.linkup.domain.community.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -44,6 +41,16 @@ public class CommunityController {
     private final CommunityService communityService;
     private final CommunityImageService communityImageService;
 
+
+
+    @GetMapping("/popular-tags")
+    @Operation(summary = "인기 태그 조회", description = "지정된 기간 동안 가장 많이 사용된 태그 목록을 반환합니다.")
+    public ResponseEntity<ApiResponse<List<TagDTO>>> getPopularTags(
+            @RequestParam(defaultValue = "5") int limit, // 상위 10개 태그
+            @RequestParam(defaultValue = "10") int days) {
+        List<TagDTO> popularTags = communityService.findPopularTags(limit, days);
+        return ResponseEntity.ok(ApiResponse.success(popularTags));
+    }
     /* -------------------------------------------------- 게시글 목록 조회 -------------------------------------------------- */
 
     /**
@@ -59,9 +66,10 @@ public class CommunityController {
     @GetMapping("/list")
     @Operation(summary = "게시글 목록 조회", description = "카테고리별로 필터링된 커뮤니티 게시물의 페이지별 목록을 검색합니다.")
     public ResponseEntity<ApiResponse<Page<CommunitySummaryResponseDTO>>> getCommunityList(
-            @RequestParam(required = false) CommunityCategory category, // Enum으로 직접 받기
+            @RequestParam(required = false) CommunityCategory category,
+            @RequestParam(required = false) String tag,
             @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<CommunitySummaryResponseDTO> communityPage = communityService.findCommunities(category, pageable);
+        Page<CommunitySummaryResponseDTO> communityPage = communityService.findCommunities(category, tag, pageable);
         return ResponseEntity.ok(ApiResponse.success(communityPage));
     }
 
