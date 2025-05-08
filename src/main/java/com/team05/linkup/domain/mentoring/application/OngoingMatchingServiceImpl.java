@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -36,7 +37,7 @@ public class OngoingMatchingServiceImpl implements OngoingMatchingService {
                     .sessionId(session.getId())
                     .menteeNickname(mentee.getNickname())
                     .menteeProfileImageUrl(mentee.getProfileImageUrl())
-                    .matchingDate(session.getCreatedAt().toLocalDate().toString())
+                    .matchingDate(session.getCreatedAt().toInstant().atZone(ZoneOffset.UTC).toString())
                     .category(session.getInterest().getDisplayName())
                     .tag(mentee.getProfileTag())
                     .description(mentee.getIntroduction())

@@ -1,19 +1,19 @@
 package com.team05.linkup.domain.user.dto;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 public class MyCommentResponseDTO {
-    private LocalDateTime updatedAt;
+    private ZonedDateTime updatedAt;
     private String description;      // 예: "게시글 제목에 댓글"
     private String commentContent;
 
-    public MyCommentResponseDTO(LocalDateTime updatedAt, String description, String commentContent) {
+    public MyCommentResponseDTO(ZonedDateTime updatedAt, String description, String commentContent) {
         this.updatedAt = updatedAt;
         this.description = description;
         this.commentContent = commentContent;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public ZonedDateTime getUpdatedAt() {
         return updatedAt;
     }
 

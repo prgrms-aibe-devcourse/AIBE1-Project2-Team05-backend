@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -209,7 +210,7 @@ public class ReviewService {
                 .map(obj -> ReceivedReviewDTO.builder()
                         .reviewerName((String) obj[0])  // 리뷰 작성자 이름
                         .reviewerProfileImageUrl((String) obj[1])   //  리뷰 작성자 프로필 사진
-                        .reviewDate(((Timestamp) obj[2]).toLocalDateTime().toLocalDate().toString())
+                        .reviewDate(((Timestamp) obj[2]).toInstant().atZone(ZoneOffset.UTC).toString())
                         .star(BigDecimal.valueOf(((Number) obj[3]).doubleValue()))  // 별점
                         .content((String) obj[4])   // 리뷰 내용
                         .build())
@@ -224,7 +225,7 @@ public class ReviewService {
                 .map(obj -> ReceivedReviewDTO.builder()
                         .reviewerName((String) obj[0])
                         .reviewerProfileImageUrl((String) obj[1])
-                        .reviewDate(((Timestamp) obj[2]).toLocalDateTime().toLocalDate().toString())
+                        .reviewDate(((Timestamp) obj[2]).toInstant().atZone(ZoneOffset.UTC).toString())
                         .star(BigDecimal.valueOf(((Number) obj[3]).doubleValue()))
                         .content((String) obj[4])
                         .build())
@@ -232,7 +233,7 @@ public class ReviewService {
     }
 
 
-    // 📍 받은 리뷰 페이징 조회 메서드 (멘토 전용)
+    // 받은 리뷰 페이징 조회 메서드 (멘토 전용)
     @Transactional(readOnly = true)
     public Page<ReceivedReviewDTO> getReceivedReviewsPaged(String mentorId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
@@ -242,7 +243,7 @@ public class ReviewService {
         return rawResults.map(obj -> ReceivedReviewDTO.builder()
                 .reviewerName((String) obj[0])
                 .reviewerProfileImageUrl((String) obj[1])
-                .reviewDate(((Timestamp) obj[2]).toLocalDateTime().toLocalDate().toString())
+                .reviewDate(((Timestamp) obj[2]).toInstant().atZone(ZoneOffset.UTC).toString())
                 .star(BigDecimal.valueOf(((Number) obj[3]).doubleValue()))
                 .content((String) obj[4])
                 .build()

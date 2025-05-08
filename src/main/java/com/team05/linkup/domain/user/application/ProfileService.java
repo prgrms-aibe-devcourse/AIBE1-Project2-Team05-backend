@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -92,7 +93,7 @@ public class ProfileService {
         return rawResults.stream()
                 .map(obj -> new MyPostResponseDTO(
                         (String) obj[0],                                      // id
-                        ((Timestamp) obj[1]).toLocalDateTime(),              // updated_at
+                        ((Timestamp) obj[1]).toInstant().atZone(ZoneOffset.UTC),              // updated_at
                         (String) obj[2],                                      // category
                         (String) obj[3],                                      // title
                         (String) obj[4],                                      // content
@@ -110,7 +111,7 @@ public class ProfileService {
 
         return resultPage.map(obj -> new MyPostResponseDTO(
                 (String) obj[0],                                      // id
-                ((Timestamp) obj[1]).toLocalDateTime(),              // updated_at
+                ((Timestamp) obj[1]).toInstant().atZone(ZoneOffset.UTC),              // updated_at
                 (String) obj[2],                                      // category
                 (String) obj[3],                                      // title
                 (String) obj[4],                                      // content
@@ -136,7 +137,7 @@ public class ProfileService {
                         String commentContent = (String) row[2];
 
                         return new MyCommentResponseDTO(
-                                updatedAt != null ? updatedAt.toLocalDateTime() : null, // Timestamp가 null일 경우 NPE 방지
+                                updatedAt != null ? updatedAt.toInstant().atZone(ZoneOffset.UTC) : null, // Timestamp가 null일 경우 NPE 방지
                                 description,
                                 commentContent
                         );
@@ -159,7 +160,7 @@ public class ProfileService {
             String commentContent = (String) row[2];
 
             return new MyCommentResponseDTO(
-                    updatedAt != null ? updatedAt.toLocalDateTime() : null,
+                    updatedAt != null ? updatedAt.toInstant().atZone(ZoneOffset.UTC) : null,
                     description,
                     commentContent
             );
@@ -184,7 +185,7 @@ public class ProfileService {
                     String content = (String) obj[2];
 
                     return new MyBookmarkResponseDTO(
-                            updatedAt != null ? updatedAt.toLocalDateTime() : null, // Timestamp가 null일 경우 NPE 방지
+                            updatedAt != null ? updatedAt.toInstant().atZone(ZoneOffset.UTC) : null, // Timestamp가 null일 경우 NPE 방지
                             title,
                             content
                     );
@@ -209,7 +210,7 @@ public class ProfileService {
                     String content = (String) obj[2];
 
                     return new MyLikeResponseDTO(
-                            updatedAt != null ? updatedAt.toLocalDateTime() : null,
+                            updatedAt != null ? updatedAt.toInstant().atZone(ZoneOffset.UTC) : null,
                             title,
                             content
                     );
