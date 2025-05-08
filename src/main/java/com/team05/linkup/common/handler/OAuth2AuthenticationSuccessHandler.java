@@ -78,7 +78,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             response.setHeader("Set-Cookie", cookie.toString());
 
             // 리디렉션 URL 생성
-            String redirectUrl = String.format("%s://front-linkup.duckdns.org/user-type-selection?loggedIn=%s&socialType=%s",
+            String redirectUrl = String.format("%s://front-likup.duckdns.org/user-type-selection?loggedIn=%s&socialType=%s",
                     scheme, true, provider);
 
             logger.info("Redirecting to: {}", redirectUrl);
