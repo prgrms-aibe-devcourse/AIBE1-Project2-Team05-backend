@@ -62,7 +62,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .maxAge(60 * 60)   // 1시간
                     .domain(".duckdns.org")
                     .build();
-
+            logger.info("cookie: {}", cookie.toString());
             // 쿠키 헤더 추가
             String provider = jwtUtils.parseToken(token).get("provider").toString();
 
