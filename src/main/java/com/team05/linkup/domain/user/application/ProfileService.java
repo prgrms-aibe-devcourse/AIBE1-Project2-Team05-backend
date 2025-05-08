@@ -324,6 +324,12 @@ public class ProfileService {
                     .orElseThrow(() -> new EntityNotFoundException("해당 지역 정보를 찾을 수 없습니다."));
         }
 
+        // 📛 4. 닉네임 중복 검사 (본인의 닉네임이 아닐 경우에만 검사)
+        if (!user.getNickname().equals(dto.getNickname()) &&
+                userRepository.existsByNickname(dto.getNickname())) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+        }
+
         // 🔁 5. User 객체 업데이트
         user.updateProfileFields(dto);
 
