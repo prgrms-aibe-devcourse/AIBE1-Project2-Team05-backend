@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
-import java.util.List;
 
 @Tag(name = "Authentication", description = "인증 관련 API")
 @RestController
@@ -37,36 +36,24 @@ public class AuthController {
         try {
             String token = jwtUtils.extractToken(request);
             logger.info("토큰 {}", token);
-            // 요청의 도메인 확인 (프론트엔드의 Origin 헤더 확인)
-            String origin = request.getHeader("Origin");
-
-            // 허용된 Origin 리스트
-            List<String> allowedOrigins = List.of(
-                    "http://localhost:3000",
-                    "http://localhost:8080",
-                    "https://eastern-rowena-jack6767-df59f302.koyeb.app"
-            );
-
-            if (origin != null && allowedOrigins.contains(origin)) {
-                boolean isSecure = "https".equals(request.getScheme());
-                String domain = origin.contains("localhost") ? "localhost" : "eastern-rowena-jack6767-df59f302.koyeb.app";
-                if (token != null && !token.isEmpty()) {
+                     if (token != null && !token.isEmpty()) {
                     // If valid, we can also extract and return some user information
                     Claims claims = jwtUtils.parseTokenWithoutExpiredAtValidation(token);
                     String providerId =  claims.getSubject();
                     String provider = (String) claims.get("provider");
                     RefreshTokenResponseDTO response = refreshTokenServiceImpl.regenerateAccessAndRefreshToken(provider, providerId);
+                    String domain = ".linkup.o-r.kr";
                     ResponseCookie cookie = ResponseCookie.from("jwt_token", response.accessToken())
                             .httpOnly(true)
-                            .secure(isSecure)
+                            .secure(true)
                             .path("/")
-                            .maxAge(Duration.ofDays(1))
-                            .sameSite("None")  // 이게 핵심!
+                            .maxAge(Duration.ofHours(1))
+                            .sameSite("None")
                             .domain(domain)
                             .build();
                     return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(response);
                 }
-            }
+
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
