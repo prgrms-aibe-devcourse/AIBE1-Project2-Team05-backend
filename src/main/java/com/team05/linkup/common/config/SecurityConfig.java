@@ -100,9 +100,8 @@ public class SecurityConfig {
         config.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
                 "http://localhost:8080",
-                "https://dev-linkup.duckdns.org",
-                "https://front-likup.duckdns.org"
-
+                "https://backend.linkup.o-r.kr",
+                "https://frontend.linkup.o-r.kr"
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList(
