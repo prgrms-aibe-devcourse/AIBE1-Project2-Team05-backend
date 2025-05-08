@@ -111,7 +111,9 @@ public class SecurityConfig {
                 "X-Requested-With",
                 "Accept",
                 "Origin",
-                "X-CSRF-Token"));
+                "X-CSRF-Token",
+                "Cookie",
+                "Set-Cookie"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
