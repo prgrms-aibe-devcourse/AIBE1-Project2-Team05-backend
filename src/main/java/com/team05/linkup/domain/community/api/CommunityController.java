@@ -213,7 +213,7 @@ public class CommunityController {
 
         try {
             return ResponseEntity
-                    .ok(ApiResponse.success(communityService.updateCommunity(principal.providerId(), postId, request)));
+                    .ok(ApiResponse.success(communityService.updateCommunity(principal, postId, request)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
@@ -246,7 +246,7 @@ public class CommunityController {
         }
 
         try {
-            communityService.deleteCommunity(principal.providerId(), postId);
+            communityService.deleteCommunity(principal, postId);
             return ResponseEntity.ok(ApiResponse.success());
         } catch (IllegalArgumentException e) {
             return ResponseEntity
