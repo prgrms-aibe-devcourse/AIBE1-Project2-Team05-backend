@@ -1,5 +1,4 @@
 server:
-  forward-headers-strategy: framework
   port: ${PORT:8080} # 충돌 문제 시 수정
 spring:
   datasource:
