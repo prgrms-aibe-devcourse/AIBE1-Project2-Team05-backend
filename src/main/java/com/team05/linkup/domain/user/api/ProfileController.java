@@ -18,15 +18,18 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -270,29 +273,61 @@ public class ProfileController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @PatchMapping("/{nickname}/profile")
-    public ResponseEntity<ApiResponse<?>> updateProfileSettings(
+    @Autowired
+    private ProfileImageService profileImageService;
+
+    @PostMapping(
+            value = "/{nickname}/profile/image",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<ApiResponse<?>> updateProfileImage(
             @PathVariable String nickname,
-            @RequestBody ProfileUpdateRequestDTO requestDTO,
+            @RequestParam("profileImage") MultipartFile profileImage,
+//            @RequestPart("profileImage") MultipartFile profileImage,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
+        if (profileImage == null || profileImage.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "이미지 파일이 전달되지 않았습니다."));
+        } else {
+            logger.info("일단 이미지 파일은 보내진 듯??");
+        }
+
+        logger.info("📸 [Upload] 프로필 이미지 업로드 요청 nickname = {}, fileName = {}", nickname, profileImage.getOriginalFilename());
+
         try {
-            // 🔐 사용자 권한 검증
             profileService.validateAccess(nickname, userPrincipal);
+            logger.info("🔐 접근 권한 검증 성공");
 
-            // 🧾 프로필 수정 처리
-            profileService.updateProfileFields(nickname, requestDTO, userPrincipal);
+            User user = userRepository.findByProviderAndProviderId(
+                    userPrincipal.provider(), userPrincipal.providerId()
+            ).orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-            return ResponseEntity.ok(ApiResponse.success("프로필이 성공적으로 수정되었습니다."));
+            logger.info("👤 사용자 조회 성공: id = {}, nickname = {}", user.getId(), user.getNickname());
+
+            // 업로드 및 URL 저장
+            String imageUrl = profileImageService.uploadProfileImage(user.getId(), profileImage);
+            logger.info("✅ Supabase 업로드 완료, imageUrl = {}", imageUrl);
+
+            // 사용자 프로필 이미지 경로 업데이트 및 저장
+            user.updateProfileImage(imageUrl);
+            logger.info("imageUrl = " + imageUrl);
+            userRepository.save(user); // 저장 - DB 반영
+
+            return ResponseEntity.ok(ApiResponse.success("프로필 이미지가 변경되었습니다."));
+
         } catch (AccessDeniedException e) {
+            logger.warn("🚫 접근 거부: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error(ResponseCode.ACCESS_DENIED));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            logger.warn("⚠️ 유효하지 않은 입력값: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED));
+            logger.error("❌ 서버 오류 발생", e);
+            return ResponseEntity.internalServerError()
+                    .body(ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR));
         }
     }
 
