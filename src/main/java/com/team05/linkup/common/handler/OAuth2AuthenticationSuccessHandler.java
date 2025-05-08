@@ -60,7 +60,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .secure(true)      // HTTPS에서만 전송
                     .path("/")         // 모든 경로에서 사용 가능
                     .maxAge(60 * 60)   // 1시간
-                    .domain("front-linkup.duckdns.org")
+                    .domain(".duckdns.org")
                     .build();
 
             // 쿠키 헤더 추가
