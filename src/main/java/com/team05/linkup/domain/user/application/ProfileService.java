@@ -103,7 +103,7 @@ public class ProfileService {
                 .collect(Collectors.toList());
     }
 
-    // 🔧 내가 작성한 커뮤니티 게시글 - 페이징
+    // 내가 작성한 커뮤니티 게시글 - 페이징
     public Page<MyPostResponseDTO> getMyPostsPaged(String nickname, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Object[]> resultPage = communityRepository.findCommunityPostsWithPaging(nickname, pageable);
@@ -256,7 +256,7 @@ public class ProfileService {
                 .build());
     }
 
-    // 🔧 태그 문자열을 리스트로 변환하는 메서드 (기존 MatchingPageFacade 참고)
+    // 태그 문자열을 리스트로 변환하는 메서드 (기존 MatchingPageFacade 참고)
     private List<String> parseTags(String tagString) {
         if (tagString == null || tagString.isBlank()) return List.of();
         return Arrays.stream(tagString.split(","))
@@ -278,10 +278,10 @@ public class ProfileService {
 
     @Transactional(readOnly = true)
     public ProfileSettingsResponseDTO getProfileSettings(String nickname, UserPrincipal principal) {
-        // 🔐 본인만 조회 가능
+        // 본인만 조회 가능
         validateAccess(nickname, principal);
 
-        // 🔍 사용자 조회
+        // 사용자 조회
         User user = userRepository.findByNickname(nickname)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
@@ -307,33 +307,33 @@ public class ProfileService {
 
     @Transactional
     public void updateProfileFields(String nickname, ProfileUpdateRequestDTO dto, UserPrincipal userPrincipal) {
-        // 🔍 1. 로그인한 사용자 정보로 User 조회
+        // 1. 로그인한 사용자 정보로 User 조회
         User user = userRepository.findByProviderAndProviderId(
                 userPrincipal.provider(), userPrincipal.providerId()
         ).orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-        // ✅ 2. nickname 일치 여부 최종 검증 (추가 안전장치)
+        // 2. nickname 일치 여부 최종 검증 (추가 안전장치)
         if (!user.getNickname().equals(nickname)) {
             throw new AccessDeniedException("프로필 수정 권한이 없습니다.");
         }
 
-        // 📦 3. Area 연관 엔티티 조회 (nullable 허용)
+        // 3. Area 연관 엔티티 조회 (nullable 허용)
         Area area = null;
         if (dto.getAreaCode() != null) {
             area = areaRepository.findById(dto.getAreaCode())
                     .orElseThrow(() -> new EntityNotFoundException("해당 지역 정보를 찾을 수 없습니다."));
         }
 
-        // 📛 4. 닉네임 중복 검사 (본인의 닉네임이 아닐 경우에만 검사)
+        // 4. 닉네임 중복 검사 (본인의 닉네임이 아닐 경우에만 검사)
         if (!user.getNickname().equals(dto.getNickname()) &&
                 userRepository.existsByNickname(dto.getNickname())) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
 
-        // 🔁 5. User 객체 업데이트
-        user.updateProfileFields(dto);
+        // 5. User 객체 업데이트
+        user.updateProfileFields(dto, area);
 
-        // ✅ 6. 저장은 @Transactional로 처리 완료
+        // 6. 저장은 @Transactional로 처리 완료
     }
 
 
