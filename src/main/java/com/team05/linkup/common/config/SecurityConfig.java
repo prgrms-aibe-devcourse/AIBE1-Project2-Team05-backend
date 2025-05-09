@@ -75,6 +75,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                 )
+                .formLogin(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(new OAuth2AuthenticationEntryPoint())
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
