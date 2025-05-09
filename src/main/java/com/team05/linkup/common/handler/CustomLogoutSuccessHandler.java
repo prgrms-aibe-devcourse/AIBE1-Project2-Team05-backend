@@ -46,8 +46,12 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
                 }
             }
 
-            // 리디렉션 설정
             response.setStatus(HttpServletResponse.SC_OK);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("{\"message\": \"logout success\"}");
+            response.getWriter().flush();
+
         } catch (Exception e) {
             logger.error("Error during logout: {}", e.getMessage());
             response.sendRedirect("/?logout-error=true");
