@@ -1,6 +1,7 @@
 package com.team05.linkup.domain.community.dto;
 
 import com.team05.linkup.domain.community.domain.Community;
+import com.team05.linkup.domain.community.domain.Tag;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 커뮤니티 기능과 관련된 DTO 클래스들을 정의합니다.
@@ -27,7 +29,11 @@ public class CommunityDto {
         @NotBlank(message = "카테고리는 필수 입력값입니다.")
         private String category;
 
-        private String communityTag;
+        /**
+         * 게시글에 첨부할 태그 이름 목록입니다.
+         * 프론트엔드에서 "tags": ["tag1", "tag2"] 형태로 전송하는 것을 가정합니다.
+         */
+        private List<String> tags;
 
         @NotBlank(message = "내용은 필수 입력값입니다.")
         private String content;
@@ -63,7 +69,7 @@ public class CommunityDto {
         private String userId;
         private String title;
         private String category;
-        private String communityTag;
+        private List<String> tags;
         private String content;
         private ZonedDateTime createdAt;
         private ZonedDateTime updatedAt;
@@ -80,7 +86,7 @@ public class CommunityDto {
                     .userId(community.getUser().getId())
                     .title(community.getTitle())
                     .category(community.getCategory().name())
-                    .communityTag(community.getCommunityTag())
+                    .tags(community.getTags().stream().map(Tag::getName).collect(Collectors.toList()))
                     .content(community.getContent())
                     .createdAt(community.getCreatedAt())
                     .updatedAt(community.getUpdatedAt())
@@ -101,7 +107,7 @@ public class CommunityDto {
         private String profileImageUrl;
         private String title;
         private String category;
-        private String communityTag;
+        private List<String> tags;
         private String content;
         private int viewCount;     // Long에서 int로 변환
         private int likeCount;     // Long에서 int로 변환
@@ -126,12 +132,34 @@ public class CommunityDto {
         private String profileImageUrl;
         private String title;
         private String category;
-        private String communityTag;
+        private List<String> tags;
         private String content;
         private int viewCount;
         private int likeCount;
         private int commentCount;
         private ZonedDateTime createdAt;
+
+        // 서비스에서 Community 엔티티를 이 DTO로 변환하는 로직 필요
+        public static CommunitySummaryResponse fromEntity(Community community, int commentCount) {
+            String preview = community.getContent();
+            if (preview != null && preview.length() > 100) {
+                preview = preview.substring(0, 100) + "...";
+            }
+
+            return CommunitySummaryResponse.builder()
+                    .id(community.getId())
+                    .nickname(community.getUser().getNickname())
+                    .profileImageUrl(community.getUser().getProfileImageUrl())
+                    .title(community.getTitle())
+                    .category(community.getCategory().name())
+                    .tags(community.getTags().stream().map(Tag::getName).collect(Collectors.toList()))
+                    .content(preview)
+                    .viewCount(community.getViewCount().intValue())
+                    .likeCount(community.getLikeCount().intValue())
+                    .commentCount(commentCount)
+                    .createdAt(community.getCreatedAt())
+                    .build();
+        }
 
         /**
          * 미리보기용 내용 생성 (최대 100자)

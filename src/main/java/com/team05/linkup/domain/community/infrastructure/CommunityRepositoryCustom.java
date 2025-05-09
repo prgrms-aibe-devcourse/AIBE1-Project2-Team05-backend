@@ -2,6 +2,7 @@ package com.team05.linkup.domain.community.infrastructure;
 
 import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.domain.CommunityCategory;
+import com.team05.linkup.domain.community.domain.Tag;
 import com.team05.linkup.domain.user.dto.CommunityQnAPostDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,7 +38,7 @@ public interface CommunityRepositoryCustom {
             String nickname,
             CommunityCategory category,
             String userRole,
-            String tag,
+            Tag tag,
             Pageable pageable
     );
 }
