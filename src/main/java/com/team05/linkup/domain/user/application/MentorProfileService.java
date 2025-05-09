@@ -1,5 +1,7 @@
 package com.team05.linkup.domain.user.application;
 
+import com.team05.linkup.domain.community.domain.Community;
+import com.team05.linkup.domain.community.domain.Tag;
 import com.team05.linkup.domain.community.dto.CommunityTalentSummaryDTO;
 import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
 import com.team05.linkup.domain.enums.Interest;
@@ -25,46 +27,56 @@ public class MentorProfileService {
     private final MentoringRepository mentoringRepository; // 🔧 추가
     private final MentorStatisticsRepository mentorStatisticsRepository;
 
+    /**
+     * 멘토 마이페이지 - 내가 등록한 재능 목록 (미리보기 2개)
+     * - 최신 등록된 TALENT 카테고리 게시글 2개를 조회
+     * - 커뮤니티 태그 리스트, 작성일, 제목, 내용(최대 55자) 포함
+     */
     public List<CommunityTalentSummaryDTO> getCommunityTalents(String nickname, int limit) {
-        // Object[]로 반환된 raw 데이터 받아오기 (native query 사용)
-        List<Object[]> results = communityRepository.findByCategory(nickname, limit);
+        // Pageable 생성
+        Pageable pageable = PageRequest.of(0, limit);
 
-        // 필요한 DTO로 변환 (null-safe)
-        return results.stream()
-                .map(row -> {
+        List<Community> communities = communityRepository.findLatestTalentsByNickname(nickname, pageable);
 
-                    // 🛡️ null-safe 및 명시적 캐스팅 - 혹시 모를 null 상황 대비
-                    String title = (String) row[0]; // 타입 캐스팅 - (String) 명시적으로 분리
-                    String tagId = (String) row[1];
-                    String content = (String) row[2];
+        // 결과 DTO로 변환
+        return communities.stream()
+                .map(community -> {
+                    String fullContent = community.getContent();
+                    String preview = (fullContent.length() > 55)
+                            ? fullContent.substring(0, 55) + "..."
+                            : fullContent;
 
                     return new CommunityTalentSummaryDTO(
-                            title,
-                            tagId,
-                            content
+                            community.getCreatedAt(),
+                            community.getTitle(),
+                            community.getTags().stream().map(Tag::getName).toList(),
+                            preview // ✅ 자른 내용 적용
                     );
                 })
                 .collect(Collectors.toList());
     }
 
     /**
-     * 마이페이지 - 내가 등록한 재능 전체 목록 조회 (페이징)
-     *
-     * @param nickname 닉네임
-     * @param page 페이지 번호 (0부터 시작)
-     * @param size 페이지 당 항목 수
-     * @return 커뮤니티 재능 요약 DTO 목록
+     * 멘토 마이페이지 - 내가 등록한 재능 목록 (더보기 페이지)
+     * - page, size 기반으로 전체 TALENT 게시글을 페이징 조회
+     * - 각 게시글은 태그, 작성일, 제목, 내용(최대 55자) 포함
      */
     public Page<CommunityTalentSummaryDTO> getCommunityTalentsPaged(String nickname, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Object[]> resultPage = communityRepository.findTalentsByNicknameWithPaging(nickname, pageable);
+        Page<Community> communityPage = communityRepository.findTalentsByNicknameWithPaging(nickname, pageable);
 
-        // Object[] → DTO 변환
-        return resultPage.map(row -> {
-            String title = (String) row[0];
-            String tagId = (String) row[1];
-            String content = (String) row[2];
-            return new CommunityTalentSummaryDTO(title, tagId, content);
+        return communityPage.map(community -> {
+            String fullContent = community.getContent();
+            String preview = (fullContent.length() > 55)
+                    ? fullContent.substring(0, 55) + "..."
+                    : fullContent;
+
+            return new CommunityTalentSummaryDTO(
+                    community.getCreatedAt(),
+                    community.getTitle(),
+                    community.getTags().stream().map(Tag::getName).toList(),
+                    preview
+            );
         });
     }
 

@@ -82,63 +82,34 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
     int decrementLikeCount(@Param("communityId") String communityId);
 
 
-    // 멘토 마이페이지 - 내가 등록한 재능 목록
-    @Query(value = """
-        SELECT 
-            title, 
-            community_tag_id, 
-            CASE
-                WHEN CHAR_LENGTH(content) > 55
-                    THEN CONCAT(LEFT(content, 55), '...')
-                ELSE content 
-            END AS content
-        FROM 
-            community 
-        WHERE 
-            category = 'TALENT' 
-            AND user_id IN (
-                SELECT id FROM user WHERE nickname = :nickname
-            )
-        ORDER BY 
-            updated_at DESC 
-        LIMIT :limit
-        """, nativeQuery = true)
-    List<Object[]> findByCategory(@Param("nickname") String nickname, @Param("limit") int limit);
-
     /**
-     * 마이페이지 - 내가 등록한 재능(TALENT) 목록 조회 (페이징 지원)
-     *
-     * @param nickname 유저 닉네임
-     * @param pageable 페이지 정보 (page, size, sort 등)
-     * @return 제목, 태그 ID, 본문 요약이 포함된 결과 목록
+     * 멘토 마이페이지 - 내가 등록한 재능 목록(최신 2개 조회) (미리보기용)
+     * - JOIN FETCH로 태그 함께 조회 (N+1 방지)
+     * -> LEFT JOIN FETCH - 태그가 없는 커뮤니티도 조회
      */
-    @Query(value = """
-        SELECT 
-            title, 
-            community_tag_id, 
-            CASE
-                WHEN CHAR_LENGTH(content) > 55
-                    THEN CONCAT(LEFT(content, 55), '...')
-                ELSE content 
-            END AS content
-        FROM 
-            community 
-        WHERE 
-            category = 'TALENT' 
-            AND user_id IN (
-                SELECT id FROM user WHERE nickname = :nickname
-            )
-        ORDER BY 
-            updated_at DESC
-        """, countQuery = """
-        SELECT COUNT(*)
-        FROM community
-        WHERE category = 'TALENT'
-          AND user_id IN (
-              SELECT id FROM user WHERE nickname = :nickname
-          )
-    """, nativeQuery = true)
-    Page<Object[]> findTalentsByNicknameWithPaging(@Param("nickname") String nickname, Pageable pageable);
+    @Query("""
+        SELECT DISTINCT c FROM Community c
+        LEFT JOIN FETCH c.tags
+        WHERE c.user.nickname = :nickname AND c.category = 'TALENT'
+        ORDER BY c.createdAt DESC
+    """)
+    List<Community> findLatestTalentsByNickname(@Param("nickname") String nickname, Pageable pageable);
+
+
+    //
+    /**
+     * 멘토 마이페이지 - 내가 등록한 재능 목록 더보기(전체 페이징 조회) (더보기용)
+     * - JOIN FETCH 사용하여 태그 즉시 로딩
+     * -> LEFT JOIN FETCH - 태그가 없는 커뮤니티도 조회
+     */
+    @Query("""
+        SELECT DISTINCT c FROM Community c
+        LEFT JOIN FETCH c.tags
+        WHERE c.user.nickname = :nickname AND c.category = 'TALENT'
+        ORDER BY c.createdAt DESC
+    """)
+    Page<Community> findTalentsByNicknameWithPaging(@Param("nickname") String nickname, Pageable pageable);
+
 
 
     // 공통 마이페이지 - 내가 작성한 커뮤니티 게시글
