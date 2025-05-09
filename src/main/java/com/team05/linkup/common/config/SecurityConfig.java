@@ -69,7 +69,6 @@ public class SecurityConfig {
                         .requestMatchers("/login/oauth2/code/google/**").permitAll()
                         .requestMatchers("/login/oauth2/code/naver/**").permitAll()
                         .requestMatchers("/login/oauth2/code/kakao/**").permitAll()
-                        .requestMatchers("/logout").permitAll()
                         .requestMatchers("/v1/users/**")
                         .access(new WebExpressionAuthorizationManager("!hasRole('TEMP')"))
                         .anyRequest().authenticated())
