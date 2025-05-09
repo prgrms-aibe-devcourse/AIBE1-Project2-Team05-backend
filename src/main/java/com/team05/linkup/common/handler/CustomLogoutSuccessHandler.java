@@ -46,7 +46,7 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
                     }
                 }
             }
-            ResponseCookie cookie = ResponseCookie.from("jwt_token", null)
+            ResponseCookie cookie = ResponseCookie.from("jwt_token", "")
                     .sameSite("None")
                     .secure(true)
                     .httpOnly(true)
@@ -54,10 +54,10 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
                     .domain(".linkup.o-r.kr")
                     .path("/")
                     .build();
-
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
+            response.setHeader("Set-Cookie", cookie.toString());
             response.getWriter().write("{\"message\": \"logout success\"}");
             response.getWriter().flush();
 
