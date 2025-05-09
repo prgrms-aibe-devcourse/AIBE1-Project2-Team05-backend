@@ -15,8 +15,11 @@ import java.util.List;
 @AllArgsConstructor
 public class CommunityTalentSummaryDTO {
 
+    @Schema(description = "게시글 ID")
+    private String postId; // 게시글 클릭 시 해당 게시글 상세페이지로 이동하기 위한 필드 추가
+
     @Schema(description = "게시글 작성일 (UTC 기준)")
-    private ZonedDateTime createdAt; // 내가 등록한 재능 목록 각 항목 상단 작성일 추가
+    private ZonedDateTime createdAt;
 
     @Schema(description = "재능 게시글 제목")
     private String title;

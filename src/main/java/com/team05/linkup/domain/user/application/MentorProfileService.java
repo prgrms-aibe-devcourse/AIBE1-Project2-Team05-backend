@@ -47,10 +47,11 @@ public class MentorProfileService {
                             : fullContent;
 
                     return new CommunityTalentSummaryDTO(
+                            community.getId(), // postId 추가
                             community.getCreatedAt(),
                             community.getTitle(),
                             community.getTags().stream().map(Tag::getName).toList(),
-                            preview // ✅ 자른 내용 적용
+                            preview // 자른 내용 적용
                     );
                 })
                 .collect(Collectors.toList());
@@ -72,6 +73,7 @@ public class MentorProfileService {
                     : fullContent;
 
             return new CommunityTalentSummaryDTO(
+                    community.getId(), // postId 추가
                     community.getCreatedAt(),
                     community.getTitle(),
                     community.getTags().stream().map(Tag::getName).toList(),
