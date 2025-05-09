@@ -87,24 +87,26 @@ public class ProfileService {
         return communityRepository.findUserIdByNickname(nickname);
     }
 
+    // 내가 작성한 게시글 (미리보기)
     public List<MyPostResponseDTO> getMyPosts(String nickname, int limit) {
         List<Object[]> rawResults = communityRepository.findByCommunityPosts(nickname, limit);
 
         return rawResults.stream()
                 .map(obj -> new MyPostResponseDTO(
                         (String) obj[0],                                      // id
-                        ((Timestamp) obj[1]).toInstant().atZone(ZoneOffset.UTC),              // updated_at
+                        ((Timestamp) obj[1]).toInstant().atZone(ZoneOffset.UTC),  // created_at
+                        // ((Timestamp) obj[2]).toInstant().atZone(ZoneOffset.UTC),  // updated_at
                         (String) obj[2],                                      // category
                         (String) obj[3],                                      // title
                         (String) obj[4],                                      // content
-                        ((Number) obj[5]).intValue(),                         // view_count (Long → int)
-                        ((Number) obj[6]).intValue(),                         // like_count (Long → int)
-                        ((Number) obj[7]).intValue()                          // comment_count (Long → int)
+                        ((Number) obj[5]).intValue(),                         // view_count
+                        ((Number) obj[6]).intValue(),                         // like_count
+                        ((Number) obj[7]).intValue()                          // comment_count
                 ))
                 .collect(Collectors.toList());
     }
 
-    // 내가 작성한 커뮤니티 게시글 - 페이징
+    // 내가 작성한 커뮤니티 게시글 - 페이징(더보기)
     public Page<MyPostResponseDTO> getMyPostsPaged(String nickname, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Object[]> resultPage = communityRepository.findCommunityPostsWithPaging(nickname, pageable);

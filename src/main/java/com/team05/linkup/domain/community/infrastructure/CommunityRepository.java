@@ -116,7 +116,7 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
     @Query(value = """
     SELECT 
         c.id,
-        c.updated_at,
+        c.created_at,
         c.category,
         c.title,
         CASE

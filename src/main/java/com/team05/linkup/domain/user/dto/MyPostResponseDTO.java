@@ -7,7 +7,8 @@ import java.time.ZonedDateTime;
 @Getter
 public class MyPostResponseDTO {
     private String id;
-    private ZonedDateTime updatedAt;
+    private ZonedDateTime createdAt;    // 작성일
+//    private ZonedDateTime updatedAt;  // 수정일
     private String category;
     private String title;
     private String content;
@@ -15,10 +16,11 @@ public class MyPostResponseDTO {
     private int likeCount;
     private int commentCount;
 
-    public MyPostResponseDTO(String id, ZonedDateTime updatedAt, String category, String title, String content,
+    public MyPostResponseDTO(String id, ZonedDateTime createdAt, /*ZonedDateTime updatedAt,*/ String category, String title, String content,
                              int viewCount, int likeCount, int commentCount) {
         this.id = id;
-        this.updatedAt = updatedAt;
+        this.createdAt = createdAt;
+//        this.updatedAt = updatedAt;
         this.category = category;
         this.title = title;
         this.content = content;
