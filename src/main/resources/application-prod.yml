@@ -71,3 +71,4 @@ supabase:
   url: ${SUPABASE_URL}
   service-key: ${SUPABASE_KEY}
   bucket: community-images
+  profile-image-bucket: profile-images

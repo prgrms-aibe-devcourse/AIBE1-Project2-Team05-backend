@@ -40,12 +40,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
             // SameSite=None 설정 (크로스 사이트 요청에서 쿠키 전송을 허용)
             ResponseCookie cookie = ResponseCookie.from("jwt_token", token)
-                    .sameSite("None")  // 크로스 사이트 요청에서도 쿠키 전송
+                    .sameSite("Strict")  // 크로스 사이트 요청에서도 쿠키 전송
                     .httpOnly(true)    // JavaScript에서 접근 불가
-                    .secure(true)      // HTTPS에서만 전송
+//                    .secure(true)      // HTTPS에서만 전송
                     .path("/")         // 모든 경로에서 사용 가능
                     .maxAge(60 * 60)   // 1시간
-                    .domain(".linkup.o-r.kr")
+//                    .domain(".linkup.o-r.kr")
                     .build();
             logger.info("cookie: {}", cookie.toString());
             // 쿠키 헤더 추가
@@ -55,10 +55,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             response.setStatus(HttpServletResponse.SC_OK);
             response.setHeader("Set-Cookie", cookie.toString());
             if ((Role.ROLE_TEMP).equals(Role.valueOf(authorities.iterator().next().getAuthority())) ) {
-                response.sendRedirect("https://frontend.linkup.o-r.kr/user-type-selection?loggedIn=true&socialType=%s".formatted(provider));
+                response.sendRedirect("http://localhost:3000/user-type-selection?loggedIn=true&socialType=%s".formatted(provider));
                 return;
             }
-            response.sendRedirect("https://frontend.linkup.o-r.kr/");
+            response.sendRedirect("https://localhost:3000/");
 
         } catch (Exception e) {
             logger.error("During onAuthenticationSuccess Exception error {}", e.getMessage(), e);
