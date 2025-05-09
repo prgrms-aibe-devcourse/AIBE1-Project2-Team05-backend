@@ -191,11 +191,19 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
 
 
 
-    // 공통 마이페이지 - 내가 작성한 댓글
+    /**
+     * 마이페이지 - 내가 작성한 댓글 목록 조회 (미리보기)
+     *
+     * @param userId 유저 ID
+     * @param limit 조회할 댓글 수
+     * @return 댓글이 달린 게시글의 ID, 카테고리, 작성일, 게시글 제목, 댓글 내용(요약 포함)
+     */
     @Query(value = """
     SELECT 
-        cs.updated_at,
-        CONCAT('"', ct.title, '" 게시글에 댓글'),            
+        ct.id AS post_id,
+        ct.category,
+        cs.created_at,
+        ct.title AS post_title,
         CASE
             WHEN CHAR_LENGTH(cs.comment_content) > 55
                 THEN CONCAT(LEFT(cs.comment_content, 55), '...')
@@ -206,7 +214,7 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
     WHERE 
         cs.user_id = :userId 
     ORDER BY 
-        cs.updated_at DESC 
+        cs.created_at DESC 
     LIMIT :limit
     """, nativeQuery = true)
     List<Object[]> findByMyCommunityComments(@Param("userId") String userId, @Param("limit") int limit);
@@ -216,31 +224,33 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
 
 
     /**
-     * 마이페이지 - 내가 작성한 댓글 목록 조회 (페이징 지원)
+     * 마이페이지 - 내가 작성한 댓글 목록 조회 (페이징)
      *
-     * @param userId 사용자 ID (닉네임 기반으로 조회된 내부 식별자)
-     * @param pageable 페이지 정보 (page, size, sort 등)
-     * @return 댓글 작성 시각, 연결된 게시글 제목 설명, 댓글 요약이 포함된 결과 목록
+     * @param userId 유저 ID
+     * @param pageable 페이지 정보 (page, size 등)
+     * @return 댓글이 달린 게시글의 ID, 카테고리, 작성일, 게시글 제목, 댓글 내용(요약 포함)
      */
     @Query(value = """
-        SELECT 
-            cs.updated_at,
-            CONCAT('"', ct.title, '" 게시글에 댓글'),            
-            CASE
-                WHEN CHAR_LENGTH(cs.comment_content) > 55
-                    THEN CONCAT(LEFT(cs.comment_content, 55), '...')
-                ELSE cs.comment_content
-            END AS comment_content
-        FROM 
-            comments cs JOIN community ct ON cs.community_id = ct.id
-        WHERE 
-            cs.user_id = :userId 
-        ORDER BY 
-            cs.updated_at DESC
+    SELECT 
+        ct.id AS post_id,
+        ct.category,
+        cs.created_at,
+        ct.title AS post_title,
+        CASE
+            WHEN CHAR_LENGTH(cs.comment_content) > 55
+                THEN CONCAT(LEFT(cs.comment_content, 55), '...')
+            ELSE cs.comment_content
+        END AS comment_content
+    FROM 
+        comments cs JOIN community ct ON cs.community_id = ct.id
+    WHERE 
+        cs.user_id = :userId 
+    ORDER BY 
+        cs.created_at DESC
     """, countQuery = """
-        SELECT COUNT(*) 
-        FROM comments 
-        WHERE user_id = :userId
+    SELECT COUNT(*) 
+    FROM comments 
+    WHERE user_id = :userId
     """, nativeQuery = true)
     Page<Object[]> findMyCommentsPaged(@Param("userId") String userId, Pageable pageable);
 

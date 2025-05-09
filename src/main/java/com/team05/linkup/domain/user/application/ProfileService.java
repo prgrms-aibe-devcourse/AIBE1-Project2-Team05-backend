@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -124,7 +125,13 @@ public class ProfileService {
     }
 
 
-    // 내가 작성한 댓글 조회
+    /**
+     * 마이페이지 - 내가 작성한 댓글 목록 조회 (미리보기)
+     *
+     * @param nickname 사용자 닉네임
+     * @param limit 조회할 개수 제한
+     * @return 댓글 미리보기 DTO 목록 (최대 55자 댓글 + 게시글 제목/카테고리 등 포함)
+     */
     public List<MyCommentResponseDTO> getMyComments(String nickname, int limit) {
         // userId 조회 (닉네임 기반 → ID 추출)
         String userId = getUserIdByNickname(nickname);
@@ -133,20 +140,38 @@ public class ProfileService {
         // DTO로 매핑
         return rows.stream()
                 .map(row -> {
-                        // 🛡️ null-safe 및 타입 캐스팅
-                        Timestamp updatedAt = (Timestamp) row[0];
-                        String description = (String) row[1];
-                        String commentContent = (String) row[2];
+                    // 컬럼 순서: post_id, category, created_at, post_title, description, comment_content
+                    // 🛡️ null-safe 및 타입 캐스팅
+                    String postId = (String) row[0];
+                    String category = (String) row[1];
+                    Timestamp createdAt = (Timestamp) row[2];
+                    ZonedDateTime createdDateTime = (createdAt != null)
+                            ? createdAt.toInstant().atZone(ZoneOffset.UTC)
+                            : null;
+//                    String description = (String) row[3];
+                    String postTitle = (String) row[3];
+                    String commentContent = (String) row[4];
 
-                        return new MyCommentResponseDTO(
-                                updatedAt != null ? updatedAt.toInstant().atZone(ZoneOffset.UTC) : null, // Timestamp가 null일 경우 NPE 방지
-                                description,
-                                commentContent
-                        );
+                    return new MyCommentResponseDTO(
+                            postId,
+                            category,
+                            createdDateTime,
+//                            description,
+                            postTitle,
+                            commentContent
+                    );
                 })
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 마이페이지 - 내가 작성한 댓글 목록 조회 (더보기용 페이징)
+     *
+     * @param nickname 사용자 닉네임
+     * @param page 현재 페이지 번호
+     * @param size 페이지 당 항목 수
+     * @return 댓글 미리보기 DTO의 페이징 결과
+     */
     public Page<MyCommentResponseDTO> getMyCommentsPaged(String nickname, int page, int size) {
         // 1. 닉네임으로 사용자 ID 조회
         String userId = getUserIdByNickname(nickname);
@@ -157,13 +182,23 @@ public class ProfileService {
 
         // 4. Object[] → DTO 매핑
         return resultPage.map(row -> {
-            Timestamp updatedAt = (Timestamp) row[0];
-            String description = (String) row[1];
-            String commentContent = (String) row[2];
+            // 🛡️ null-safe 및 타입 캐스팅
+            String postId = (String) row[0];
+            String category = (String) row[1];
+            Timestamp createdAt = (Timestamp) row[2];
+            ZonedDateTime createdDateTime = (createdAt != null)
+                    ? createdAt.toInstant().atZone(ZoneOffset.UTC)
+                    : null;
+//            String description = (String) row[3];
+            String postTitle = (String) row[3];
+            String commentContent = (String) row[4];
 
             return new MyCommentResponseDTO(
-                    updatedAt != null ? updatedAt.toInstant().atZone(ZoneOffset.UTC) : null,
-                    description,
+                    postId,
+                    category,
+                    createdDateTime,
+//                    description,
+                    postTitle,
                     commentContent
             );
         });
