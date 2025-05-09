@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,7 +44,7 @@ public class InterestMoreDetailsService {
                     String title = (String) row[1];
                     String content = (String) row[2];
                     return new MyBookmarkResponseDTO(
-                            updatedAt != null ? updatedAt.toLocalDateTime() : null,
+                            updatedAt != null ? updatedAt.toInstant().atZone(ZoneOffset.UTC) : null,
                             title,
                             content
                     );
@@ -57,7 +58,7 @@ public class InterestMoreDetailsService {
                     String title = (String) row[1];
                     String content = (String) row[2];
                     return new MyLikeResponseDTO(
-                            updatedAt != null ? updatedAt.toLocalDateTime() : null,
+                            updatedAt != null ? updatedAt.toInstant().atZone(ZoneOffset.UTC) : null,
                             title,
                             content
                     );
@@ -68,19 +69,19 @@ public class InterestMoreDetailsService {
                 Page<Object[]> bookmarkPage = communityRepository.findBookmarksByUserId(userId, pageable);
                 Page<Object[]> likePage = communityRepository.findLikesByUserId(userId, pageable);
 
-//                bookmarkPage.forEach(row -> System.out.println("🎯 북마크(all) ROW: " + Arrays.toString(row)));
-//                likePage.forEach(row -> System.out.println("🎯 좋아요(all) ROW: " + Arrays.toString(row)));
+//                bookmarkPage.forEach(row -> System.out.println("북마크(all) ROW: " + Arrays.toString(row)));
+//                likePage.forEach(row -> System.out.println("좋아요(all) ROW: " + Arrays.toString(row)));
 
                 List<MyBookmarkResponseDTO> bookmarks = bookmarkPage.stream()
                         .map(row -> new MyBookmarkResponseDTO(
-                                ((Timestamp) row[0]).toLocalDateTime(),
+                                ((Timestamp) row[0]).toInstant().atZone(ZoneOffset.UTC),
                                 (String) row[1],
                                 (String) row[2]
                         )).collect(Collectors.toList());
 
                 List<MyLikeResponseDTO> likes = likePage.stream()
                         .map(row -> new MyLikeResponseDTO(
-                                ((Timestamp) row[0]).toLocalDateTime(),
+                                ((Timestamp) row[0]).toInstant().atZone(ZoneOffset.UTC),
                                 (String) row[1],
                                 (String) row[2]
                         )).collect(Collectors.toList());

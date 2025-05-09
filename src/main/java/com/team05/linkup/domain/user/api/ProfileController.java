@@ -5,6 +5,7 @@ import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.common.enums.ResponseCode;
 import com.team05.linkup.domain.community.dto.CommunityTalentSummaryDTO;
 import com.team05.linkup.domain.enums.Role;
+import com.team05.linkup.domain.mentoring.application.OngoingMatchingService;
 import com.team05.linkup.domain.mentoring.dto.MatchedMentorProfileDto;
 import com.team05.linkup.domain.mentoring.dto.OngoingMatchingDTO;
 import com.team05.linkup.domain.review.application.ReviewService;
@@ -15,17 +16,22 @@ import com.team05.linkup.domain.user.dto.*;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +47,7 @@ public class ProfileController {
     private final ProfileService profileService;
     private final MentorProfileService mentorProfileService;
     private final MenteeProfileService menteeProfileService;
+    private final OngoingMatchingService ongoingMatchingService;
 
     @GetMapping("/{nickname}")
     @Operation(summary = "회원 페이지 조회", description = "멘토/멘티 프로필 페이지(마이페이지 조회) 관련 데이터를 조회합니다.")
@@ -262,4 +269,105 @@ public class ProfileController {
                     .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "지원하지 않는 type입니다."));
         };
     }
+
+    @GetMapping("/check-nickname")
+    public ResponseEntity<ApiResponse<NicknameCheckResponseDTO>> checkNicknameDuplication(
+            @RequestParam("nickname") String nickname) {
+
+        boolean isDuplicated = userRepository.existsByNickname(nickname);
+        NicknameCheckResponseDTO response = new NicknameCheckResponseDTO(isDuplicated);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/{nickname}/profile")
+    public ResponseEntity<ApiResponse<ProfileSettingsResponseDTO>> getProfileSettings(
+            @PathVariable String nickname,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        ProfileSettingsResponseDTO response = profileService.getProfileSettings(nickname, principal);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PatchMapping("/{nickname}/profile")
+    @Operation(summary = "프로필 정보 수정", description = "자기 자신의 프로필 정보를 수정합니다.")
+    public ResponseEntity<ApiResponse<String>> updateProfileFields(
+            @PathVariable String nickname,
+            @RequestBody ProfileUpdateRequestDTO dto,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        try {
+            profileService.updateProfileFields(nickname, dto, principal);
+            return ResponseEntity.ok(ApiResponse.success("프로필 정보가 수정되었습니다."));
+        } catch (AccessDeniedException e) {
+            logger.warn("🚫 접근 거부: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED));
+        } catch (Exception e) {
+            logger.error("❌ 서버 오류 발생", e);
+            return ResponseEntity.internalServerError()
+                    .body(ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR));
+        }
+    }
+
+
+    @Autowired
+    private ProfileImageService profileImageService;
+
+    @PostMapping(
+            value = "/{nickname}/profile/image",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<ApiResponse<?>> updateProfileImage(
+            @PathVariable String nickname,
+            @RequestParam("profileImage") MultipartFile profileImage,
+//            @RequestPart("profileImage") MultipartFile profileImage,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        if (profileImage == null || profileImage.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "이미지 파일이 전달되지 않았습니다."));
+        } else {
+            logger.info("일단 이미지 파일은 보내진 듯??");
+        }
+
+        logger.info("📸 [Upload] 프로필 이미지 업로드 요청 nickname = {}, fileName = {}", nickname, profileImage.getOriginalFilename());
+
+        try {
+            profileService.validateAccess(nickname, userPrincipal);
+            logger.info("🔐 접근 권한 검증 성공");
+
+            User user = userRepository.findByProviderAndProviderId(
+                    userPrincipal.provider(), userPrincipal.providerId()
+            ).orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+            logger.info("👤 사용자 조회 성공: id = {}, nickname = {}", user.getId(), user.getNickname());
+
+            // 업로드 및 URL 저장
+            String imageUrl = profileImageService.uploadProfileImage(user.getId(), profileImage);
+            logger.info("✅ Supabase 업로드 완료, imageUrl = {}", imageUrl);
+
+            // 사용자 프로필 이미지 경로 업데이트 및 저장
+            user.updateProfileImage(imageUrl);
+            logger.info("imageUrl = " + imageUrl);
+            userRepository.save(user); // 저장 - DB 반영
+
+            return ResponseEntity.ok(ApiResponse.success("프로필 이미지가 변경되었습니다."));
+
+        } catch (AccessDeniedException e) {
+            logger.warn("🚫 접근 거부: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(ResponseCode.ACCESS_DENIED));
+        } catch (IllegalArgumentException e) {
+            logger.warn("⚠️ 유효하지 않은 입력값: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, e.getMessage()));
+        } catch (Exception e) {
+            logger.error("❌ 서버 오류 발생", e);
+            return ResponseEntity.internalServerError()
+                    .body(ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR));
+        }
+    }
+
+
 }
