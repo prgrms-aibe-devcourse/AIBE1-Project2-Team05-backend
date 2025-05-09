@@ -40,7 +40,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
             // SameSite=None 설정 (크로스 사이트 요청에서 쿠키 전송을 허용)
             ResponseCookie cookie = ResponseCookie.from("jwt_token", token)
-                    .sameSite("Strict")  // 크로스 사이트 요청에서도 쿠키 전송
+                    .sameSite("None")  // 크로스 사이트 요청에서도 쿠키 전송
                     .httpOnly(true)    // JavaScript에서 접근 불가
                     .secure(true)      // HTTPS에서만 전송
                     .path("/")         // 모든 경로에서 사용 가능
