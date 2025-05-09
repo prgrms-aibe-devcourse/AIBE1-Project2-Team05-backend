@@ -25,12 +25,13 @@ public class LogoutController {
         SecurityContextHolder.clearContext();
 
 
-        ResponseCookie cookie = ResponseCookie.from("jwt_token", null)
+        ResponseCookie cookie = ResponseCookie.from("jwt_token", "")
                 .path("/")
                 .maxAge(0)
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
+                .domain(".linkup.o-r.kr")
                 .build();
         response.addHeader("Set-Cookie",cookie.toString());
         return ResponseEntity.ok(ApiResponse.success(ResponseCode.SUCCESS));
