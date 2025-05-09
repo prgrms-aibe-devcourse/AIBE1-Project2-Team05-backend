@@ -47,7 +47,6 @@ CREATE TABLE community (
        user_id VARCHAR(36) NOT NULL,
        title VARCHAR(100) NOT NULL,
        category ENUM('QUESTION', 'INFO', 'REVIEW', 'FREE', 'TALENT') NOT NULL,
-       community_tag_id VARCHAR(36),
        content LONGTEXT NOT NULL,
        view_count bigint default 0 not null,
        like_count bigint default 0 not null,
@@ -58,12 +57,26 @@ CREATE TABLE community (
        CONSTRAINT fk_community_user_id FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE RESTRICT
 );
 
-CREATE TABLE community_tag (
-    id VARCHAR(36) PRIMARY KEY ,
-    community_id VARCHAR(36),
-    tag_name VARCHAR(10) NOT NULL ,
-    CONSTRAINT fk_community_id FOREIGN KEY (community_id) REFERENCES community(id) ON DELETE CASCADE
+create table tags
+(
+    id   bigint auto_increment primary key,
+    name varchar(36) not null,
+    constraint uk_tag_name
+        unique (name)
 );
+
+create table community_tag_join
+(
+    community_id varchar(36) not null,
+    tag_id       bigint      not null,
+    primary key (community_id, tag_id),
+    constraint FKfy9ih17swrqg97i96thstdpx1
+        foreign key (community_id) references community (id),
+    constraint FKhfrf0f0d90vff672af07cj4si
+        foreign key (tag_id) references tags (id)
+);
+
+
 
 CREATE TABLE images (
     id VARCHAR(36) PRIMARY KEY,
