@@ -4,12 +4,14 @@ import com.team05.linkup.domain.enums.Interest;
 import com.team05.linkup.domain.enums.Role;
 import com.team05.linkup.domain.mentoring.dto.ProfileTagInterestDTO;
 import com.team05.linkup.domain.user.domain.User;
+import com.team05.linkup.domain.community.dto.ActiveUsersTempDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,5 +68,28 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     boolean existsByNickname(String nickname);
 
+
+    /**
+     * 지정된 시작일 이후의 사용자 활동(게시글 수, 댓글 수)을 집계하여 반환합니다.
+     * 비활성화된 계정은 제외합니다.
+     *
+     * @param startDate 활동 집계 시작일
+     * @return 사용자별 활동 정보 DTO 목록
+     */
+    @Query("SELECT NEW com.team05.linkup.domain.community.dto.ActiveUsersTempDTO(" +
+            "u.id, u.nickname, u.profileImageUrl, " +
+            "COALESCE(pc.postCount, 0L), COALESCE(cc.commentCount, 0L)) " +
+            "FROM User u " +
+            "LEFT JOIN (" +
+                "SELECT p.user.id AS authorUserId, COUNT(p.id) AS postCount " +
+                "FROM Community p " + // 제공해주신 Community 엔티티명 사용
+                "WHERE p.createdAt >= :startDate GROUP BY p.user.id) pc ON u.id = pc.authorUserId " +
+            // 댓글 수 집계: Comment 엔티티의 'userId' 필드 (String 타입)를 사용자의 id와 직접 연결
+            "LEFT JOIN (" +
+                "SELECT c.userId AS commentAuthorId, COUNT(c.id) AS commentCount " +
+                "FROM Comment c " + // 제공해주신 Comment 엔티티명 사용
+                "WHERE c.createdAt >= :startDate GROUP BY c.userId) cc ON u.id = cc.commentAuthorId " +
+            "WHERE u.accountDisable = false") // User 엔티티의 accountDisable 필드 활용
+    List<ActiveUsersTempDTO> findUserActivities(@Param("startDate") ZonedDateTime startDate);
 
 }
