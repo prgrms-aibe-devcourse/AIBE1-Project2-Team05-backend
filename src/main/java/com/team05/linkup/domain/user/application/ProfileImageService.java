@@ -21,7 +21,7 @@ public class ProfileImageService {
     @Value("${supabase.profile-image-bucket}")
     private String profileImageBucket;
 
-    @Value("${supabase.url}")
+    @Value("${supabase.storage-url}")   // ../storage/v1/
     private String url;
 
     /**

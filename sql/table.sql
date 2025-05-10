@@ -87,7 +87,7 @@ CREATE TABLE images (
     id VARCHAR(36) PRIMARY KEY,
     user_id VARCHAR(36),
     community_id VARCHAR(36),
-    image_url VARCHAR(255) NOT NULL ,
+    object_path VARCHAR(512) NOT NULL,   -- ← image_url → object_path
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
