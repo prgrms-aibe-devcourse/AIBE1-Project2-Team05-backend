@@ -102,18 +102,24 @@ public class CommunityService {
      * @param pageable 페이징 및 정렬 정보 (페이지 번호, 페이지 크기, 정렬 기준). Spring Data Web Support에 의해 Controller에서 생성됩니다.
      * @return 조건에 맞는 게시글 요약 정보({@link CommunitySummaryResponseDTO})를 담고 있는 {@link Page} 객체.
      * 결과가 없을 경우 빈 Page 객체가 반환됩니다.
-     * @see CommunityRepository#findCommunitySummaries(CommunityCategory, Pageable)
+     * @see CommunityRepository #findCommunitySummaries(CommunityCategory, Pageable)
      */
     public Page<CommunitySummaryResponseDTO> findCommunities(CommunityCategory category, String tagName, Pageable pageable) {
-        String trimmedTagName = null;
-        if (StringUtils.hasText(tagName)) {
-            trimmedTagName = tagName.trim();
-        }
+        String trimmedTagName = StringUtils.hasText(tagName) ? tagName.trim() : null;
+
         return communityRepository.findCommunitySummaries(
                 category,
                 trimmedTagName,
-                pageable
-        );
+                pageable);
+//        String trimmedTagName = null;
+//        if (StringUtils.hasText(tagName)) {
+//            trimmedTagName = tagName.trim();
+//        }
+//        return communityRepository.findCommunitySummaries(
+//                category,
+//                trimmedTagName,
+//                pageable
+//        );
     }
 
     /**
@@ -195,7 +201,7 @@ public class CommunityService {
 
         /* 이미지 objectPath 가져온 뒤 → 60초짜리 서명 URL 변환 */
         List<String> imageUrls = imageRepository.findByCommunityId(communityId).stream()
-                .map(Image::getImageUrl)
+                .map(Image::getObjectPath)
                 .map(p -> communityImageService.getSignedUrl(p, 60))
                 .toList();
 
@@ -421,7 +427,7 @@ public class CommunityService {
         List<Image> images = objectPaths.stream()
                 .map(path -> Image.builder()
                         .community(community)
-                        .imageUrl(path)      // Supabase object path 그대로
+                        .objectPath(path)      // Supabase object path 그대로
                         .build())
                 .toList();
 

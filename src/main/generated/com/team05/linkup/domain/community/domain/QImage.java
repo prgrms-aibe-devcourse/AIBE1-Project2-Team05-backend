@@ -31,7 +31,7 @@ public class QImage extends EntityPathBase<Image> {
 
     public final StringPath id = createString("id");
 
-    public final StringPath imageUrl = createString("imageUrl");
+    public final StringPath objectPath = createString("objectPath");
 
     //inherited
     public final DateTimePath<java.time.ZonedDateTime> updatedAt = _super.updatedAt;

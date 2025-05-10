@@ -29,6 +29,9 @@ public class Image extends BaseEntity {
     @JoinColumn(name = "community_id")
     private Community community;
 
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
+    @Column(name = "object_path", length = 512, nullable = false)
+    private String objectPath;     // imageUrl → objectPath 로 변경
+
+//    @Column(name = "image_url", nullable = false)
+//    private String imageUrl;
 }
