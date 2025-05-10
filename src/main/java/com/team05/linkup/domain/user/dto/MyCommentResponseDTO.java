@@ -14,13 +14,15 @@ public class MyCommentResponseDTO {
     private String postId;  // 게시글 ID (프론트에서 링크 이동에 사용)
 
     private String category; // 게시글 카테고리 (자유게시판, Q&A 등)
-    private String categoryDisplayName;  // ✅ 한글 표시용 (예: 자유게시판)
+    private String categoryDisplayName;  // 한글 표시용 (예: 자유게시판)
 
     private ZonedDateTime createdAt;     // 댓글 작성일 (UTC 기준)
 
     private String postTitle;    // 게시글 제목
 
     private String commentContent;
+
+    private String postUrl; // ✅ 새로 추가된 필드
 
     public MyCommentResponseDTO(
             String postId,
@@ -31,10 +33,13 @@ public class MyCommentResponseDTO {
     ) {
         this.postId = postId;
         this.category = category;
-        this.categoryDisplayName = CommunityCategory.valueOf(category).getDisplayName(); // ✅ 변환 추가
+        this.categoryDisplayName = CommunityCategory.valueOf(category).getDisplayName(); // 변환 추가
         this.createdAt = createdAt;
         this.postTitle = postTitle;
         this.commentContent = commentContent;
+
+        // ✅ 게시글 상세 이동 URL 자동 생성
+        this.postUrl = "/community/detail/" + postId;
     }
 
     public String getPostId() {
@@ -62,5 +67,10 @@ public class MyCommentResponseDTO {
     // 삭제 시 댓글 내용이 응답에 포함되지 않으므로 유지 필수
     public String getCommentContent() {
         return commentContent;
+    }
+
+    // ✅ 새로 추가된 getter
+    public String getPostUrl() {
+        return postUrl;
     }
 }
