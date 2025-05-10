@@ -2,6 +2,7 @@ package com.team05.linkup.domain.mentoring.infrastructure;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.team05.linkup.domain.enums.ActivityTime;
 import com.team05.linkup.domain.enums.ActivityType;
 import com.team05.linkup.domain.enums.Role;
 import com.team05.linkup.domain.mentoring.dto.MentorFilterDTO;
@@ -43,8 +44,13 @@ public class MentorFilterRepository {
         }
 
         // 옵션 필터: 활동 시간대
-        if (filterDTO.getActivityTime() != null) {
-            builder.and(user.activityTime.eq(filterDTO.getActivityTime()));
+        if (filterDTO.getActivityTime() != null && !filterDTO.getActivityTime().isEmpty()) {
+            // 리스트에 있는 시간 중 하나라도 일치하는 경우 (OR 조건)
+            BooleanBuilder timeBuilder = new BooleanBuilder();
+            for (ActivityTime time : filterDTO.getActivityTime()) {
+                timeBuilder.or(user.activityTime.eq(time));
+            }
+            builder.and(timeBuilder);
         }
 
         // 옵션 필터: 활동 유형
