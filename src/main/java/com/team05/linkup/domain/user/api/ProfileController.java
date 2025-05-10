@@ -66,7 +66,10 @@ public class ProfileController {
 
     @GetMapping("/{nickname}/activity")
     @Operation(summary = "나의 활동 내역 조회(멘토, 멘티 공통)", description = "멘토: 내가 등록한 재능 목록, 멘티: 내가 신청한 매칭, 내가 작성한 커뮤니티 게시글, 내가 작성한 댓글, 관심 목록 데이터를 조회합니다.")
-    public ResponseEntity<ApiResponse<ActivityResponseDTO>> getActivity(@PathVariable String nickname) {
+    public ResponseEntity<ApiResponse<ActivityResponseDTO>> getActivity(
+            @PathVariable String nickname,
+            @AuthenticationPrincipal UserPrincipal userPrincipal     // 🟢 로그인한 사용자 주입
+    ) {
         // 1. 사용자의 역할(멘토/멘티) 확인
         Optional<User> userOpt = userRepository.findByNickname(nickname);
         if (userOpt.isEmpty())
@@ -74,11 +77,26 @@ public class ProfileController {
                     .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다."));
 
         User profile = userOpt.get();
-        logger.debug(profile.getRole());
+        logger.debug("🔍 요청 대상 닉네임의 역할: {}", profile.getRole());
+
+        // ✅ me 여부 판단: provider + providerId 기준으로 user 조회 → nickname 비교
+        boolean isMe = false;
+
+        if (userPrincipal != null) {
+            Optional<User> loginUser = userRepository.findByProviderAndProviderId(
+                    userPrincipal.provider(), userPrincipal.providerId()
+            );
+
+            isMe = loginUser
+                    .map(user -> nickname.equals(user.getNickname()))
+                    .orElse(false);
+        }
 
         // 공통 조회 항목 - Controller에서는 입출력과 역할 분기만 담당
+        // 공통 항목 DTO 생성 + me 설정
         ActivityResponseDTO.ActivityResponseDTOBuilder builder =
-                profileService.getCommonActivityDTO(nickname).toBuilder();
+                profileService.getCommonActivityDTO(nickname).toBuilder()
+                        .me(isMe); // ✅ 본인 여부 포함
 
         if (profile.getRole().equals(Role.ROLE_MENTOR)) {
             // 멘토의 경우, 커뮤니티 재능나눔 게시글 작성 내역 조회하여 반환
@@ -101,28 +119,29 @@ public class ProfileController {
             @PathVariable String nickname,
             @RequestParam("type") String type,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size   // size 파라미터 추가
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @AuthenticationPrincipal UserPrincipal userPrincipal // ✅ 여기서 닫기
     ) {
         return switch (type) {
             // 재능 목록 more-details
             case "my-talents" -> {
-                Page<CommunityTalentSummaryDTO> result =
-                        mentorProfileService.getCommunityTalentsPaged(nickname, page, size);
+                ActivityMoreDetailsResponseDTO<CommunityTalentSummaryDTO> result =
+                        mentorProfileService.getMyTalentsMoreDetails(nickname, userPrincipal, page, size);
                 yield ResponseEntity.ok(ApiResponse.success(result));
             }
 
             // 내가 쓴 게시글 more-details
             case "my-posts" -> {
-                Page<MyPostResponseDTO> result =
-                        profileService.getMyPostsPaged(nickname, page, size);
-                yield ResponseEntity.ok(ApiResponse.success(result));
+                ActivityMoreDetailsResponseDTO<MyPostResponseDTO> dto =
+                        profileService.getMyPostsMoreDetails(nickname, userPrincipal, page, size);
+                yield ResponseEntity.ok(ApiResponse.success(dto));
             }
 
             // 내가 쓴 댓글 more-details
             case "my-comments" -> {
-                Page<MyCommentResponseDTO> result =
-                        profileService.getMyCommentsPaged(nickname, page, size);
-                yield ResponseEntity.ok(ApiResponse.success(result));
+                ActivityMoreDetailsResponseDTO<MyCommentResponseDTO> dto =
+                        profileService.getMyCommentsMoreDetails(nickname, userPrincipal, page, size);
+                yield ResponseEntity.ok(ApiResponse.success(dto));
             }
 
             // 내가 신청한 매칭 more-details
@@ -140,28 +159,62 @@ public class ProfileController {
 
     private final InterestMoreDetailsService interestMoreDetailsService;
 
-    // 관심 목록 더보기 API
+//    // 관심 목록 더보기 API
+//    @GetMapping("/{nickname}/activity/more-details/interests")
+//    @Operation(summary = "나의 활동 내역 조회 more-details [관심 목록(북마크/좋아요)]", description = "북마크(bookmarked), 좋아요(liked), 전체(all) 옵션에 따라 관련 데이터를 자세히 조회합니다.")
+//    public ResponseEntity<ApiResponse<?>> getInterestMoreDetails(
+//            @PathVariable String nickname,
+//            @RequestParam("filter") String filter, // bookmarked | liked | all
+//            @RequestParam(value = "page", defaultValue = "0") int page,
+//            @RequestParam(value = "size", defaultValue = "10") int size
+//    ) {
+//        // 유효하지 않은 filter 처리
+//        if (!filter.equals("bookmarked") && !filter.equals("liked") && !filter.equals("all")) {
+//            return ResponseEntity
+//                    .status(HttpStatus.BAD_REQUEST)
+//                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "유효하지 않은 filter 파라미터입니다."));
+//        }
+//
+//        // 서비스 호출
+//        Page<?> result = interestMoreDetailsService.getInterestPosts(nickname, filter, page, size);
+//
+//        // 성공 응답 반환
+//        return ResponseEntity.ok(ApiResponse.success(result));
+//    }
+// 관심 목록 더보기 API
     @GetMapping("/{nickname}/activity/more-details/interests")
     @Operation(summary = "나의 활동 내역 조회 more-details [관심 목록(북마크/좋아요)]", description = "북마크(bookmarked), 좋아요(liked), 전체(all) 옵션에 따라 관련 데이터를 자세히 조회합니다.")
-    public ResponseEntity<ApiResponse<?>> getInterestMoreDetails(
+    public ResponseEntity<ApiResponse<ActivityMoreDetailsResponseDTO<InterestItemDTO>>> getInterestMoreDetails(
             @PathVariable String nickname,
             @RequestParam("filter") String filter, // bookmarked | liked | all
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @AuthenticationPrincipal UserPrincipal userPrincipal // 🔑 me 여부 계산용
     ) {
-        // 유효하지 않은 filter 처리
-        if (!filter.equals("bookmarked") && !filter.equals("liked") && !filter.equals("all")) {
+        // 1. filter 유효성 검사
+        if (!List.of("bookmarked", "liked", "all").contains(filter)) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "유효하지 않은 filter 파라미터입니다."));
         }
 
-        // 서비스 호출
-        Page<?> result = interestMoreDetailsService.getInterestPosts(nickname, filter, page, size);
+        // 2. 본인 여부 판단
+        boolean isMe = false;
+        if (userPrincipal != null) {
+            Optional<User> loginUserOpt = userRepository.findByProviderAndProviderId(
+                    userPrincipal.provider(), userPrincipal.providerId()
+            );
+            isMe = loginUserOpt.map(user -> user.getNickname().equals(nickname)).orElse(false);
+        }
 
-        // 성공 응답 반환
+        // 3. 래핑된 DTO 응답 호출
+        ActivityMoreDetailsResponseDTO<InterestItemDTO> result =
+                interestMoreDetailsService.getInterestPostsWrapped(nickname, filter, page, size, isMe);
+
+        // 4. 반환
         return ResponseEntity.ok(ApiResponse.success(result));
     }
+
 
     private final MatchingPageFacade matchingPageFacade;
 
