@@ -75,6 +75,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                 )
+                .formLogin(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(new OAuth2AuthenticationEntryPoint())
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
@@ -101,7 +102,8 @@ public class SecurityConfig {
                 "http://localhost:3000",
                 "http://localhost:8080",
                 "https://backend.linkup.o-r.kr",
-                "https://frontend.linkup.o-r.kr"
+                "https://frontend.linkup.o-r.kr",
+                "http://frontend.linkup.o-r.kr:3000"
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList(

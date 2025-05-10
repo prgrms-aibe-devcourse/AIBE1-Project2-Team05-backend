@@ -82,70 +82,57 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
     int decrementLikeCount(@Param("communityId") String communityId);
 
 
-    // 멘토 마이페이지 - 내가 등록한 재능 목록
-    @Query(value = """
-        SELECT 
-            title, 
-            community_tag_id, 
-            CASE
-                WHEN CHAR_LENGTH(content) > 55
-                    THEN CONCAT(LEFT(content, 55), '...')
-                ELSE content 
-            END AS content
-        FROM 
-            community 
-        WHERE 
-            category = 'TALENT' 
-            AND user_id IN (
-                SELECT id FROM user WHERE nickname = :nickname
-            )
-        ORDER BY 
-            updated_at DESC 
-        LIMIT :limit
-        """, nativeQuery = true)
-    List<Object[]> findByCategory(@Param("nickname") String nickname, @Param("limit") int limit);
+    /**
+     * 멘토 마이페이지 - 내가 등록한 재능 목록 (미리보기 용, 최신 2개)
+     *
+     * <p>특정 닉네임의 유저가 작성한 커뮤니티 게시글 중, 카테고리가 'TALENT'인 글을 최신순으로 최대 2개까지 조회한다.</p>
+     * <p>태그는 JOIN FETCH를 통해 함께 로딩하며, 태그가 없는 게시글도 조회되도록 LEFT JOIN 사용.</p>
+     *
+     * @param nickname 닉네임 기준으로 게시글 필터링
+     * @param pageable PageRequest.of(0, 2) 형태의 페이징 정보
+     * @return 최신 재능 게시글 2개 (엔티티 리스트, 태그 포함)
+     */
+    @Query("""
+        SELECT DISTINCT c FROM Community c
+        LEFT JOIN FETCH c.tags
+        WHERE c.user.nickname = :nickname AND c.category = 'TALENT'
+        ORDER BY c.createdAt DESC
+    """)
+    List<Community> findLatestTalentsByNickname(@Param("nickname") String nickname, Pageable pageable);
+
 
     /**
-     * 마이페이지 - 내가 등록한 재능(TALENT) 목록 조회 (페이징 지원)
+     * 멘토 마이페이지 - 내가 등록한 재능 목록 (더보기 페이지용)
      *
-     * @param nickname 유저 닉네임
-     * @param pageable 페이지 정보 (page, size, sort 등)
-     * @return 제목, 태그 ID, 본문 요약이 포함된 결과 목록
+     * <p>특정 닉네임의 유저가 작성한 'TALENT' 카테고리 커뮤니티 게시글 전체를 페이징 처리하여 조회한다.</p>
+     * <p>JOIN FETCH를 통해 태그를 함께 로딩하며, 태그가 없는 게시글도 조회된다.</p>
+     *
+     * @param nickname 닉네임 기준으로 게시글 필터링
+     * @param pageable 페이지 정보 (page, size 등)
+     * @return 재능 게시글 목록 (Page 타입, 태그 포함)
      */
-    @Query(value = """
-        SELECT 
-            title, 
-            community_tag_id, 
-            CASE
-                WHEN CHAR_LENGTH(content) > 55
-                    THEN CONCAT(LEFT(content, 55), '...')
-                ELSE content 
-            END AS content
-        FROM 
-            community 
-        WHERE 
-            category = 'TALENT' 
-            AND user_id IN (
-                SELECT id FROM user WHERE nickname = :nickname
-            )
-        ORDER BY 
-            updated_at DESC
-        """, countQuery = """
-        SELECT COUNT(*)
-        FROM community
-        WHERE category = 'TALENT'
-          AND user_id IN (
-              SELECT id FROM user WHERE nickname = :nickname
-          )
-    """, nativeQuery = true)
-    Page<Object[]> findTalentsByNicknameWithPaging(@Param("nickname") String nickname, Pageable pageable);
+    @Query("""
+        SELECT DISTINCT c FROM Community c
+        LEFT JOIN FETCH c.tags
+        WHERE c.user.nickname = :nickname AND c.category = 'TALENT'
+        ORDER BY c.createdAt DESC
+    """)
+    Page<Community> findTalentsByNicknameWithPaging(@Param("nickname") String nickname, Pageable pageable);
 
 
-    // 공통 마이페이지 - 내가 작성한 커뮤니티 게시글
+
+    /**
+     * 마이페이지 - 내가 작성한 게시글 조회 (미리보기, 최신 N개)
+     * - TALENT 카테고리는 제외
+     *
+     * @param nickname 닉네임 기준
+     * @param limit 가져올 게시글 개수
+     * @return Object[] 리스트 (id, created_at, category, title, content, viewCount, likeCount, commentCount)
+     */
     @Query(value = """
     SELECT 
         c.id,
-        c.updated_at,
+        c.created_at,
         c.category,
         c.title,
         CASE
@@ -174,10 +161,12 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
     List<Object[]> findByCommunityPosts(@Param("nickname") String nickname, @Param("limit") int limit);
 
     /**
-     * 마이페이지 - 내가 작성한 커뮤니티 게시글 목록 조회 (페이징)
+     * 마이페이지 - 내가 작성한 게시글 조회 (더보기/페이징용)
+     * - TALENT 카테고리는 제외
      *
-     * @param nickname 유저 닉네임
-     * @param pageable 페이지 정보 (page, size 등)
+     * @param nickname 닉네임 기준
+     * @param pageable 페이지 정보
+     * @return Object[] Page (id, updated_at, category, title, content, viewCount, likeCount, commentCount)
      */
     @Query(value = """
     SELECT 
@@ -220,11 +209,19 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
 
 
 
-    // 공통 마이페이지 - 내가 작성한 댓글
+    /**
+     * 마이페이지 - 내가 작성한 댓글 목록 조회 (미리보기)
+     *
+     * @param userId 유저 ID
+     * @param limit 조회할 댓글 수
+     * @return 댓글이 달린 게시글의 ID, 카테고리, 작성일, 게시글 제목, 댓글 내용(요약 포함)
+     */
     @Query(value = """
     SELECT 
-        cs.updated_at,
-        CONCAT('"', ct.title, '" 게시글에 댓글'),            
+        ct.id AS post_id,
+        ct.category,
+        cs.created_at,
+        ct.title AS post_title,
         CASE
             WHEN CHAR_LENGTH(cs.comment_content) > 55
                 THEN CONCAT(LEFT(cs.comment_content, 55), '...')
@@ -235,7 +232,7 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
     WHERE 
         cs.user_id = :userId 
     ORDER BY 
-        cs.updated_at DESC 
+        cs.created_at DESC 
     LIMIT :limit
     """, nativeQuery = true)
     List<Object[]> findByMyCommunityComments(@Param("userId") String userId, @Param("limit") int limit);
@@ -245,31 +242,33 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
 
 
     /**
-     * 마이페이지 - 내가 작성한 댓글 목록 조회 (페이징 지원)
+     * 마이페이지 - 내가 작성한 댓글 목록 조회 (페이징)
      *
-     * @param userId 사용자 ID (닉네임 기반으로 조회된 내부 식별자)
-     * @param pageable 페이지 정보 (page, size, sort 등)
-     * @return 댓글 작성 시각, 연결된 게시글 제목 설명, 댓글 요약이 포함된 결과 목록
+     * @param userId 유저 ID
+     * @param pageable 페이지 정보 (page, size 등)
+     * @return 댓글이 달린 게시글의 ID, 카테고리, 작성일, 게시글 제목, 댓글 내용(요약 포함)
      */
     @Query(value = """
-        SELECT 
-            cs.updated_at,
-            CONCAT('"', ct.title, '" 게시글에 댓글'),            
-            CASE
-                WHEN CHAR_LENGTH(cs.comment_content) > 55
-                    THEN CONCAT(LEFT(cs.comment_content, 55), '...')
-                ELSE cs.comment_content
-            END AS comment_content
-        FROM 
-            comments cs JOIN community ct ON cs.community_id = ct.id
-        WHERE 
-            cs.user_id = :userId 
-        ORDER BY 
-            cs.updated_at DESC
+    SELECT 
+        ct.id AS post_id,
+        ct.category,
+        cs.created_at,
+        ct.title AS post_title,
+        CASE
+            WHEN CHAR_LENGTH(cs.comment_content) > 55
+                THEN CONCAT(LEFT(cs.comment_content, 55), '...')
+            ELSE cs.comment_content
+        END AS comment_content
+    FROM 
+        comments cs JOIN community ct ON cs.community_id = ct.id
+    WHERE 
+        cs.user_id = :userId 
+    ORDER BY 
+        cs.created_at DESC
     """, countQuery = """
-        SELECT COUNT(*) 
-        FROM comments 
-        WHERE user_id = :userId
+    SELECT COUNT(*) 
+    FROM comments 
+    WHERE user_id = :userId
     """, nativeQuery = true)
     Page<Object[]> findMyCommentsPaged(@Param("userId") String userId, Pageable pageable);
 

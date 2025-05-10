@@ -15,11 +15,11 @@ import lombok.NoArgsConstructor;
 public class MentorCardDTO {
     private String mentorId;
     private String nickname;
-    private Interest interest;
+    private String interest;
     private String profileImageUrl;
     private String areaName;
     private String sigunguName;
     private String introduction;
-    private ActivityTime activityTime;
-    private ActivityType activityType;
+    private String activityTime;
+    private String activityType;
 }
