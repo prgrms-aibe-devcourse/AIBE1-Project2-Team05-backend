@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -45,9 +46,21 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
                     }
                 }
             }
+            ResponseCookie cookie = ResponseCookie.from("jwt_token", "")
+                    .sameSite("None")
+                    .secure(true)
+                    .httpOnly(true)
+                    .maxAge(0)
+                    .domain(".linkup.o-r.kr")
+                    .path("/")
+                    .build();
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.setHeader("Set-Cookie", cookie.toString());
+            response.getWriter().write("{\"message\": \"logout success\"}");
+            response.getWriter().flush();
 
-            // 리디렉션 설정
-            response.sendRedirect("/");
         } catch (Exception e) {
             logger.error("Error during logout: {}", e.getMessage());
             response.sendRedirect("/?logout-error=true");

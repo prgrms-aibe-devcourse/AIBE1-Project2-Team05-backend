@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -87,24 +88,39 @@ public class ProfileService {
         return communityRepository.findUserIdByNickname(nickname);
     }
 
+    /**
+     * 마이페이지 - 내가 작성한 커뮤니티 게시글 목록 조회 (미리보기용, 상위 N개)
+     *
+     * @param nickname 닉네임 (user.nickname)
+     * @param limit 가져올 게시글 개수 (최신순 제한)
+     * @return 게시글 요약 정보 리스트
+     */
     public List<MyPostResponseDTO> getMyPosts(String nickname, int limit) {
         List<Object[]> rawResults = communityRepository.findByCommunityPosts(nickname, limit);
 
         return rawResults.stream()
                 .map(obj -> new MyPostResponseDTO(
                         (String) obj[0],                                      // id
-                        ((Timestamp) obj[1]).toInstant().atZone(ZoneOffset.UTC),              // updated_at
+                        ((Timestamp) obj[1]).toInstant().atZone(ZoneOffset.UTC),  // created_at
+                        // ((Timestamp) obj[2]).toInstant().atZone(ZoneOffset.UTC),  // updated_at
                         (String) obj[2],                                      // category
                         (String) obj[3],                                      // title
                         (String) obj[4],                                      // content
-                        ((Number) obj[5]).intValue(),                         // view_count (Long → int)
-                        ((Number) obj[6]).intValue(),                         // like_count (Long → int)
-                        ((Number) obj[7]).intValue()                          // comment_count (Long → int)
+                        ((Number) obj[5]).intValue(),                         // view_count
+                        ((Number) obj[6]).intValue(),                         // like_count
+                        ((Number) obj[7]).intValue()                          // comment_count
                 ))
                 .collect(Collectors.toList());
     }
 
-    // 내가 작성한 커뮤니티 게시글 - 페이징
+    /**
+     * 마이페이지 - 내가 작성한 커뮤니티 게시글 목록 조회 (페이징: 더보기 탭용)
+     *
+     * @param nickname 닉네임 (user.nickname)
+     * @param page 페이지 번호 (0부터 시작)
+     * @param size 페이지당 항목 수
+     * @return 게시글 요약 정보 페이징 결과
+     */
     public Page<MyPostResponseDTO> getMyPostsPaged(String nickname, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Object[]> resultPage = communityRepository.findCommunityPostsWithPaging(nickname, pageable);
@@ -121,8 +137,49 @@ public class ProfileService {
         ));
     }
 
+    /**
+     * [더보기] 내가 작성한 게시글 목록 응답 (me 여부 포함)
+     *
+     * @param nickname 조회 대상 사용자 닉네임
+     * @param principal 로그인 사용자 정보
+     * @param page 페이지 번호
+     * @param size 페이지 크기
+     * @return me + 게시글 리스트 래핑 DTO
+     */
+    public ActivityMoreDetailsResponseDTO<MyPostResponseDTO> getMyPostsMoreDetails(
+            String nickname, UserPrincipal principal, int page, int size) {
 
-    // 내가 작성한 댓글 조회
+        // 1. 게시글 목록 페이징 조회
+        Page<MyPostResponseDTO> result = getMyPostsPaged(nickname, page, size);
+
+        // 2. me 여부 판단
+        boolean isMe = false;
+        if (principal != null) {
+            Optional<User> loginUserOpt = userRepository.findByProviderAndProviderId(
+                    principal.provider(), principal.providerId()
+            );
+            isMe = loginUserOpt
+                    .map(user -> user.getNickname().equals(nickname))
+                    .orElse(false);
+        }
+
+        // 3. 응답 래핑
+        return ActivityMoreDetailsResponseDTO.<MyPostResponseDTO>builder()
+                .me(isMe)
+                .content(result.getContent())
+                .build();
+    }
+
+
+
+
+    /**
+     * 마이페이지 - 내가 작성한 댓글 목록 조회 (미리보기)
+     *
+     * @param nickname 사용자 닉네임
+     * @param limit 조회할 개수 제한
+     * @return 댓글 미리보기 DTO 목록 (최대 55자 댓글 + 게시글 제목/카테고리 등 포함)
+     */
     public List<MyCommentResponseDTO> getMyComments(String nickname, int limit) {
         // userId 조회 (닉네임 기반 → ID 추출)
         String userId = getUserIdByNickname(nickname);
@@ -131,20 +188,38 @@ public class ProfileService {
         // DTO로 매핑
         return rows.stream()
                 .map(row -> {
-                        // 🛡️ null-safe 및 타입 캐스팅
-                        Timestamp updatedAt = (Timestamp) row[0];
-                        String description = (String) row[1];
-                        String commentContent = (String) row[2];
+                    // 컬럼 순서: post_id, category, created_at, post_title, description, comment_content
+                    // 🛡️ null-safe 및 타입 캐스팅
+                    String postId = (String) row[0];
+                    String category = (String) row[1];
+                    Timestamp createdAt = (Timestamp) row[2];
+                    ZonedDateTime createdDateTime = (createdAt != null)
+                            ? createdAt.toInstant().atZone(ZoneOffset.UTC)
+                            : null;
+//                    String description = (String) row[3];
+                    String postTitle = (String) row[3];
+                    String commentContent = (String) row[4];
 
-                        return new MyCommentResponseDTO(
-                                updatedAt != null ? updatedAt.toInstant().atZone(ZoneOffset.UTC) : null, // Timestamp가 null일 경우 NPE 방지
-                                description,
-                                commentContent
-                        );
+                    return new MyCommentResponseDTO(
+                            postId,
+                            category,
+                            createdDateTime,
+//                            description,
+                            postTitle,
+                            commentContent
+                    );
                 })
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 마이페이지 - 내가 작성한 댓글 목록 조회 (더보기용 페이징)
+     *
+     * @param nickname 사용자 닉네임
+     * @param page 현재 페이지 번호
+     * @param size 페이지 당 항목 수
+     * @return 댓글 미리보기 DTO의 페이징 결과
+     */
     public Page<MyCommentResponseDTO> getMyCommentsPaged(String nickname, int page, int size) {
         // 1. 닉네임으로 사용자 ID 조회
         String userId = getUserIdByNickname(nickname);
@@ -155,17 +230,61 @@ public class ProfileService {
 
         // 4. Object[] → DTO 매핑
         return resultPage.map(row -> {
-            Timestamp updatedAt = (Timestamp) row[0];
-            String description = (String) row[1];
-            String commentContent = (String) row[2];
+            // 🛡️ null-safe 및 타입 캐스팅
+            String postId = (String) row[0];
+            String category = (String) row[1];
+            Timestamp createdAt = (Timestamp) row[2];
+            ZonedDateTime createdDateTime = (createdAt != null)
+                    ? createdAt.toInstant().atZone(ZoneOffset.UTC)
+                    : null;
+//            String description = (String) row[3];
+            String postTitle = (String) row[3];
+            String commentContent = (String) row[4];
 
             return new MyCommentResponseDTO(
-                    updatedAt != null ? updatedAt.toInstant().atZone(ZoneOffset.UTC) : null,
-                    description,
+                    postId,
+                    category,
+                    createdDateTime,
+//                    description,
+                    postTitle,
                     commentContent
             );
         });
     }
+
+    /**
+     * [더보기] 내가 작성한 댓글 목록 응답 (me 여부 포함)
+     *
+     * @param nickname 조회 대상 사용자 닉네임
+     * @param principal 로그인 사용자 정보
+     * @param page 페이지 번호
+     * @param size 페이지 크기
+     * @return me + 댓글 리스트 래핑 DTO
+     */
+    public ActivityMoreDetailsResponseDTO<MyCommentResponseDTO> getMyCommentsMoreDetails(
+            String nickname, UserPrincipal principal, int page, int size) {
+
+        // 1. 댓글 목록 페이징 조회
+        Page<MyCommentResponseDTO> result = getMyCommentsPaged(nickname, page, size);
+
+        // 2. me 여부 판단
+        boolean isMe = false;
+        if (principal != null) {
+            Optional<User> loginUserOpt = userRepository.findByProviderAndProviderId(
+                    principal.provider(), principal.providerId()
+            );
+            isMe = loginUserOpt
+                    .map(user -> user.getNickname().equals(nickname))
+                    .orElse(false);
+        }
+
+        // 3. 응답 래핑
+        return ActivityMoreDetailsResponseDTO.<MyCommentResponseDTO>builder()
+                .me(isMe)
+                .content(result.getContent()) // Page → List
+                .build();
+    }
+
 
 
     // 내가 북마크한 게시글 조회

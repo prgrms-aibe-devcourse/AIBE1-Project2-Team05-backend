@@ -67,10 +67,18 @@ public class AuthController {
 
     @GetMapping("/status")
     public ResponseEntity<ApiResponse> getStatus(HttpServletRequest request) {
+        String token = jwtUtils.extractToken(request);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         boolean isLoggedIn = authentication != null &&
                 authentication.isAuthenticated() &&
                 !(authentication instanceof AnonymousAuthenticationToken);
+        if (token != null && !token.isEmpty()) {
+            boolean isValid = jwtUtils.validateToken(token);
+            if (!isValid) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
+            }
+        }
 
         if (!isLoggedIn) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

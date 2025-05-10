@@ -55,7 +55,7 @@ spring:
 # 로깅 설정
 logging:
   level:
-    com.team05.linkup: INFO
+    com.team05.linkup: DEBUG
 # mapper 패키지의 로깅 레벨을 DEBUG로 설정 (DEV)
 
 jwt:
@@ -71,3 +71,4 @@ supabase:
   url: ${SUPABASE_URL}
   service-key: ${SUPABASE_KEY}
   bucket: community-images
+  profile-image-bucket: profile-images

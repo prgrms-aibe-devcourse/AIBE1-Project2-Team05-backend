@@ -28,8 +28,6 @@ public class QCommunity extends EntityPathBase<Community> {
 
     public final EnumPath<CommunityCategory> category = createEnum("category", CommunityCategory.class);
 
-    public final StringPath communityTag = createString("communityTag");
-
     public final StringPath content = createString("content");
 
     //inherited
@@ -40,6 +38,8 @@ public class QCommunity extends EntityPathBase<Community> {
     public final ListPath<Image, QImage> images = this.<Image, QImage>createList("images", Image.class, QImage.class, PathInits.DIRECT2);
 
     public final NumberPath<Long> likeCount = createNumber("likeCount", Long.class);
+
+    public final SetPath<Tag, QTag> tags = this.<Tag, QTag>createSet("tags", Tag.class, QTag.class, PathInits.DIRECT2);
 
     public final StringPath title = createString("title");
 
