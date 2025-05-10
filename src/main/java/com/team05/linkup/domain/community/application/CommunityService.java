@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -93,6 +94,48 @@ public class CommunityService {
         Pageable pageable = PageRequest.of(0, limit);
         return tagRepository.findPopularTagsSince(sinceDate, pageable);
     }
+
+    /**
+     * 활발한 커뮤니티 사용자 목록을 조회합니다.
+     * 활동 점수 = (게시글 수 * 게시글 가중치) + (댓글 수 * 댓글 가중치)
+     * 점수가 높은 순으로 정렬하며, 점수가 같을 경우 닉네임 오름차순으로 정렬합니다.
+     *
+     * @param limit 조회할 사용자 수
+     * @param days  활동 집계 기간(일)
+     * @return 활발한 사용자 정보 목록
+     */
+    public List<ActiveUsersResponseDTO> getActiveUsers(int limit, int days) {
+        log.info("활발한 사용자 목록 조회 시작 - 기간: {}일, 최대 인원: {}", days, limit);
+        ZonedDateTime startDate = ZonedDateTime.now().minusDays(days);
+        List<ActiveUsersTempDTO> usersActivityData = userRepository.findUserActivities(startDate);
+        log.debug("DB 조회 결과 사용자 수: {}", usersActivityData.size());
+
+        return usersActivityData.stream()
+                .map(data -> {
+                    long activityScore = data.postCount() * 3 + data.commentCount();
+                    return new RankedUser(data, activityScore);     // 정렬을 위해 RankedUser 객체 생성
+                })
+                .filter(rankedUser -> rankedUser.activityScore() > 0) // 활동 점수가 0보다 큰 사용자만 필터링
+                .sorted(Comparator.comparingLong(RankedUser::activityScore).reversed() // 점수 높은 순
+                        .thenComparing(u -> u.data().nickname())) // 점수 같으면 닉네임 오름차순
+                .limit(limit)  // 요청된 수만큼 제한
+                .map(rankedUser -> ActiveUsersResponseDTO.of( // 최종 응답 DTO로 변환
+                        rankedUser.data().userId(),
+                        rankedUser.data().nickname(),
+                        rankedUser.data().profileImageUrl(),
+                        rankedUser.data().postCount(),
+                        rankedUser.data().commentCount()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 활동 점수 및 원본 데이터를 함께 가지는 불변 데이터 홀더입니다.
+     * Java 14+의 레코드를 사용하여 간결하게 정의합니다.
+     * 이 레코드는 이 서비스 메소드 내부에서만 사용되므로 private으로 선언합니다.
+     */
+    private record RankedUser(ActiveUsersTempDTO data, long activityScore) {}
+
 
     /**
      * 지정된 조건(카테고리 필터링, 페이징, 정렬)에 맞는 게시글 요약 목록을 조회합니다.
