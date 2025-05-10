@@ -125,8 +125,8 @@ public class ProfileController {
         return switch (type) {
             // 재능 목록 more-details
             case "my-talents" -> {
-                Page<CommunityTalentSummaryDTO> result =
-                        mentorProfileService.getCommunityTalentsPaged(nickname, page, size);
+                ActivityMoreDetailsResponseDTO<CommunityTalentSummaryDTO> result =
+                        mentorProfileService.getMyTalentsMoreDetails(nickname, userPrincipal, page, size);
                 yield ResponseEntity.ok(ApiResponse.success(result));
             }
 

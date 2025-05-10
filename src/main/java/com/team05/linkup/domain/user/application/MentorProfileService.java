@@ -1,5 +1,6 @@
 package com.team05.linkup.domain.user.application;
 
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.domain.Tag;
 import com.team05.linkup.domain.community.dto.CommunityTalentSummaryDTO;
@@ -8,8 +9,11 @@ import com.team05.linkup.domain.enums.Interest;
 import com.team05.linkup.domain.mentoring.domain.MentorStatisticsView;
 import com.team05.linkup.domain.mentoring.infrastructure.MentorStatisticsRepository;
 import com.team05.linkup.domain.mentoring.infrastructure.MentoringRepository;
+import com.team05.linkup.domain.user.domain.User;
+import com.team05.linkup.domain.user.dto.ActivityMoreDetailsResponseDTO;
 import com.team05.linkup.domain.user.dto.InterestCountDTO;
 import com.team05.linkup.domain.user.dto.MentorStatsDTO;
+import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -97,6 +102,38 @@ public class MentorProfileService {
             );
         });
     }
+
+    private final UserRepository userRepository;
+    public ActivityMoreDetailsResponseDTO<CommunityTalentSummaryDTO> getMyTalentsMoreDetails(
+            String nickname, UserPrincipal principal, int page, int size) {
+
+        Page<CommunityTalentSummaryDTO> resultPage = getCommunityTalentsPaged(nickname, page, size);
+
+        boolean isMe = false;
+        if (principal != null) {
+            Optional<User> loginUserOpt = userRepository.findByProviderAndProviderId(
+                    principal.provider(), principal.providerId()
+            );
+
+            loginUserOpt.ifPresent(user -> {
+                System.out.println("🔍 로그인 유저 nickname: " + user.getNickname());
+                System.out.println("📌 요청 경로의 nickname: " + nickname);
+            });
+
+            isMe = loginUserOpt.map(user -> user.getNickname().equals(nickname)).orElse(false);
+        } else {
+            System.out.println("⚠️ principal이 null임");
+        }
+
+        System.out.println("✅ me 여부 판단 결과: " + isMe);
+
+        return ActivityMoreDetailsResponseDTO.<CommunityTalentSummaryDTO>builder()
+                .me(isMe)
+                .type("my-talents")
+                .content(resultPage.getContent())
+                .build();
+    }
+
 
 
     // (리팩토링된) 멘토링 통계 조회 메서드 (DB View 기반)
