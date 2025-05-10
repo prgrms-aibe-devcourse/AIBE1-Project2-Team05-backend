@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Getter
 @Builder
 @NoArgsConstructor
@@ -16,6 +18,6 @@ public class MentorFilterDTO {
     private Interest interest;
     private Integer areaCode;
     private Integer sigunguCode;
-    private ActivityTime activityTime;
+    private List<ActivityTime> activityTime;
     private ActivityType activityType;
 }
