@@ -42,6 +42,7 @@ public class CommunityController {
     private final CommunityImageService communityImageService;
 
 
+    /* -------------------------------------------------- community 페이지내 추가 조회 -------------------------------------------------- */
 
     @GetMapping("/popular-tags")
     @Operation(summary = "인기 태그 조회", description = "지정된 기간 동안 가장 많이 사용된 태그 목록을 반환합니다.")
@@ -51,6 +52,18 @@ public class CommunityController {
         List<TagDTO> popularTags = communityService.findPopularTags(limit, days);
         return ResponseEntity.ok(ApiResponse.success(popularTags));
     }
+
+    @GetMapping("/active-users")
+    @Operation(summary = "활발한 사용자 조회", description = "최근 활동을 기준으로 검색합니다.")
+    public ResponseEntity<ApiResponse<List<ActiveUsersResponseDTO>>> getActiveUsers(
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestParam(defaultValue = "14") int day) {
+
+        List<ActiveUsersResponseDTO> activeUsers = communityService.getActiveMembers(limit, day);
+
+        return ResponseEntity.ok(ApiResponse.success(activeUsers));
+    }
+
     /* -------------------------------------------------- 게시글 목록 조회 -------------------------------------------------- */
 
     /**
@@ -174,7 +187,7 @@ public class CommunityController {
                                   {
                                     "title": "스프링 질문 있습니다!",
                                     "category": "QUESTION",
-                                    "communityTag": ["SPRING", "JAVA"],
+                                    "tags": ["SPRING", "JAVA"],
                                     "content": "Bean과 Component 차이가 뭔가요?"
                                   }""")
                     )
