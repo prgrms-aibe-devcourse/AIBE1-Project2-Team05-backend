@@ -132,9 +132,9 @@ public class ProfileController {
 
             // 내가 쓴 게시글 more-details
             case "my-posts" -> {
-                Page<MyPostResponseDTO> result =
-                        profileService.getMyPostsPaged(nickname, page, size);
-                yield ResponseEntity.ok(ApiResponse.success(result));
+                ActivityMoreDetailsResponseDTO<MyPostResponseDTO> dto =
+                        profileService.getMyPostsMoreDetails(nickname, userPrincipal, page, size);
+                yield ResponseEntity.ok(ApiResponse.success(dto));
             }
 
             // 내가 쓴 댓글 more-details

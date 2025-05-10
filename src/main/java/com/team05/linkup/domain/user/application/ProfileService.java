@@ -137,6 +137,41 @@ public class ProfileService {
         ));
     }
 
+    /**
+     * [더보기] 내가 작성한 게시글 목록 응답 (me 여부 포함)
+     *
+     * @param nickname 조회 대상 사용자 닉네임
+     * @param principal 로그인 사용자 정보
+     * @param page 페이지 번호
+     * @param size 페이지 크기
+     * @return me + 게시글 리스트 래핑 DTO
+     */
+    public ActivityMoreDetailsResponseDTO<MyPostResponseDTO> getMyPostsMoreDetails(
+            String nickname, UserPrincipal principal, int page, int size) {
+
+        // 1. 게시글 목록 페이징 조회
+        Page<MyPostResponseDTO> result = getMyPostsPaged(nickname, page, size);
+
+        // 2. me 여부 판단
+        boolean isMe = false;
+        if (principal != null) {
+            Optional<User> loginUserOpt = userRepository.findByProviderAndProviderId(
+                    principal.provider(), principal.providerId()
+            );
+            isMe = loginUserOpt
+                    .map(user -> user.getNickname().equals(nickname))
+                    .orElse(false);
+        }
+
+        // 3. 응답 래핑
+        return ActivityMoreDetailsResponseDTO.<MyPostResponseDTO>builder()
+                .me(isMe)
+                .content(result.getContent())
+                .build();
+    }
+
+
+
 
     /**
      * 마이페이지 - 내가 작성한 댓글 목록 조회 (미리보기)
