@@ -121,7 +121,14 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
 
 
 
-    // 공통 마이페이지 - 내가 작성한 커뮤니티 게시글
+    /**
+     * 마이페이지 - 내가 작성한 게시글 조회 (미리보기, 최신 N개)
+     * - TALENT 카테고리는 제외
+     *
+     * @param nickname 닉네임 기준
+     * @param limit 가져올 게시글 개수
+     * @return Object[] 리스트 (id, created_at, category, title, content, viewCount, likeCount, commentCount)
+     */
     @Query(value = """
     SELECT 
         c.id,
@@ -154,10 +161,12 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
     List<Object[]> findByCommunityPosts(@Param("nickname") String nickname, @Param("limit") int limit);
 
     /**
-     * 마이페이지 - 내가 작성한 커뮤니티 게시글 목록 조회 (페이징)
+     * 마이페이지 - 내가 작성한 게시글 조회 (더보기/페이징용)
+     * - TALENT 카테고리는 제외
      *
-     * @param nickname 유저 닉네임
-     * @param pageable 페이지 정보 (page, size 등)
+     * @param nickname 닉네임 기준
+     * @param pageable 페이지 정보
+     * @return Object[] Page (id, updated_at, category, title, content, viewCount, likeCount, commentCount)
      */
     @Query(value = """
     SELECT 

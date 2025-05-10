@@ -88,7 +88,13 @@ public class ProfileService {
         return communityRepository.findUserIdByNickname(nickname);
     }
 
-    // 내가 작성한 게시글 (미리보기)
+    /**
+     * 마이페이지 - 내가 작성한 커뮤니티 게시글 목록 조회 (미리보기용, 상위 N개)
+     *
+     * @param nickname 닉네임 (user.nickname)
+     * @param limit 가져올 게시글 개수 (최신순 제한)
+     * @return 게시글 요약 정보 리스트
+     */
     public List<MyPostResponseDTO> getMyPosts(String nickname, int limit) {
         List<Object[]> rawResults = communityRepository.findByCommunityPosts(nickname, limit);
 
@@ -107,7 +113,14 @@ public class ProfileService {
                 .collect(Collectors.toList());
     }
 
-    // 내가 작성한 커뮤니티 게시글 - 페이징(더보기)
+    /**
+     * 마이페이지 - 내가 작성한 커뮤니티 게시글 목록 조회 (페이징: 더보기 탭용)
+     *
+     * @param nickname 닉네임 (user.nickname)
+     * @param page 페이지 번호 (0부터 시작)
+     * @param size 페이지당 항목 수
+     * @return 게시글 요약 정보 페이징 결과
+     */
     public Page<MyPostResponseDTO> getMyPostsPaged(String nickname, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Object[]> resultPage = communityRepository.findCommunityPostsWithPaging(nickname, pageable);
