@@ -98,6 +98,7 @@ jobs:
               -e SERVER_PORT="${{secrets.PORT}}" \
               -e SUPABASE_URL="${{secrets.SUPABASE_URL}}" \
               -e SUPABASE_KEY="${{secrets.SUPABASE_KEY}}" \
+              -e SUPABASE_STORAGE_URL=${{secrets.SUPABASE_STORAGE_URL}} \
               ${{ env.DOCKER_REPO }}:latest
             
             echo "새 컨테이너 실행 시도 완료"
