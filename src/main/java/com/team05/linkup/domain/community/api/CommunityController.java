@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -33,6 +34,7 @@ import java.util.List;
  * community 게시물을 목록에 대한 엔드 포인트를 제공 (Paginated, 필터링, 정렬)
  * 그리고 인기있는 게시물을 검색
  */
+@Slf4j
 @RestController
 @RequestMapping("/v1/community")
 @RequiredArgsConstructor
@@ -301,8 +303,16 @@ public class CommunityController {
         }
 
         try {
+            log.info("Processing image upload request for post: {}, user: {}",
+                    postId, principal.providerId());
+
             // 수정: id() → providerId() 로 변경
-            List<String> objectPaths = communityImageService.uploadImages(principal.providerId(), images);
+            List<String> objectPaths = communityImageService.uploadImages(images, principal.providerId());
+
+            // 이미지 경로를 저장
+            log.info("Image upload successful, attaching {} images to post {}",
+                    objectPaths.size(), postId);
+
             // 수정: 매개변수 3개 → 2개로 변경
             communityService.attachImages(postId, objectPaths);
 
@@ -311,6 +321,8 @@ public class CommunityController {
                     // 수정: ImageDto.Response.of() 메서드 제거하고 직접 리스트 반환
                     .body(ApiResponse.created(objectPaths));
         } catch (jakarta.persistence.EntityNotFoundException e) {
+            log.error("Entity not found during image upload: {}", e.getMessage());
+
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND));

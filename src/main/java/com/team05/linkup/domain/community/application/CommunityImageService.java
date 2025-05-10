@@ -1,24 +1,27 @@
 package com.team05.linkup.domain.community.application;
 
 import io.supabase.StorageClient;
-import io.supabase.api.IStorageFileAPI;
-import io.supabase.data.file.FilePublicUrlResponse;
-import io.supabase.data.file.FileSignedUrlResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class CommunityImageService {
 
     private final StorageClient storageClient;
@@ -26,59 +29,65 @@ public class CommunityImageService {
     @Value("${supabase.bucket}")
     private String bucket;
 
-    /* ───────────── 업로드 ───────────── */
-    public List<String> uploadImages(String userId, List<MultipartFile> files) {
-        IStorageFileAPI fileApi = storageClient.from(bucket);
-        List<String> paths = new ArrayList<>();
+    public List<String> uploadImages(List<MultipartFile> images, String userId) {
+        log.info("Uploading {} file(s) → {}", images.size(), bucket);
 
-        for (MultipartFile file : files) {
-            String objectPath = "%s/%s-%s".formatted(
-                    userId,
-                    UUID.randomUUID(),
-                    file.getOriginalFilename());
+        return images.stream()
+                .map(img -> uploadOne(img, userId))
+                .toList();
+    }
 
-            try {
-                fileApi.upload(objectPath, file.getResource().getFile()).get();
-                paths.add(objectPath);
+    private String uploadOne(MultipartFile image, String userId) {
 
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException("Interrupted during Supabase upload", ie);
+        String original = image.getOriginalFilename();
+        String objectPath = "%s/%s-%s".formatted(userId, UUID.randomUUID(), original);
 
-            } catch (ExecutionException | IOException e) {
-                throw new RuntimeException("Supabase upload failed: " + objectPath, e);
+        File tmp = null;
+        try {
+            tmp = File.createTempFile("upload-", "-" + original);
+            image.transferTo(tmp);
+
+            storageClient.from(bucket)
+                    .upload(objectPath, tmp)      // async
+                    .get(10, TimeUnit.SECONDS);   // 타임아웃
+
+            String url = storageClient.from(bucket)
+                    .getPublicUrl(objectPath, null, null)
+                    .getPublicUrl();
+
+            log.info("✔ {} → {}", original, url);
+            return url;
+
+        } catch (ExecutionException | InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Supabase upload failed", e.getCause());
+
+        } catch (TimeoutException te) {
+            throw new IllegalStateException("Supabase upload timed-out", te);
+
+        } catch (IOException ioe) {
+            throw new IllegalStateException("Temp-file I/O error", ioe);
+
+        } finally {
+            if (tmp != null && tmp.delete()) {
+                log.debug("tmp deleted");
             }
         }
-        return paths;
     }
 
-    /* ───────────── URL 반환 ───────────── */
-
-    /** 버킷이 public 일 때 직접 접근 URL */
-    public String getPublicUrl(String objectPath) {
-        FilePublicUrlResponse res = storageClient
-                .from(bucket)
-                .getPublicUrl(objectPath, null, null);
-
-        return res.getPublicUrl();          // String
-    }
-
-    /** 비공개 버킷 → 만료 시간(초) 지정 서명 URL */
-    public String getSignedUrl(String objectPath, int expiresSec) {
+    /* 비공개 버킷 */
+    public String getSignedUrl(String objectPath, int expireSec) {
         try {
-            FileSignedUrlResponse res = storageClient
-                    .from(bucket)
-                    .getSignedUrl(objectPath, expiresSec, null, null)
-                    .get();                          // CompletableFuture → Response
-
-            return res.getSignedUrl();               // String
-
+            return storageClient.from(bucket)
+                    .getSignedUrl(objectPath, expireSec, null, null)
+                    .get()
+                    .getSignedUrl();
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Interrupted while generating signed URL", ie);
-
-        } catch (ExecutionException e) {
-            throw new RuntimeException("Signed URL generation failed: " + objectPath, e);
+            throw new RuntimeException("Interrupted", ie);
+        } catch (ExecutionException ee) {
+            throw new RuntimeException("Signed-url fail", ee.getCause());
         }
     }
 }
+
