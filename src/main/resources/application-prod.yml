@@ -69,6 +69,7 @@ api:
   # 이미지 스토리지
 supabase:
   url: ${SUPABASE_URL}
+  storage-url: ${SUPABASE_STORAGE_URL}
   service-key: ${SUPABASE_KEY}
   bucket: community-images
   profile-image-bucket: profile-images
