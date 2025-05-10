@@ -83,9 +83,14 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
 
 
     /**
-     * 멘토 마이페이지 - 내가 등록한 재능 목록(최신 2개 조회) (미리보기용)
-     * - JOIN FETCH로 태그 함께 조회 (N+1 방지)
-     * -> LEFT JOIN FETCH - 태그가 없는 커뮤니티도 조회
+     * 멘토 마이페이지 - 내가 등록한 재능 목록 (미리보기 용, 최신 2개)
+     *
+     * <p>특정 닉네임의 유저가 작성한 커뮤니티 게시글 중, 카테고리가 'TALENT'인 글을 최신순으로 최대 2개까지 조회한다.</p>
+     * <p>태그는 JOIN FETCH를 통해 함께 로딩하며, 태그가 없는 게시글도 조회되도록 LEFT JOIN 사용.</p>
+     *
+     * @param nickname 닉네임 기준으로 게시글 필터링
+     * @param pageable PageRequest.of(0, 2) 형태의 페이징 정보
+     * @return 최신 재능 게시글 2개 (엔티티 리스트, 태그 포함)
      */
     @Query("""
         SELECT DISTINCT c FROM Community c
@@ -96,11 +101,15 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
     List<Community> findLatestTalentsByNickname(@Param("nickname") String nickname, Pageable pageable);
 
 
-    //
     /**
-     * 멘토 마이페이지 - 내가 등록한 재능 목록 더보기(전체 페이징 조회) (더보기용)
-     * - JOIN FETCH 사용하여 태그 즉시 로딩
-     * -> LEFT JOIN FETCH - 태그가 없는 커뮤니티도 조회
+     * 멘토 마이페이지 - 내가 등록한 재능 목록 (더보기 페이지용)
+     *
+     * <p>특정 닉네임의 유저가 작성한 'TALENT' 카테고리 커뮤니티 게시글 전체를 페이징 처리하여 조회한다.</p>
+     * <p>JOIN FETCH를 통해 태그를 함께 로딩하며, 태그가 없는 게시글도 조회된다.</p>
+     *
+     * @param nickname 닉네임 기준으로 게시글 필터링
+     * @param pageable 페이지 정보 (page, size 등)
+     * @return 재능 게시글 목록 (Page 타입, 태그 포함)
      */
     @Query("""
         SELECT DISTINCT c FROM Community c

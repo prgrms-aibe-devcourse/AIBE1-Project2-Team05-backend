@@ -20,6 +20,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * 멘토 마이페이지 관련 서비스
+ *
+ * <p>재능 게시글 조회, 멘토링 통계 조회 등의 기능 제공</p>
+ */
 @Service
 @RequiredArgsConstructor
 public class MentorProfileService {
@@ -29,8 +34,13 @@ public class MentorProfileService {
 
     /**
      * 멘토 마이페이지 - 내가 등록한 재능 목록 (미리보기 2개)
-     * - 최신 등록된 TALENT 카테고리 게시글 2개를 조회
-     * - 커뮤니티 태그 리스트, 작성일, 제목, 내용(최대 55자) 포함
+     *
+     * <p>특정 멘토 닉네임 기준으로 최신 등록된 TALENT 카테고리 게시글을 2개 조회한다.</p>
+     * <p>각 게시글은 태그, 작성일, 제목, 내용(최대 55자 요약) 정보를 포함한다.</p>
+     *
+     * @param nickname 멘토의 닉네임
+     * @param limit 조회할 게시글 수 (일반적으로 2개)
+     * @return 재능 게시글 요약 정보 리스트
      */
     public List<CommunityTalentSummaryDTO> getCommunityTalents(String nickname, int limit) {
         // Pageable 생성
@@ -58,9 +68,15 @@ public class MentorProfileService {
     }
 
     /**
-     * 멘토 마이페이지 - 내가 등록한 재능 목록 (더보기 페이지)
-     * - page, size 기반으로 전체 TALENT 게시글을 페이징 조회
-     * - 각 게시글은 태그, 작성일, 제목, 내용(최대 55자) 포함
+     * 멘토 마이페이지 - 내가 등록한 재능 목록 (더보기 페이지용)
+     *
+     * <p>특정 멘토 닉네임 기준으로 TALENT 카테고리 게시글을 page, size 기반으로 페이징 조회한다.</p>
+     * <p>각 게시글은 태그, 작성일, 제목, 내용(최대 55자 요약) 정보를 포함한다.</p>
+     *
+     * @param nickname 멘토의 닉네임
+     * @param page 페이지 번호 (0부터 시작)
+     * @param size 페이지당 항목 수
+     * @return 페이징된 재능 게시글 요약 정보
      */
     public Page<CommunityTalentSummaryDTO> getCommunityTalentsPaged(String nickname, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
