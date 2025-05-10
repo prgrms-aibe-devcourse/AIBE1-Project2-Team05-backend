@@ -2,6 +2,7 @@ package com.team05.linkup.domain.community.application;
 
 import com.team05.linkup.domain.community.dto.AiCommentResponseDTO;
 import com.team05.linkup.domain.community.infrastructure.CustomAiCommentRepositoryImpl;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +17,10 @@ public class AiCommentViewServiceImpl implements AiCommentViewService {
     public AiCommentResponseDTO getAiComment(String communityId) throws Exception {
         try {
             String comment = customAiCommentRepository.findCommentByText(communityId);
+            if (comment == null) {
+                logger.error("no communitiy found with id: {}", communityId);
+                throw new EntityNotFoundException("no communitiy found with id: " + communityId);
+            }
             return new AiCommentResponseDTO(comment);
         } catch (Exception e) {
             logger.error("Error in getAiComment: {}", e.getMessage());

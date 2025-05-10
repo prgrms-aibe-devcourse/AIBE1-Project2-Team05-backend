@@ -10,11 +10,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, String> {
+public interface UserRepository extends JpaRepository<User, String> , CustomerUserRepository{
 
     Optional<User> findById(String id);
 
@@ -40,22 +39,22 @@ public interface UserRepository extends JpaRepository<User, String> {
     """)
     ProfileTagInterestDTO findProfileTagAndInterestByProviderAndProviderId(@Param("provider") String provider, @Param("providerId") String providerId);
 
-    @Query("""
-        SELECT u.area.areacode,
-                       area.areaName,
-                       u.sigunguCode,
-                       sigungu.sigunguname,
-                       u.nickname,
-                       u.profileTag,
-                       u.profileImageUrl,
-                       u.providerId,
-                       u.contactLink
-        FROM User u, Area area, Sigungu sigungu
-        WHERE u.providerId <> :providerId AND u.provider = :provider AND u.interest = :interest
-    """)
-    List<Object[]> findOtherProfileTagsByProviderId(@Param("provider") String provider,
-                                                    @Param("providerId") String providerId,
-                                                    @Param("interest") Interest interest);
+//    @Query("""
+//        SELECT u.area.areacode,
+//                       area.areaName,
+//                       u.sigunguCode,
+//                       sigungu.sigunguname,
+//                       u.nickname,
+//                       u.profileTag,
+//                       u.profileImageUrl,
+//                       u.providerId,
+//                       u.contactLink
+//        FROM User u, Area area, Sigungu sigungu
+//        WHERE u.providerId <> :providerId AND u.provider = :provider AND u.interest = :interest AND u.role = 'ROLE_MENTOR'
+//    """)
+//    List<Object[]> findOtherProfileTagsByProviderId(@Param("provider") String provider,
+//                                                    @Param("providerId") String providerId,
+//                                                    @Param("interest") Interest interest);
 
     // 닉네임을 기준으로 사용자와 지역 정보를 조회하는 쿼리
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.area WHERE u.nickname = :nickname")
