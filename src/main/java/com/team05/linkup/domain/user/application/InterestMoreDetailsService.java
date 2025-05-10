@@ -1,6 +1,8 @@
 package com.team05.linkup.domain.user.application;
 
 import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
+import com.team05.linkup.domain.user.dto.ActivityMoreDetailsResponseDTO;
+import com.team05.linkup.domain.user.dto.InterestItemDTO;
 import com.team05.linkup.domain.user.dto.MyBookmarkResponseDTO;
 import com.team05.linkup.domain.user.dto.MyLikeResponseDTO;
 import lombok.RequiredArgsConstructor;
@@ -94,4 +96,25 @@ public class InterestMoreDetailsService {
             default -> throw new IllegalArgumentException("유효하지 않은 filter 값입니다: " + filter);
         }
     }
+
+    public ActivityMoreDetailsResponseDTO<InterestItemDTO> getInterestPostsWrapped(
+            String nickname,
+            String filter,
+            int page,
+            int size,
+            boolean isMe
+    ) {
+        Page<?> resultPage = getInterestPosts(nickname, filter, page, size);
+
+        List<InterestItemDTO> content = resultPage.getContent().stream()
+                .map(item -> (InterestItemDTO) item)
+                .collect(Collectors.toList());
+
+        return ActivityMoreDetailsResponseDTO.<InterestItemDTO>builder()
+                .me(isMe)
+                .type(filter)
+                .content(content)
+                .build();
+    }
+
 }

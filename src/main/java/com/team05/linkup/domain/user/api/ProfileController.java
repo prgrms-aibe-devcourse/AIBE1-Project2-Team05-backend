@@ -159,28 +159,62 @@ public class ProfileController {
 
     private final InterestMoreDetailsService interestMoreDetailsService;
 
-    // 관심 목록 더보기 API
+//    // 관심 목록 더보기 API
+//    @GetMapping("/{nickname}/activity/more-details/interests")
+//    @Operation(summary = "나의 활동 내역 조회 more-details [관심 목록(북마크/좋아요)]", description = "북마크(bookmarked), 좋아요(liked), 전체(all) 옵션에 따라 관련 데이터를 자세히 조회합니다.")
+//    public ResponseEntity<ApiResponse<?>> getInterestMoreDetails(
+//            @PathVariable String nickname,
+//            @RequestParam("filter") String filter, // bookmarked | liked | all
+//            @RequestParam(value = "page", defaultValue = "0") int page,
+//            @RequestParam(value = "size", defaultValue = "10") int size
+//    ) {
+//        // 유효하지 않은 filter 처리
+//        if (!filter.equals("bookmarked") && !filter.equals("liked") && !filter.equals("all")) {
+//            return ResponseEntity
+//                    .status(HttpStatus.BAD_REQUEST)
+//                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "유효하지 않은 filter 파라미터입니다."));
+//        }
+//
+//        // 서비스 호출
+//        Page<?> result = interestMoreDetailsService.getInterestPosts(nickname, filter, page, size);
+//
+//        // 성공 응답 반환
+//        return ResponseEntity.ok(ApiResponse.success(result));
+//    }
+// 관심 목록 더보기 API
     @GetMapping("/{nickname}/activity/more-details/interests")
     @Operation(summary = "나의 활동 내역 조회 more-details [관심 목록(북마크/좋아요)]", description = "북마크(bookmarked), 좋아요(liked), 전체(all) 옵션에 따라 관련 데이터를 자세히 조회합니다.")
-    public ResponseEntity<ApiResponse<?>> getInterestMoreDetails(
+    public ResponseEntity<ApiResponse<ActivityMoreDetailsResponseDTO<InterestItemDTO>>> getInterestMoreDetails(
             @PathVariable String nickname,
             @RequestParam("filter") String filter, // bookmarked | liked | all
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @AuthenticationPrincipal UserPrincipal userPrincipal // 🔑 me 여부 계산용
     ) {
-        // 유효하지 않은 filter 처리
-        if (!filter.equals("bookmarked") && !filter.equals("liked") && !filter.equals("all")) {
+        // 1. filter 유효성 검사
+        if (!List.of("bookmarked", "liked", "all").contains(filter)) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "유효하지 않은 filter 파라미터입니다."));
         }
 
-        // 서비스 호출
-        Page<?> result = interestMoreDetailsService.getInterestPosts(nickname, filter, page, size);
+        // 2. 본인 여부 판단
+        boolean isMe = false;
+        if (userPrincipal != null) {
+            Optional<User> loginUserOpt = userRepository.findByProviderAndProviderId(
+                    userPrincipal.provider(), userPrincipal.providerId()
+            );
+            isMe = loginUserOpt.map(user -> user.getNickname().equals(nickname)).orElse(false);
+        }
 
-        // 성공 응답 반환
+        // 3. 래핑된 DTO 응답 호출
+        ActivityMoreDetailsResponseDTO<InterestItemDTO> result =
+                interestMoreDetailsService.getInterestPostsWrapped(nickname, filter, page, size, isMe);
+
+        // 4. 반환
         return ResponseEntity.ok(ApiResponse.success(result));
     }
+
 
     private final MatchingPageFacade matchingPageFacade;
 
