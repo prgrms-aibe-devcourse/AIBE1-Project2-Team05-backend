@@ -119,7 +119,8 @@ public class ProfileController {
             @PathVariable String nickname,
             @RequestParam("type") String type,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size   // size 파라미터 추가
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @AuthenticationPrincipal UserPrincipal userPrincipal // ✅ 여기서 닫기
     ) {
         return switch (type) {
             // 재능 목록 more-details
@@ -138,9 +139,9 @@ public class ProfileController {
 
             // 내가 쓴 댓글 more-details
             case "my-comments" -> {
-                Page<MyCommentResponseDTO> result =
-                        profileService.getMyCommentsPaged(nickname, page, size);
-                yield ResponseEntity.ok(ApiResponse.success(result));
+                ActivityMoreDetailsResponseDTO<MyCommentResponseDTO> dto =
+                        profileService.getMyCommentsMoreDetails(nickname, userPrincipal, page, size);
+                yield ResponseEntity.ok(ApiResponse.success(dto));
             }
 
             // 내가 신청한 매칭 more-details

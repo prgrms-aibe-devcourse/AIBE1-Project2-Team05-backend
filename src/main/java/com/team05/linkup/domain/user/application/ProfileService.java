@@ -217,6 +217,40 @@ public class ProfileService {
         });
     }
 
+    /**
+     * [더보기] 내가 작성한 댓글 목록 응답 (me 여부 포함)
+     *
+     * @param nickname 조회 대상 사용자 닉네임
+     * @param principal 로그인 사용자 정보
+     * @param page 페이지 번호
+     * @param size 페이지 크기
+     * @return me + 댓글 리스트 래핑 DTO
+     */
+    public ActivityMoreDetailsResponseDTO<MyCommentResponseDTO> getMyCommentsMoreDetails(
+            String nickname, UserPrincipal principal, int page, int size) {
+
+        // 1. 댓글 목록 페이징 조회
+        Page<MyCommentResponseDTO> result = getMyCommentsPaged(nickname, page, size);
+
+        // 2. me 여부 판단
+        boolean isMe = false;
+        if (principal != null) {
+            Optional<User> loginUserOpt = userRepository.findByProviderAndProviderId(
+                    principal.provider(), principal.providerId()
+            );
+            isMe = loginUserOpt
+                    .map(user -> user.getNickname().equals(nickname))
+                    .orElse(false);
+        }
+
+        // 3. 응답 래핑
+        return ActivityMoreDetailsResponseDTO.<MyCommentResponseDTO>builder()
+                .me(isMe)
+                .content(result.getContent()) // Page → List
+                .build();
+    }
+
+
 
     // 내가 북마크한 게시글 조회
      public List<MyBookmarkResponseDTO> getMyBookmarks(String nickname, int limit) {
