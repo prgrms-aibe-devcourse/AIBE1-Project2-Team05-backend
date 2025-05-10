@@ -174,7 +174,7 @@ public class CommunityController {
                                   {
                                     "title": "스프링 질문 있습니다!",
                                     "category": "QUESTION",
-                                    "communityTag": ["SPRING", "JAVA"]
+                                    "communityTag": ["SPRING", "JAVA"],
                                     "content": "Bean과 Component 차이가 뭔가요?"
                                   }""")
                     )
