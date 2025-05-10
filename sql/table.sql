@@ -33,6 +33,7 @@ CREATE TABLE user(
          activity_type ENUM('온라인', '오프라인', '모두') DEFAULT '모두',
          contact_link varchar(255),
          match_status BOOLEAN DEFAULT FALSE,
+         profile_tag varchar(255) ,
          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
          UNIQUE KEY uk_provider_provider_id (provider, provider_id),
