@@ -66,7 +66,10 @@ public class ProfileController {
 
     @GetMapping("/{nickname}/activity")
     @Operation(summary = "나의 활동 내역 조회(멘토, 멘티 공통)", description = "멘토: 내가 등록한 재능 목록, 멘티: 내가 신청한 매칭, 내가 작성한 커뮤니티 게시글, 내가 작성한 댓글, 관심 목록 데이터를 조회합니다.")
-    public ResponseEntity<ApiResponse<ActivityResponseDTO>> getActivity(@PathVariable String nickname) {
+    public ResponseEntity<ApiResponse<ActivityResponseDTO>> getActivity(
+            @PathVariable String nickname,
+            @AuthenticationPrincipal UserPrincipal userPrincipal     // 🟢 로그인한 사용자 주입
+    ) {
         // 1. 사용자의 역할(멘토/멘티) 확인
         Optional<User> userOpt = userRepository.findByNickname(nickname);
         if (userOpt.isEmpty())
@@ -74,11 +77,26 @@ public class ProfileController {
                     .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다."));
 
         User profile = userOpt.get();
-        logger.debug(profile.getRole());
+        logger.debug("🔍 요청 대상 닉네임의 역할: {}", profile.getRole());
+
+        // ✅ me 여부 판단: provider + providerId 기준으로 user 조회 → nickname 비교
+        boolean isMe = false;
+
+        if (userPrincipal != null) {
+            Optional<User> loginUser = userRepository.findByProviderAndProviderId(
+                    userPrincipal.provider(), userPrincipal.providerId()
+            );
+
+            isMe = loginUser
+                    .map(user -> nickname.equals(user.getNickname()))
+                    .orElse(false);
+        }
 
         // 공통 조회 항목 - Controller에서는 입출력과 역할 분기만 담당
+        // 공통 항목 DTO 생성 + me 설정
         ActivityResponseDTO.ActivityResponseDTOBuilder builder =
-                profileService.getCommonActivityDTO(nickname).toBuilder();
+                profileService.getCommonActivityDTO(nickname).toBuilder()
+                        .me(isMe); // ✅ 본인 여부 포함
 
         if (profile.getRole().equals(Role.ROLE_MENTOR)) {
             // 멘토의 경우, 커뮤니티 재능나눔 게시글 작성 내역 조회하여 반환

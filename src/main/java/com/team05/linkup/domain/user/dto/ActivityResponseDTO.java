@@ -15,6 +15,9 @@ import java.util.List;
 @Builder(toBuilder = true)
 public class ActivityResponseDTO {
 
+    @Schema(description = "현재 로그인한 사용자인지 여부")
+    private boolean me; // 🟢 [신규] 본인 여부 플래그
+
     @Schema(description = "프로필 닉네임 (본인 여부 판별용)")
     private String nickname;    // 프론트에서 "내 활동 내역" vs "OOO님의 활동 내역" 판단용
 
