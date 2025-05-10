@@ -1,5 +1,6 @@
 package com.team05.linkup.domain.user.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.team05.linkup.domain.community.domain.CommunityCategory;
 import lombok.Getter;
 
@@ -7,6 +8,7 @@ import java.time.ZonedDateTime;
 
 @Getter
 public class MyPostResponseDTO {
+    @JsonProperty("postId") // ✅ 응답에서 postId로 직렬화
     private String id;
     private ZonedDateTime createdAt;
     private String category;
