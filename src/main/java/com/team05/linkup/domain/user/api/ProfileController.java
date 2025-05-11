@@ -226,17 +226,17 @@ public class ProfileController {
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
 //         여기부터 주석 또는 삭제
-        if (userPrincipal == null) {
-            logger.warn("⚠️ 인증 객체가 null입니다. Swagger 테스트 중일 수 있습니다.");
-            Optional<User> fallbackUserOpt = userRepository.findByNickname(nickname);
-            if (fallbackUserOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "사용자를 찾을 수 없습니다."));
-            }
-
-            User fallbackUser = fallbackUserOpt.get();
-            userPrincipal = new UserPrincipal(fallbackUser.getProviderId(), fallbackUser.getProvider());
-        }
+//        if (userPrincipal == null) {
+//            logger.warn("⚠️ 인증 객체가 null입니다. Swagger 테스트 중일 수 있습니다.");
+//            Optional<User> fallbackUserOpt = userRepository.findByNickname(nickname);
+//            if (fallbackUserOpt.isEmpty()) {
+//                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                        .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "사용자를 찾을 수 없습니다."));
+//            }
+//
+//            User fallbackUser = fallbackUserOpt.get();
+//            userPrincipal = new UserPrincipal(fallbackUser.getProviderId(), fallbackUser.getProvider());
+//        }
         // 여기까지
 
         Optional<User> userOpt = userRepository.findByProviderAndProviderId(
@@ -324,6 +324,7 @@ public class ProfileController {
     }
 
     @GetMapping("/check-nickname")
+    @Operation(summary = "닉네임 중복 확인용", description = "프로필 설정에서 닉네임 변경 시 사용자가 중복 확인 가능하도록 구현(프로필 변경 시 닉네임 중복 검사 로직과 별도 기능입니다)")
     public ResponseEntity<ApiResponse<NicknameCheckResponseDTO>> checkNicknameDuplication(
             @RequestParam("nickname") String nickname) {
 
@@ -334,6 +335,7 @@ public class ProfileController {
     }
 
     @GetMapping("/{nickname}/profile")
+    @Operation(summary = "마이페이지 프로필 설정 - 현재 정보 불러오기", description = "프로필 설정 현재 사용자 정보 조회")
     public ResponseEntity<ApiResponse<ProfileSettingsResponseDTO>> getProfileSettings(
             @PathVariable String nickname,
             @AuthenticationPrincipal UserPrincipal principal
@@ -371,6 +373,7 @@ public class ProfileController {
             value = "/{nickname}/profile/image",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
+    @Operation(summary = "프로필 설정 - 프로필 이미지 변경", description = "프로필 설정에서 사용자 프로필 변경")
     public ResponseEntity<ApiResponse<?>> updateProfileImage(
             @PathVariable String nickname,
             @RequestParam("profileImage") MultipartFile profileImage,
