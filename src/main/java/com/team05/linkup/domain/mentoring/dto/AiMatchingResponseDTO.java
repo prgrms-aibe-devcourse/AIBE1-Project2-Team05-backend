@@ -11,5 +11,6 @@ public record AiMatchingResponseDTO(String profileTag, List<Result> results) {
                         String nickname,
                         String profileTag,
                         String profileImageUrl,
-                        double similarity) {}
+                        double similarity,
+                        String contactLink) {}
 }
