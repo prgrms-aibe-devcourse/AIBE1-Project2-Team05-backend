@@ -30,7 +30,8 @@ public class ProfileSettingsResponseDTO {
     private String activityTypeDisplayName;
 
     // 🔹 지역 정보
-    private String area;        // Area 엔티티에서 getAreaName()으로 추출
+    private Integer areaCode;
+    private String area;        // ex. "서울"
     private Integer sigunguCode;    // 구/군 코드
     private String sigunguName;    // ex. "마포구"
 
