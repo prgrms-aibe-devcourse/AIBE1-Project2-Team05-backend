@@ -425,6 +425,7 @@ public class ProfileService {
                 .activityType(user.getActivityType())
                 .activityTypeDisplayName(user.getActivityType().getDisplayName())
 
+                .areaCode(user.getArea() != null ? user.getArea().getAreacode() : null)
                 .area(user.getArea() != null ? user.getArea().getAreaName() : null)
                 .sigunguCode(user.getSigunguCode())
                 .sigunguName(sigunguName)
