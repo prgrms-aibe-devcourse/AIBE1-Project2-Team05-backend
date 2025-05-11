@@ -245,7 +245,7 @@ public class CommunityService {
         /* 이미지 objectPath 가져온 뒤 → 60초짜리 서명 URL 변환 */
         List<String> imageUrls = imageRepository.findByCommunityId(communityId).stream()
                 .map(Image::getObjectPath)
-                .map(p -> communityImageService.getSignedUrl(p, 60))
+//                .map(p -> communityImageService.getSignedUrl(p, 60))
                 .toList();
 
         // 태그 이름 목록 추출
