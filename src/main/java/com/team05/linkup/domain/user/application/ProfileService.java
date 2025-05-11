@@ -405,15 +405,30 @@ public class ProfileService {
         User user = userRepository.findByNickname(nickname)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
+        // 시군구 이름 조회
+        String sigunguName = Optional.ofNullable(user.getArea())
+                .flatMap(area -> Optional.ofNullable(user.getSigunguCode())
+                        .flatMap(code -> sigunguRepository.findByIdAreacodeAndIdSigungucode(area.getAreacode(), code))
+                        .map(Sigungu::getSigunguname))
+                .orElse(null);
+
         return ProfileSettingsResponseDTO.builder()
                 .nickname(user.getNickname())
                 .profileImageUrl(user.getProfileImageUrl())
                 .introduction(user.getIntroduction())
                 .interest(user.getInterest())
+                .interestDisplayName(user.getInterest().getDisplayName())
+
                 .activityTime(user.getActivityTime())
+                .activityTimeDisplayName(user.getActivityTime().getDisplayName())
+
                 .activityType(user.getActivityType())
+                .activityTypeDisplayName(user.getActivityType().getDisplayName())
+
+                .areaCode(user.getArea() != null ? user.getArea().getAreacode() : null)
                 .area(user.getArea() != null ? user.getArea().getAreaName() : null)
-                .sigungu(user.getSigunguCode())
+                .sigunguCode(user.getSigunguCode())
+                .sigunguName(sigunguName)
                 .tags(user.parseTags())
 
                 // 🔹 멘토 전용 필드

@@ -8,6 +8,7 @@ import com.team05.linkup.domain.mentoring.dto.AiMatchingRequestDTO;
 import com.team05.linkup.domain.mentoring.dto.AiMatchingResponseDTO;
 import com.team05.linkup.domain.mentoring.dto.ProfileTagInterestDTO;
 import com.team05.linkup.domain.mentoring.util.RecommendationLogic;
+import com.team05.linkup.domain.user.infrastructure.CustomerUserRepositoryImpl;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -18,13 +19,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AiMatchingListServiceImpl implements AiMatchingService {
     private static final Logger logger = LogManager.getLogger();
     private final UserRepository userRepository;
+    private final CustomerUserRepositoryImpl customerUserRepositoryImpl;
     private final ApiUtils apiUtils;
     private final RecommendationLogic recommendationLogic;
 
@@ -41,24 +42,24 @@ public class AiMatchingListServiceImpl implements AiMatchingService {
             Interest myInterest = result.interest();
 
             logger.debug("myProfileTag: {}, myInterest: {}", myProfileTag, myInterest);
-            List<Object[]> resultList = userRepository.findOtherProfileTagsByProviderId(provider,
+            List<AiMatchingRequestDTO.OtherProfile> resultList = customerUserRepositoryImpl.findOtherProfileTagsByProviderId(provider,
                                                                                         providerId,
                                                                                         myInterest);
+            logger.debug("resultList: {}", resultList);
+//            List<AiMatchingRequestDTO.OtherProfile> otherProfiles = resultList.stream().map(obj -> new AiMatchingRequestDTO.OtherProfile(
+//                                (Integer) obj[0],  // areacode
+//                                (String) obj[1],   // areaName
+//                                (Integer) obj[2],  // sigungucode
+//                                (String) obj[3],   // sigunguname
+//                                (String) obj[4],   // nickname
+//                                (String) obj[5],   // profileTag
+//                                (String) obj[6],   // profileImageUrl
+//                                (String) obj[7],    // providerId
+//                                (String) obj[8]
+//                            )).collect(Collectors.toList());
 
-            List<AiMatchingRequestDTO.OtherProfile> otherProfiles = resultList.stream().map(obj -> new AiMatchingRequestDTO.OtherProfile(
-                                (Integer) obj[0],  // areacode
-                                (String) obj[1],   // areaName
-                                (Integer) obj[2],  // sigungucode
-                                (String) obj[3],   // sigunguname
-                                (String) obj[4],   // nickname
-                                (String) obj[5],   // profileTag
-                                (String) obj[6],   // profileImageUrl
-                                (String) obj[7],    // providerId
-                                (String) obj[8]
-                            )).collect(Collectors.toList());
-
-            AiMatchingRequestDTO requestDTO = new AiMatchingRequestDTO(myProfileTag, otherProfiles);
-            String url = "https://aibe1-project2-team05-embedding.fly.dev/word-similarity";
+            AiMatchingRequestDTO requestDTO = new AiMatchingRequestDTO(myProfileTag, resultList);
+            String url = "http://localhost:5000/word-similarity";
 
             Optional<AiMatchingResponseDTO> responseOpt = apiUtils.getApiResponse(url, "POST", requestDTO, AiMatchingResponseDTO.class);
 

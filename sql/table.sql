@@ -1,3 +1,19 @@
+CREATE TABLE area
+(
+    areacode  tinyint PRIMARY KEY,
+    area_name varchar(30) NOT NULL
+);
+
+CREATE TABLE sigungu
+(
+    sigungucode int         not null,
+    sigunguname varchar(20) not null,
+    areacode    int         not null,
+    primary key (areacode, sigungucode),
+    constraint fk_sigungu_areacode
+        foreign key (areacode) references area (areacode)
+);
+
 CREATE TABLE user(
          id VARCHAR(36) PRIMARY KEY ,
          provider VARCHAR(10) NOT NULL ,
@@ -24,12 +40,7 @@ CREATE TABLE user(
          UNIQUE KEY uk_nickname(nickname)
 );
 
-CREATE TABLE area (
-    id tinyint PRIMARY KEY ,
-    area_name VARCHAR(30) NOT NULL
-);
-
-CREATE TABLE `refresh_token` (
+CREATE TABLE refresh_token (
        id VARCHAR(36) PRIMARY KEY ,
        user_id VARCHAR(36) NOT NULL ,
        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -47,7 +58,6 @@ CREATE TABLE community (
        user_id VARCHAR(36) NOT NULL,
        title VARCHAR(100) NOT NULL,
        category ENUM('QUESTION', 'INFO', 'REVIEW', 'FREE', 'TALENT') NOT NULL,
-       community_tag_id VARCHAR(36),
        content LONGTEXT NOT NULL,
        view_count bigint default 0 not null,
        like_count bigint default 0 not null,
@@ -58,11 +68,20 @@ CREATE TABLE community (
        CONSTRAINT fk_community_user_id FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE RESTRICT
 );
 
-CREATE TABLE community_tag (
-    id VARCHAR(36) PRIMARY KEY ,
-    community_id VARCHAR(36),
-    tag_name VARCHAR(10) NOT NULL ,
-    CONSTRAINT fk_community_id FOREIGN KEY (community_id) REFERENCES community(id) ON DELETE CASCADE
+CREATE TABLE tags
+(
+    id   bigint auto_increment primary key,
+    name varchar(36) not null,
+    CONSTRAINT uk_tag_name UNIQUE (name)
+);
+
+CREATE TABLE community_tag_join
+(
+    community_id varchar(36) not null,
+    tag_id       bigint      not null,
+    primary key (community_id, tag_id),
+    CONSTRAINT fk_community_tag_join_community_id FOREIGN KEY (community_id) REFERENCES community (id),
+    CONSTRAINT fk_community_tag_join_tag_id FOREIGN KEY (tag_id) REFERENCES tags (id)
 );
 
 CREATE TABLE images (

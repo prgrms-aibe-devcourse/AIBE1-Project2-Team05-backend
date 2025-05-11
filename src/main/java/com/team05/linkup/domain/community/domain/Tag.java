@@ -33,7 +33,7 @@ public class Tag {
      * - null이거나 비어있을 수 없음
      * - 최대 15자 (조정 가능)
      */
-    @Column(name = "name", length = 15, nullable = false)
+    @Column(name = "name", length = 36, nullable = false)
     private String name;
 
     /**
