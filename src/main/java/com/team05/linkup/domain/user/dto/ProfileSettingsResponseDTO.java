@@ -21,12 +21,18 @@ public class ProfileSettingsResponseDTO {
 
     // 🔹 활동 관련
     private Interest interest;
+    private String interestDisplayName;
+
     private ActivityTime activityTime;
+    private String activityTimeDisplayName;
+
     private ActivityType activityType;
+    private String activityTypeDisplayName;
 
     // 🔹 지역 정보
     private String area;        // Area 엔티티에서 getAreaName()으로 추출
-    private Integer sigungu;    // 구/군 코드
+    private Integer sigunguCode;    // 구/군 코드
+    private String sigunguName;    // ex. "마포구"
 
     // 🔹 태그
     private List<String> tags;  // ','로 구분된 String → List<String>으로 변환
