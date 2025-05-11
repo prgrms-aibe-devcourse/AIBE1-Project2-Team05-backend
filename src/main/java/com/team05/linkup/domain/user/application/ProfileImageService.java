@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -21,8 +22,11 @@ public class ProfileImageService {
     @Value("${supabase.profile-image-bucket}")
     private String profileImageBucket;
 
-    @Value("${supabase.storage-url}")   // ../storage/v1/
+    @Value("${supabase.storage-url}")   // 공개 URL 생성용
     private String url;
+
+    @Value("${supabase.service-key}")  // 🔐 yml에서 직접 주입
+    private String supabaseApiKey;
 
     /**
      * 🔹 프로필 이미지 업로드
@@ -33,32 +37,45 @@ public class ProfileImageService {
      */
     public String uploadProfileImage(String userId, MultipartFile file) {
         log.info("🚀 Supabase upload 시작");
+
+        // MIME type 검사
         String contentType = file.getContentType();
         if (contentType == null || !contentType.matches("image/(jpeg|png|gif|webp|svg\\+xml)")) {
-            throw new IllegalArgumentException("허용되지 않는 이미지 형식입니다.");
+            throw new IllegalArgumentException("❗허용되지 않는 이미지 형식입니다.");
         }
-            log.info("contentType = " + contentType);
+        log.info("🔎 contentType = " + contentType);
 
         if (file.getSize() > 10 * 1024 * 1024) {
-            throw new IllegalArgumentException("파일 크기는 10MB 이하만 허용됩니다.");
+            throw new IllegalArgumentException("❗파일 크기는 10MB 이하만 허용됩니다.");
         }
-        log.info("file.getSize() = " + file.getSize());
+        log.info("🔎 file.getSize() = " + file.getSize());
 
-        IStorageFileAPI fileApi = storageClient.from(profileImageBucket);
-        log.info("fileApi.toString() = " + fileApi.toString());
+
+        String storageBaseUrl  = url;
+        StorageClient fixedClient = new StorageClient(supabaseApiKey, storageBaseUrl );
+
+        IStorageFileAPI fileApi = fixedClient.from(profileImageBucket);
+//        IStorageFileAPI fileApi = storageClient.from(profileImageBucket);
+        log.info("🔎 fileApi.toString() = " + fileApi.toString());
+
+        String originalName = Optional.ofNullable(file.getOriginalFilename())
+                .orElseThrow(() -> new IllegalArgumentException("파일 이름이 없습니다."));
+
         String objectPath = "%s/%s-%s".formatted(
                 userId,
                 UUID.randomUUID(),
-                file.getOriginalFilename()
+                originalName
+//                file.getOriginalFilename()
         );
-        log.info("✅ objectPath = ", objectPath);
+        log.info("✅ objectPath = {}", objectPath);
 
         File tempFile = null;
         try {
             tempFile = File.createTempFile("profile-", "-" + file.getOriginalFilename());
-            log.info("tempFile.getAbsolutePath = " + tempFile.getAbsolutePath());
+            log.info("📍 tempFile.getAbsolutePath = " + tempFile.getAbsolutePath());
+
             file.transferTo(tempFile);
-            log.info("file.getOriginalFilename() = " + file.getOriginalFilename());
+            log.info("📍 file.getOriginalFilename() = " + file.getOriginalFilename());
 
             fileApi.upload(objectPath, tempFile).get(); // 동기 처리
 
@@ -74,7 +91,10 @@ public class ProfileImageService {
             }
         }
 
-        return String.format("%s"+"object/public/%s/%s", url, profileImageBucket, objectPath);
+        // 방어적 코드
+        String fixedUrl = url.replaceAll("/$", ""); // 끝 슬래시 제거
+        // ✅ 프론트에 제공할 public URL 반환
+        return String.format("%s/object/public/%s/%s", fixedUrl, profileImageBucket, objectPath);
     }
 
 }
