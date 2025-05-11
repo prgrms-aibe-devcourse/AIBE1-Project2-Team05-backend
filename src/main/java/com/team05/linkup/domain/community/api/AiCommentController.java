@@ -7,6 +7,7 @@ import com.team05.linkup.domain.community.application.AiCommentViewServiceImpl;
 import com.team05.linkup.domain.community.dto.AiCommentResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +35,9 @@ public class AiCommentController {
             }
             AiCommentResponseDTO data = aiCommentService.getAiComment(communityId);
             return ResponseEntity.ok(ApiResponse.success(data));
-        } catch (Exception e) {
+        } catch (EntityNotFoundException e) {
+         return ResponseEntity.ok(ApiResponse.error(ResponseCode.POST_NOT_FOUND));
+     } catch (Exception e) {
             return ResponseEntity.ok(ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR));
         }
     }
