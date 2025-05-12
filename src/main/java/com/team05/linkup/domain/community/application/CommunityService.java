@@ -239,6 +239,8 @@ public class CommunityService {
         long likeCount = likeRepository.countByCommunityId(communityId);
         int commentCount = commentRepository.countByCommunityId(communityId);
 
+
+
         // 좋아요, 북마크 상태 확인
          boolean isLiked = likeRepository.existsByUserAndCommunityId(user, communityId);
          boolean isBookmarked = bookmarkRepository.existsByUserAndCommunityId(user, communityId);

@@ -4,6 +4,7 @@ import com.team05.linkup.domain.community.domain.Comment;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -56,7 +57,7 @@ public class CommentDto {
                     .id(comment.getId())
                     .userId(comment.getUserId())
                     .nickname(comment.getName()) // User 객체 대신 name 필드 사용
-                    .profileImageUrl(null) // 필요시 User 조회하여 채움
+                    .profileImageUrl(null) // Service에서 User 조회하여 설정해야 함
                     .commentContent(comment.getCommentContent())
                     .isParent(comment.getParentCommentId() == null) // parentCommentId 기준으로 판단
                     .totalLikeCount(comment.getTotalLikeCount())
