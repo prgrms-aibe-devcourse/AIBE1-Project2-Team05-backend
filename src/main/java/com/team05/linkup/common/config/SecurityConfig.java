@@ -18,6 +18,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -66,8 +67,8 @@ public class SecurityConfig {
                         .requestMatchers("/login/oauth2/code/google/**").permitAll()
                         .requestMatchers("/login/oauth2/code/naver/**").permitAll()
                         .requestMatchers("/login/oauth2/code/kakao/**").permitAll()
-                        .requestMatchers("/v1/users/**").permitAll()
-//                        .access(new WebExpressionAuthorizationManager("!hasRole('TEMP')"))
+                        .requestMatchers("/v1/users/**")
+                        .access(new WebExpressionAuthorizationManager("!hasRole('TEMP')"))
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oAuth2AuthenticationSuccessHandler)

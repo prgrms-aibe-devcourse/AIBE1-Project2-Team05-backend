@@ -7,6 +7,7 @@ import com.team05.linkup.domain.enums.Interest;
 import com.team05.linkup.domain.mentoring.dto.AiMatchingRequestDTO;
 import com.team05.linkup.domain.mentoring.dto.AiMatchingResponseDTO;
 import com.team05.linkup.domain.mentoring.dto.ProfileTagInterestDTO;
+import com.team05.linkup.domain.mentoring.util.NgrokApiUrl;
 import com.team05.linkup.domain.mentoring.util.RecommendationLogic;
 import com.team05.linkup.domain.user.infrastructure.CustomerUserRepositoryImpl;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
@@ -29,6 +30,8 @@ public class AiMatchingListServiceImpl implements AiMatchingService {
     private final ApiUtils apiUtils;
     private final RecommendationLogic recommendationLogic;
 
+    private final NgrokApiUrl apiUrl;
+
     @Override
     public AiMatchingResponseDTO matchMentor(UserPrincipal userPrincipal) throws TimeoutException {
         try {
@@ -46,20 +49,10 @@ public class AiMatchingListServiceImpl implements AiMatchingService {
                                                                                         providerId,
                                                                                         myInterest);
             logger.debug("resultList: {}", resultList);
-//            List<AiMatchingRequestDTO.OtherProfile> otherProfiles = resultList.stream().map(obj -> new AiMatchingRequestDTO.OtherProfile(
-//                                (Integer) obj[0],  // areacode
-//                                (String) obj[1],   // areaName
-//                                (Integer) obj[2],  // sigungucode
-//                                (String) obj[3],   // sigunguname
-//                                (String) obj[4],   // nickname
-//                                (String) obj[5],   // profileTag
-//                                (String) obj[6],   // profileImageUrl
-//                                (String) obj[7],    // providerId
-//                                (String) obj[8]
-//                            )).collect(Collectors.toList());
 
             AiMatchingRequestDTO requestDTO = new AiMatchingRequestDTO(myProfileTag, resultList);
-            String url = "https://a624-110-14-126-182.ngrok-free.app//word-similarity";
+            logger.debug("api url: {}", apiUrl);
+            String url = "%s/word-similarity".formatted(apiUrl.getApiUrl());
 
             Optional<AiMatchingResponseDTO> responseOpt = apiUtils.getApiResponse(url, "POST", requestDTO, AiMatchingResponseDTO.class);
 
