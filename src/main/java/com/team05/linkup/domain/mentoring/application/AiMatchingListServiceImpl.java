@@ -59,7 +59,7 @@ public class AiMatchingListServiceImpl implements AiMatchingService {
 //                            )).collect(Collectors.toList());
 
             AiMatchingRequestDTO requestDTO = new AiMatchingRequestDTO(myProfileTag, resultList);
-            String url = "http://localhost:5000/word-similarity";
+            String url = "https://a624-110-14-126-182.ngrok-free.app//word-similarity";
 
             Optional<AiMatchingResponseDTO> responseOpt = apiUtils.getApiResponse(url, "POST", requestDTO, AiMatchingResponseDTO.class);
 
