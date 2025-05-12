@@ -1,5 +1,6 @@
 package com.team05.linkup.domain.community.application;
 
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.community.domain.Comment;
 import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.dto.CommentDto;
@@ -145,22 +146,26 @@ public class CommentService {
      * 새로운 댓글을 생성합니다.
      * 부모 댓글인 경우 순서 번호를 할당합니다.
      *
-     * @param userId 사용자 ID
-     * @param communityId 게시글 ID
+     * @param principal   현재 인증된 사용자 정보 객체. {@code null}이 아니어야 합니다.
+     * @param communityId 댓글을 작성할 게시글 ID
      * @param request 댓글 생성 요청 데이터
      * @return 생성된 댓글 정보
      * @throws EntityNotFoundException 사용자가 존재하지 않는 경우
      */
     @Transactional
-    public CommentDto.Response createComment(String userId, String communityId, CommentDto.Request request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+    public CommentDto.Response createComment(UserPrincipal principal, String communityId, CommentDto.Request request) {
+
+        String provider = principal.provider();
+        String providerId = principal.providerId();
+
+        User user = userRepository.findByProviderAndProviderId(provider, providerId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with PID: " + provider + "-" + providerId));
 
         String commentId = UUID.randomUUID().toString();
 
         Comment comment = Comment.builder()
                 .id(commentId)
-                .userId(userId)
+                .userId(user.getId())
                 .communityId(communityId)
                 .commentContent(request.getCommentContent())
                 .name(user.getNickname())
@@ -194,7 +199,7 @@ public class CommentService {
      * 기존 댓글을 수정합니다.
      * 작성자만 수정할 수 있습니다.
      *
-     * @param userId 사용자 ID
+     * @param principal   현재 인증된 사용자 정보 객체. {@code null}이 아니어야 합니다.
      * @param communityId 게시글 ID
      * @param commentId 수정할 댓글 ID
      * @param request 댓글 수정 요청 데이터
@@ -203,12 +208,20 @@ public class CommentService {
      * @throws IllegalArgumentException 댓글 작성자가 아닌 경우
      */
     @Transactional
-    public CommentDto.Response updateComment(String userId, String communityId, String commentId, CommentDto.Request request) {
+    public CommentDto.Response updateComment(UserPrincipal principal, String communityId, String commentId, CommentDto.Request request) {
+
+        String provider = principal.provider();
+        String providerId = principal.providerId();
+
+        User user = userRepository.findByProviderAndProviderId(provider, providerId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with PID: " + provider + "-" + providerId));
+
+
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
 
         // 댓글 작성자만 수정 가능
-        if (!comment.getUserId().equals(userId)) {
+        if (!comment.getUserId().equals(user.getId())) {
             throw new IllegalArgumentException("댓글 수정 권한이 없습니다.");
         }
 
@@ -226,19 +239,26 @@ public class CommentService {
      * 댓글을 삭제합니다.
      * 작성자만 삭제할 수 있으며, 부모 댓글 삭제 시 자식 댓글도 함께 삭제됩니다.
      *
-     * @param userId 사용자 ID
+     * @param principal   현재 인증된 사용자 정보 객체. {@code null}이 아니어야 합니다.
      * @param communityId 게시글 ID
      * @param commentId 삭제할 댓글 ID
      * @throws EntityNotFoundException 댓글이 존재하지 않는 경우
      * @throws IllegalArgumentException 댓글 작성자가 아닌 경우
      */
     @Transactional
-    public void deleteComment(String userId, String communityId, String commentId) {
+    public void deleteComment(UserPrincipal principal, String communityId, String commentId) {
+
+        String provider = principal.provider();
+        String providerId = principal.providerId();
+
+        User user = userRepository.findByProviderAndProviderId(provider, providerId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with PID: " + provider + "-" + providerId));
+
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
 
         // 댓글 작성자만 삭제 가능
-        if (!comment.getUserId().equals(userId)) {
+        if (!comment.getUserId().equals(user.getId())) {
             throw new IllegalArgumentException("댓글 삭제 권한이 없습니다.");
         }
 

@@ -50,9 +50,7 @@ public class CommentController {
                     new CommentDto.SliceResponse(comments.getContent(), comments.hasNext())
             ));
         } catch (jakarta.persistence.EntityNotFoundException e) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND));
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, e.getMessage()));
         }
     }
 
@@ -76,16 +74,14 @@ public class CommentController {
                     new CommentDto.SliceResponse(comments.getContent(), comments.hasNext())
             ));
         } catch (jakarta.persistence.EntityNotFoundException e) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND));
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, e.getMessage()));
         }
     }
 
     /**
      * 게시글에 새 댓글을 작성합니다.
      *
-     * @param principal 인증된 사용자 정보
+     * @param userPrincipal 인증된 사용자 정보
      * @param communityId 댓글을 작성할 게시글 ID
      * @param request 댓글 내용을 포함한 요청 데이터
      * @return 생성된 댓글 정보
@@ -93,27 +89,20 @@ public class CommentController {
     @PostMapping("/{postId}/comments")
     @Operation(summary = "댓글 작성", description = "게시글에 댓글을 작성합니다.")
     public ResponseEntity<ApiResponse<CommentDto.Response>> createComment(
-            @AuthenticationPrincipal UserPrincipal principal,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable("postId") String communityId,
             @Valid @RequestBody CommentDto.Request request) {
 
         // 인증 처리 표준화
-        if (principal == null) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
+        if (userPrincipal == null) {
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.UNAUTHORIZED));
         }
 
         try {
-            // providerId로 변경하여 일관성 유지
-            CommentDto.Response response = commentService.createComment(principal.providerId(), communityId, request);
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(ApiResponse.created(response));
+            CommentDto.Response response = commentService.createComment(userPrincipal, communityId, request);
+            return ResponseEntity.ok(ApiResponse.created(response));
         } catch (jakarta.persistence.EntityNotFoundException e) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND));
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, e.getMessage()));
         }
     }
 
@@ -121,7 +110,7 @@ public class CommentController {
      * 기존 댓글을 수정합니다.
      * 자신이 작성한 댓글만 수정할 수 있습니다.
      *
-     * @param principal 인증된 사용자 정보
+     * @param userPrincipal 인증된 사용자 정보
      * @param communityId 댓글이 속한 게시글 ID
      * @param commentId 수정할 댓글 ID
      * @param request 수정할 댓글 내용
@@ -130,30 +119,25 @@ public class CommentController {
     @PatchMapping("/comments/{postId}/{commentId}")
     @Operation(summary = "댓글 수정", description = "댓글을 수정합니다.")
     public ResponseEntity<ApiResponse<CommentDto.Response>> updateComment(
-            @AuthenticationPrincipal UserPrincipal principal,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable("postId") String communityId,
             @PathVariable("commentId") String commentId,
             @Valid @RequestBody CommentDto.Request request) {
 
         // 인증 처리 표준화
-        if (principal == null) {
+        if (userPrincipal == null) {
             return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
+                    .ok(ApiResponse.error(ResponseCode.UNAUTHORIZED));
         }
 
         try {
             // providerId로 변경하여 일관성 유지
-            CommentDto.Response response = commentService.updateComment(principal.providerId(), communityId, commentId, request);
+            CommentDto.Response response = commentService.updateComment(userPrincipal, communityId, commentId, request);
             return ResponseEntity.ok(ApiResponse.success(response));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .body(ApiResponse.error(ResponseCode.NO_EDIT_PERMISSION));
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.NO_EDIT_PERMISSION));
         } catch (jakarta.persistence.EntityNotFoundException e) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error(ResponseCode.COMMENT_NOT_FOUND));
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, e.getMessage()));
         }
     }
 
@@ -161,7 +145,7 @@ public class CommentController {
      * 댓글을 삭제합니다.
      * 자신이 작성한 댓글만 삭제할 수 있습니다.
      *
-     * @param principal 인증된 사용자 정보
+     * @param userPrincipal 인증된 사용자 정보
      * @param communityId 댓글이 속한 게시글 ID
      * @param commentId 삭제할 댓글 ID
      * @return 성공 응답
@@ -169,29 +153,24 @@ public class CommentController {
     @DeleteMapping("/comments/{postId}/{commentId}")
     @Operation(summary = "댓글 삭제", description = "댓글을 삭제합니다.")
     public ResponseEntity<ApiResponse<Void>> deleteComment(
-            @AuthenticationPrincipal UserPrincipal principal,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable("postId") String communityId,
             @PathVariable("commentId") String commentId) {
 
         // 인증 처리 표준화
-        if (principal == null) {
+        if (userPrincipal == null) {
             return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error(ResponseCode.UNAUTHORIZED));
+                    .ok(ApiResponse.error(ResponseCode.UNAUTHORIZED));
         }
 
         try {
             // providerId로 변경하여 일관성 유지
-            commentService.deleteComment(principal.providerId(), communityId, commentId);
+            commentService.deleteComment(userPrincipal, communityId, commentId);
             return ResponseEntity.ok(ApiResponse.success());
         } catch (IllegalArgumentException e) {
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .body(ApiResponse.error(ResponseCode.NO_DELETE_PERMISSION));
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.NO_DELETE_PERMISSION));
         } catch (jakarta.persistence.EntityNotFoundException e) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error(ResponseCode.COMMENT_NOT_FOUND));
+            return ResponseEntity.ok(ApiResponse.error(ResponseCode.COMMENT_NOT_FOUND));
         }
     }
 }
