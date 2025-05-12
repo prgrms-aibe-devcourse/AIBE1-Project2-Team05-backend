@@ -34,4 +34,6 @@ public interface LikeRepository extends JpaRepository<Like, String> {
      */
     Optional<Like> findByUserAndCommunity(User user, Community community);
 
+
+    long countByCommunityId(String communityId);
 }

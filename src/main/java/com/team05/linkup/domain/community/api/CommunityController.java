@@ -159,10 +159,8 @@ public class CommunityController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable("postId") String communityId) {
 
-        // 인증되지 않은 사용자도 조회 가능하도록 처리 (있을 경우 회원 ID 사용, 없을 경우 null 전달)
-        String userId = principal != null ? principal.providerId() : null;
         try {
-            return ResponseEntity.ok(ApiResponse.success(communityService.getCommunityDetail(userId, communityId)));
+            return ResponseEntity.ok(ApiResponse.success(communityService.getCommunityDetail(principal, communityId)));
         } catch (jakarta.persistence.EntityNotFoundException e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
