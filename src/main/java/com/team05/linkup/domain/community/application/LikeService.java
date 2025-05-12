@@ -1,7 +1,9 @@
 package com.team05.linkup.domain.community.application;
 
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.domain.Like;
+import com.team05.linkup.domain.community.dto.LikeResponseDTO;
 import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
 import com.team05.linkup.domain.community.infrastructure.LikeRepository;
 import com.team05.linkup.domain.user.domain.User;
@@ -29,39 +31,44 @@ public class LikeService {
     /**
      * 사용자가 특정 커뮤니티 게시글에 대한 '좋아요' 상태를 토글합니다.
      * 이미 '좋아요' 상태이면 취소하고, 아니면 '좋아요'를 추가합니다.
+     * 게시글의 총 '좋아요' 수도 함께 업데이트됩니다.
      *
-     * @param provider  토글 요청 사용자 Provider
-     * @param providerId  토글 요청 사용자 Provider ID.
+     * @param principal   현재 인증된 사용자 정보 객체. {@code null}이 아니어야 합니다.
      * @param communityId 대상 게시글 ID.
-     * @return 토글 후의 최종 '좋아요' 상태 (true: 좋아요, false: 좋아요 아님).
+     * @return {@link LikeResponseDTO} - 토글 후의 최종 '좋아요' 상태와 게시글의 총 '좋아요' 수를 포함하는 DTO.
      * @throws EntityNotFoundException 사용자 또는 게시글을 찾을 수 없는 경우.
      */
     @Transactional //
-    public boolean toggleLike(String provider, String providerId, String communityId) {
+    public LikeResponseDTO toggleLike(UserPrincipal principal, String communityId) {
+        String provider = principal.provider();
+        String providerId = principal.providerId();
+
         // 1. 사용자 및 커뮤니티 엔티티 조회
         User user = userRepository.findByProviderAndProviderId(provider, providerId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with PID: " + provider + "-" + providerId));
         Community community = communityRepository.findById(communityId)
                 .orElseThrow(() -> new EntityNotFoundException("Community not found with CID: " + communityId));
 
+        // 2. 기존 '좋아요' 상태 확인
         Optional<Like> existingLike = likeRepository.findByUserAndCommunity(user, community);
 
+        boolean newLikedStatus;
+
         if (existingLike.isPresent()) {
-            // 좋아요가 있으면 -> 취소
             likeRepository.delete(existingLike.get());
-            communityRepository.decrementLikeCount(communityId);
-            log.debug("UserPID {} unliked community {}", providerId, communityId);
-            return false; // 최종 상태: 좋아요 아님
+            community.decrementLikeCount();
+            newLikedStatus = false;
         } else {
-            // 좋아요가 없으면 -> 추가
-            Like like = Like.builder()
+            Like newLike = Like.builder()
                     .user(user)
                     .community(community)
                     .build();
-            likeRepository.save(like);
-            communityRepository.incrementLikeCount(communityId);
-            log.debug("UserPID {} liked community {}", providerId, communityId);
-            return true; // 최종 상태: 좋아요
+            likeRepository.save(newLike);
+            community.incrementLikeCount();
+            newLikedStatus = true;
         }
+
+        // 3. 최종 '좋아요' 상태와 업데이트된 게시글의 총 '좋아요' 수를 DTO에 담아 반환
+        return new LikeResponseDTO(newLikedStatus, community.getLikeCount());
     }
 }

@@ -6,10 +6,7 @@ import com.team05.linkup.domain.community.domain.CommunityCategory;
 import com.team05.linkup.domain.community.domain.Image;
 import com.team05.linkup.domain.community.domain.Tag;
 import com.team05.linkup.domain.community.dto.*;
-import com.team05.linkup.domain.community.infrastructure.CommentRepository;
-import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
-import com.team05.linkup.domain.community.infrastructure.ImageRepository;
-import com.team05.linkup.domain.community.infrastructure.TagRepository;
+import com.team05.linkup.domain.community.infrastructure.*;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -46,8 +43,8 @@ public class CommunityService {
     private final ImageRepository imageRepository;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
-    // private final LikeRepository likeRepository;
-    // private final BookmarkRepository bookmarkRepository;
+     private final LikeRepository likeRepository;
+     private final BookmarkRepository bookmarkRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final CommunityImageService communityImageService;
     private final TagRepository tagRepository;
@@ -221,13 +218,17 @@ public class CommunityService {
     /**
      * 게시글 ID로 특정 게시글의 상세 정보를 조회합니다. 조회 시 조회수가 증가합니다.
      *
-     * @param userId 현재 조회하는 사용자의 ID (좋아요, 북마크 상태 확인 등에 사용될 수 있음). 없을 경우 null.
+     * @param userPrincipal 현재 인증된 사용자의 정보.
      * @param communityId 조회할 게시글 ID.
      * @return 게시글 상세 정보 DTO ({@link CommunityDto.DetailResponse}).
      * @throws EntityNotFoundException 해당 ID의 게시글이 없을 경우 발생.
      */
     @Transactional
-    public CommunityDto.DetailResponse getCommunityDetail(String userId, String communityId) {
+    public CommunityDto.DetailResponse getCommunityDetail(UserPrincipal userPrincipal, String communityId) {
+
+        User user = userRepository.findByProviderAndProviderId(userPrincipal.provider(), userPrincipal.providerId())
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
         Community community = communityRepository.findById(communityId)
                 .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
 
@@ -235,14 +236,14 @@ public class CommunityService {
         community.incrementViewCount();
 
         // 좋아요 수와 댓글 수 조회
-        // long likeCount = likeRepository.countByCommunityId(communityId);
+        long likeCount = likeRepository.countByCommunityId(communityId);
         int commentCount = commentRepository.countByCommunityId(communityId);
 
 
 
         // 좋아요, 북마크 상태 확인
-        // boolean isLiked = likeRepository.existsByUserIdAndCommunityId(userId, communityId);
-        // boolean isBookmarked = bookmarkRepository.existsByUserIdAndCommunityId(userId, communityId);
+         boolean isLiked = likeRepository.existsByUserAndCommunityId(user, communityId);
+         boolean isBookmarked = bookmarkRepository.existsByUserAndCommunityId(user, communityId);
 
         /* 이미지 objectPath 가져온 뒤 → 60초짜리 서명 URL 변환 */
         List<String> imageUrls = imageRepository.findByCommunityId(communityId).stream()
@@ -265,10 +266,10 @@ public class CommunityService {
                 .tags(tagNames)
                 .content(community.getContent())
                 .viewCount(community.getViewCount().intValue())
-                // .likeCount((int) likeCount)
+                 .likeCount((int) likeCount)
                 .commentCount(commentCount)
-                // .isLiked(isLiked)
-                // .isBookmarked(isBookmarked)
+                 .isLiked(isLiked)
+                 .isBookmarked(isBookmarked)
                 .imageUrls(imageUrls)
                 .createdAt(community.getCreatedAt())
                 .updatedAt(community.getUpdatedAt())

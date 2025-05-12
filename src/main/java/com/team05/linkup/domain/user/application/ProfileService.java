@@ -58,7 +58,7 @@ public class ProfileService {
                 .profileImageUrl(user.getProfileImageUrl())
                 .role(user.getRole().name())
                 .tag(user.getProfileTag())
-                .interest(user.getInterest().getDisplayName())
+                .interest(user.getInterest() != null ? user.getInterest().getDisplayName() : null)
                 .area(areaName)
                 .sigungu(sigungu)
                 .introduction(user.getIntroduction())
@@ -417,13 +417,13 @@ public class ProfileService {
                 .profileImageUrl(user.getProfileImageUrl())
                 .introduction(user.getIntroduction())
                 .interest(user.getInterest())
-                .interestDisplayName(user.getInterest().getDisplayName())
+                .interestDisplayName(user.getInterest() != null ? user.getInterest().getDisplayName() : null)
 
                 .activityTime(user.getActivityTime())
-                .activityTimeDisplayName(user.getActivityTime().getDisplayName())
+                .activityTimeDisplayName(user.getActivityTime() != null ? user.getActivityTime().getDisplayName() : null)
 
                 .activityType(user.getActivityType())
-                .activityTypeDisplayName(user.getActivityType().getDisplayName())
+                .activityTypeDisplayName(user.getActivityType() != null ? user.getActivityType().getDisplayName() : null)
 
                 .areaCode(user.getArea() != null ? user.getArea().getAreacode() : null)
                 .area(user.getArea() != null ? user.getArea().getAreaName() : null)

@@ -24,6 +24,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * 댓글 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
+ * 댓글 조회, 생성, 수정, 삭제 기능을 제공합니다.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -227,6 +231,8 @@ public class CommentService {
      * @param commentId 댓글 ID
      * @param request 수정 요청 데이터
      * @return 수정된 댓글 정보
+     * @throws EntityNotFoundException 댓글이 존재하지 않는 경우
+     * @throws IllegalArgumentException 댓글 작성자가 아닌 경우
      */
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public CommentDto.Response updateComment(UserPrincipal principal, String communityId, String commentId, CommentDto.Request request) {
@@ -283,6 +289,7 @@ public class CommentService {
 
     /**
      * 댓글을 삭제합니다.
+     * 작성자만 삭제할 수 있으며, 부모 댓글 삭제 시 자식 댓글도 함께 삭제됩니다.
      *
      * @param principal 인증 정보
      * @param communityId 게시글 ID
