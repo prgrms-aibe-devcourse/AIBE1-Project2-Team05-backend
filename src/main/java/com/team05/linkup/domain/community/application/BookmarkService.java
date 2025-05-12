@@ -1,5 +1,6 @@
 package com.team05.linkup.domain.community.application;
 
+import com.team05.linkup.common.dto.UserPrincipal;
 import com.team05.linkup.domain.community.domain.Bookmark;
 import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.infrastructure.BookmarkRepository;
@@ -30,14 +31,16 @@ public class BookmarkService {
      * 사용자가 특정 커뮤니티 게시글에 대한 '북마크' 상태를 토글.
      * 이미 북마크 상태이면 취소하고, 아니면 북마크를 추가.
      *
-     * @param provider  토글 요청 사용자 Provider.
-     * @param providerId  토글 요청 사용자 Provider ID.
+     * @param principal   현재 인증된 사용자 정보 객체. {@code null}이 아니어야 합니다.
      * @param communityId 대상 게시글 ID.
      * @return 토글 후의 최종 북마크 상태 (true: 북마크됨, false: 북마크 안됨).
      * @throws EntityNotFoundException 사용자 또는 게시글을 찾을 수 없는 경우.
      */
     @Transactional
-    public boolean toggleBookmark(String provider, String providerId, String communityId) {
+    public boolean toggleBookmark(UserPrincipal principal, String communityId) {
+        String provider = principal.provider();
+        String providerId = principal.providerId();
+
         // 1. 사용자 및 커뮤니티 엔티티 조회
         User user = userRepository.findByProviderAndProviderId(provider, providerId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with PID: " + provider + "-" + providerId));
@@ -49,20 +52,15 @@ public class BookmarkService {
 
 
         if (existingBookmark.isPresent()) {
-            // 북마크가 있으면 -> 삭제
             bookmarkRepository.delete(existingBookmark.get());
-            log.debug("UserPID {} removed bookmark for community {}", providerId, communityId);
-            return false; // 최종 상태: 북마크 안됨
+            return false;
         } else {
-            // 북마크가 없으면 -> 추가
             Bookmark bookmark = Bookmark.builder()
                     .user(user)
                     .community(community)
                     .build();
             bookmarkRepository.save(bookmark);
-            log.debug("UserPID {} added bookmark for community {}", providerId, communityId);
-            return true; // 최종 상태: 북마크됨
+            return true;
         }
     }
-
 }
