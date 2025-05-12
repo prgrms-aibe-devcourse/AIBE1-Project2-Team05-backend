@@ -51,12 +51,12 @@ public class RoleController {
             String refreshToken = refreshTokenServiceImpl.createRefreshToken(updatedAuth);
 
             ResponseCookie cookie = ResponseCookie.from("jwt_token", newToken)
-                    .sameSite("Strict")
-//                    .httpOnly(true)
-//                    .secure(true)
+                    .sameSite("None")
+                    .httpOnly(true)
+                    .secure(true)
                     .path("/")
                     .maxAge(60 * 60) // 1 hour
-//                    .domain(".linkup.o-r.kr")
+                    .domain(".linkup.o-r.kr")
                     .build();
 
             response.setHeader("Set-Cookie", cookie.toString());

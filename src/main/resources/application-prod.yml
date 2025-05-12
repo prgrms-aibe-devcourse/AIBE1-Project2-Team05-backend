@@ -65,6 +65,7 @@ jwt:
 api:
   Key:
     gemini: ${GEMINI_API_KEY}
+  url : ${NGROK_URL}
 
   # 이미지 스토리지
 supabase:
