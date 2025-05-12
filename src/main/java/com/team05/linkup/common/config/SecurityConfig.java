@@ -16,10 +16,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -44,7 +42,6 @@ public class SecurityConfig {
     @Bean
     public DefaultMethodSecurityExpressionHandler methodSecurityExpressionHandler() {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
-//        expressionHandler.setRoleHierarchy(roleHierarchy());
         expressionHandler.setDefaultRolePrefix("ROLE_");
         return expressionHandler;
     }
@@ -69,8 +66,8 @@ public class SecurityConfig {
                         .requestMatchers("/login/oauth2/code/google/**").permitAll()
                         .requestMatchers("/login/oauth2/code/naver/**").permitAll()
                         .requestMatchers("/login/oauth2/code/kakao/**").permitAll()
-                        .requestMatchers("/v1/users/**")
-                        .access(new WebExpressionAuthorizationManager("!hasRole('TEMP')"))
+                        .requestMatchers("/v1/users/**").permitAll()
+//                        .access(new WebExpressionAuthorizationManager("!hasRole('TEMP')"))
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oAuth2AuthenticationSuccessHandler)
@@ -125,11 +122,6 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 
 
