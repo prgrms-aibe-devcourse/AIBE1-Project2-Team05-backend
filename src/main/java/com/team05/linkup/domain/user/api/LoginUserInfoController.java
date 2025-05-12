@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/v1/users")
+@RequestMapping("/v1/authUser")
 @Tag(name = "로그인 유저 API", description = "현재 로그인한 유저의 기본 정보(nickname, role) 조회용 API")
 @RequiredArgsConstructor
 public class LoginUserInfoController {
