@@ -62,6 +62,10 @@ public interface MentoringRepository extends JpaRepository<MentoringSessions, St
     String findMenteeIdByNickname(@Param("nickname") String nickname);
 
     // menteeId로 페이징된 매칭 세션 조회
-    @Query("SELECT m FROM MentoringSessions m WHERE m.mentee.id = :menteeId")
+    @Query("SELECT m FROM MentoringSessions m WHERE m.mentee.id = :menteeId ORDER BY m.createdAt DESC")
     Page<MentoringSessions> findByMenteeUserIdPaged(@Param("menteeId") String menteeId, Pageable pageable);
+
+    // menteeId로 페이징된 매칭 세션 조회 + 상태 필터링
+    @Query("SELECT m FROM MentoringSessions m WHERE m.mentee.id = :menteeId AND m.status = :status ORDER BY m.createdAt DESC")
+    Page<MentoringSessions> findByMenteeUserIdAndStatusPaged(@Param("menteeId") String menteeId, @Param("status") MentoringStatus status, Pageable pageable);
 }
