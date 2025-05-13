@@ -137,48 +137,47 @@ public class CommunityService {
     /**
      * 지정된 조건(카테고리 필터링, 페이징, 정렬)에 맞는 게시글 요약 목록을 조회합니다.
      * 이 메소드는 읽기 전용 트랜잭션으로 실행됩니다.
+     * 리포지토리에서 Object[]를 받아 CommunitySummaryResponseDTO로 변환합니다.
      *
      * @param category 조회할 게시글 카테고리 (선택 사항, null일 경우 전체 카테고리 조회).
-     * @param pageable 페이징 및 정렬 정보 (페이지 번호, 페이지 크기, 정렬 기준). Spring Data Web Support에 의해 Controller에서 생성됩니다.
+     * @param tagName  조회할 태그 이름 (선택 사항).
+     * @param pageable 페이징 및 정렬 정보.
      * @return 조건에 맞는 게시글 요약 정보({@link CommunitySummaryResponseDTO})를 담고 있는 {@link Page} 객체.
-     * 결과가 없을 경우 빈 Page 객체가 반환됩니다.
-     * @see CommunityRepository #findCommunitySummaries(CommunityCategory, Pageable)
      */
     public Page<CommunitySummaryResponseDTO> findCommunities(CommunityCategory category, String tagName, Pageable pageable) {
         String trimmedTagName = StringUtils.hasText(tagName) ? tagName.trim() : null;
+        String categoryName = (category != null) ? category.name() : null;
 
-        return communityRepository.findCommunitySummaries(
-                category,
+        Page<Object[]> objectPage = communityRepository.findCommunitySummaries(
+                categoryName,
                 trimmedTagName,
                 pageable);
-//        String trimmedTagName = null;
-//        if (StringUtils.hasText(tagName)) {
-//            trimmedTagName = tagName.trim();
-//        }
-//        return communityRepository.findCommunitySummaries(
-//                category,
-//                trimmedTagName,
-//                pageable
-//        );
+
+        List<CommunitySummaryResponseDTO> dtoList = objectPage.getContent().stream()
+                .map(CommunitySummaryResponseDTO::fromObjectArray) // 정적 팩토리 메서드 사용
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(dtoList, pageable, objectPage.getTotalElements());
     }
 
     /**
-     * 최근 일정 기간 동안 작성된 게시글 중 인기 게시글 목록을 조회
-     * 인기도는 Repository 쿼리 내의 정렬 기준(조회수, 좋아요 수, 최신순)에 따라 결정
-     * 이 메소드는 읽기 전용 트랜잭션으로 실행
+     * 최근 일정 기간 동안 작성된 게시글 중 인기 게시글 목록을 조회.
+     * 이 메소드는 읽기 전용 트랜잭션으로 실행.
+     * 리포지토리에서 Object[] 리스트를 받아 CommunitySummaryResponseDTO 리스트로 변환합니다.
      *
      * @param limit 조회할 최대 인기 게시글 수.
-     * @param day   인기 게시글을 선정할 최근 기간(일 단위). 예를 들어 7이면 최근 7일간의 게시글을 대상으로 함
-     * @return 인기 게시글 요약 정보({@link CommunitySummaryResponseDTO})의 {@link List}. 결과는 'limit' 수만큼 제한되며, 없을 경우 빈 리스트가 반환
-     * @see CommunityRepository#findPopularSince(ZonedDateTime, Pageable)
+     * @param day   인기 게시글을 선정할 최근 기간(일 단위).
+     * @return 인기 게시글 요약 정보({@link CommunitySummaryResponseDTO})의 {@link List}.
      */
     public List<CommunitySummaryResponseDTO> findPopularCommunities(int limit, int day) {
-        // 1. 조회 시작 시점 계산
         ZonedDateTime daysAgo = ZonedDateTime.now().minusDays(day);
-        // 2. 결과 개수 제한 설정
         Pageable topLimit = PageRequest.of(0, limit);
-        // 3. Repository 메소드 호출
-        return communityRepository.findPopularSince(daysAgo, topLimit);
+
+        List<Object[]> objectList = communityRepository.findPopularSince(daysAgo, topLimit);
+
+        return objectList.stream()
+                .map(CommunitySummaryResponseDTO::fromObjectArray) // 정적 팩토리 메서드 사용
+                .collect(Collectors.toList());
     }
 
     /**

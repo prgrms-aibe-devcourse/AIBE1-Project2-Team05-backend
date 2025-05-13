@@ -22,29 +22,76 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
     /**
      * 커뮤니티 요약의 페이지 매김된 목록을 찾습니다.
      */
-    @Query("SELECT new com.team05.linkup.domain.community.dto.CommunitySummaryResponseDTO(" +
-            "c.id, u.nickname, c.title, c.category, c.createdAt, c.viewCount, c.likeCount, c.content, " +
-            "u.profileImageUrl, " +
-            "CAST((SELECT COUNT(cmt.id) FROM Comment cmt WHERE cmt.communityId = c.id) AS Long) AS commentCount) " +
-            "FROM Community c JOIN c.user u " +
-            "WHERE (:category IS NULL OR c.category = :category) " +
-            "  AND (:tagName IS NULL OR EXISTS (SELECT t_sub FROM c.tags t_sub WHERE t_sub.name = :tagName))")
-    Page<CommunitySummaryResponseDTO> findCommunitySummaries(
-            @Param("category") CommunityCategory category,
+    @Query(value = """
+        SELECT
+            c.id AS id,
+            u.nickname AS nickname,
+            c.title AS title,
+            c.category AS category,
+            c.created_at AS createdAt,
+            c.view_count AS viewCount,
+            c.like_count AS likeCount,
+            IF(CHAR_LENGTH(c.content) > 75, CONCAT(LEFT(c.content, 75), '...'), c.content) AS content,
+            u.profile_image_url AS profileImageUrl,
+            (SELECT COUNT(cmt.id) FROM comments cmt WHERE cmt.community_id = c.id) AS commentCount
+        FROM
+            community c
+        JOIN
+            user u ON c.user_id = u.id
+        WHERE
+            (:category IS NULL OR c.category = :category)
+            AND
+            (:tagName IS NULL OR EXISTS (
+                SELECT 1
+                FROM community_tag_join ctj
+                JOIN tags t ON ctj.tag_id = t.id
+                WHERE ctj.community_id = c.id AND t.name = :tagName
+            ))
+        """,
+            countQuery = """
+        SELECT COUNT(c.id) FROM community c
+        WHERE
+            (:category IS NULL OR c.category = :category)
+            AND
+            (:tagName IS NULL OR EXISTS (
+                SELECT 1
+                FROM community_tag_join ctj
+                JOIN tags t ON ctj.tag_id = t.id
+                WHERE ctj.community_id = c.id AND t.name = :tagName
+            ))
+        """,
+            nativeQuery = true)
+    Page<Object[]> findCommunitySummaries(
+            @Param("category") String category,
             @Param("tagName") String tagName,
             Pageable pageable);
 
     /**
      * 인기 게시글 조회
      */
-    @Query("SELECT new com.team05.linkup.domain.community.dto.CommunitySummaryResponseDTO(" +
-            "c.id, u.nickname, c.title, c.category, c.createdAt, c.viewCount, c.likeCount, c.content, " +
-            "u.profileImageUrl, " +
-            "CAST((SELECT COUNT(cmt.id) FROM Comment cmt WHERE cmt.communityId = c.id) AS Long) AS commentCount) " +
-            "FROM Community c JOIN c.user u " +
-            "WHERE c.createdAt > :startDate " +
-            "ORDER BY c.viewCount DESC, c.likeCount DESC, c.createdAt DESC")
-    List<CommunitySummaryResponseDTO> findPopularSince(@Param("startDate") ZonedDateTime startDate, Pageable pageable);
+    @Query(value = """
+        SELECT
+            c.id AS id,
+            u.nickname AS nickname,
+            c.title AS title,
+            c.category AS category,
+            c.created_at AS createdAt,
+            c.view_count AS viewCount,
+            c.like_count AS likeCount,
+            IF(CHAR_LENGTH(c.content) > 55, CONCAT(LEFT(c.content, 55), '...'), c.content) AS content,
+            u.profile_image_url AS profileImageUrl,
+            (SELECT COUNT(cmt.id) FROM comments cmt WHERE cmt.community_id = c.id) AS commentCount
+        FROM
+            community c
+        JOIN
+            user u ON c.user_id = u.id
+        WHERE
+            c.created_at > :startDate
+        ORDER BY
+            c.view_count DESC, c.like_count DESC, c.created_at DESC
+        """,
+            nativeQuery = true)
+    List<Object[]> findPopularSince(@Param("startDate") ZonedDateTime startDate, Pageable pageable);
 
     /**
      * 주간 인기 게시글 조회
@@ -155,7 +202,7 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
     GROUP BY 
         c.id
     ORDER BY 
-        c.updated_at DESC
+        c.updated_at DESC 
     LIMIT :limit
     """, nativeQuery = true)
     List<Object[]> findByCommunityPosts(@Param("nickname") String nickname, @Param("limit") int limit);
