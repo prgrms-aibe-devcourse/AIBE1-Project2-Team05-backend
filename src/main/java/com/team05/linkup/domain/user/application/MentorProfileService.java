@@ -149,10 +149,27 @@ public class MentorProfileService {
         // 2. 관심 분야별 멘토링 횟수 (기존 쿼리 그대로 유지)
         List<Object[]> rawResults = mentoringRepository.countMentoringByInterest(mentorUserId);
         List<InterestCountDTO> interestStats = rawResults.stream()
-                .map(row -> InterestCountDTO.builder()
-                        .interest(((Interest) row[0]).name())
-                        .count((Long) row[1])
-                        .build())
+                .map(row -> {
+                    String interestStr = String.valueOf(row[0]);
+                    Long count = (Long) row[1];
+
+                    try {
+                        Interest interestEnum = Interest.valueOf(interestStr);
+
+                        return InterestCountDTO.builder()
+                                .interest(interestEnum.name())                 // "WEB_DEV"
+                                .displayName(interestEnum.getDisplayName())    // "웹개발"
+                                .count(count)
+                                .build();
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                            // 매칭 실패 시 fallback 처리
+                            return InterestCountDTO.builder()
+                                    .interest(interestStr)      // 그대로 전달
+                                    .displayName(interestStr) // 영어로라도 표시
+                                    .count(count)
+                                    .build();
+                    }
+                })
                 .collect(Collectors.toList());
 
         return MentorStatsDTO.builder()

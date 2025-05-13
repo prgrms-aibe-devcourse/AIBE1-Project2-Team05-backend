@@ -39,7 +39,14 @@ public class MatchingPageFacade {
     public MyMatchingPageDTO getMatchingPageData(User mentor) {
         return MyMatchingPageDTO.builder()
                 .reviews(reviewService.getReviewsForMentor(mentor.getId(), 2))
-                .communityQnAs(getRecentQnAByInterest(mentor.getInterest().name(), 2))
+//                .communityQnAs(getRecentQnAByInterest(mentor.getInterest().name(), 2))
+                .communityQnAs(getRecentQnAByInterest(
+                        Arrays.stream(mentor.getProfileTag().split(","))
+                                .map(String::trim)
+                                .filter(s -> !s.isBlank())
+                                .toList(),
+                        2
+                ))
                 .ongoingMatchings(ongoingMatchingService.getOngoingMatchingsForMentor(mentor.getId(), 2))
                 .stats(mentorProfileService.getMentoringStats(UUID.fromString(mentor.getId())))
                 .build();
@@ -48,8 +55,8 @@ public class MatchingPageFacade {
     /**
      * 관심 분야 기반 최근 QnA 게시글 조회
      */
-    private List<CommunityQnAPostResponseDTO> getRecentQnAByInterest(String interest, int limit) {
-        List<CommunityQnAPostDTO> rawResults = communityRepository.findRecentQnAPostsByInterest(interest, limit);
+    private List<CommunityQnAPostResponseDTO> getRecentQnAByInterest(List<String> userTags, int limit) {
+        List<CommunityQnAPostDTO> rawResults = communityRepository.findRecentQnAPostsByTags(userTags, limit);
 
         return rawResults.stream()
                 .map(dto -> CommunityQnAPostResponseDTO.builder()
@@ -64,6 +71,22 @@ public class MatchingPageFacade {
                         .build())
                 .collect(Collectors.toList());
     }
+//    private List<CommunityQnAPostResponseDTO> getRecentQnAByInterest(String interest, int limit) {
+//        List<CommunityQnAPostDTO> rawResults = communityRepository.findRecentQnAPostsByInterest(interest, limit);
+//
+//        return rawResults.stream()
+//                .map(dto -> CommunityQnAPostResponseDTO.builder()
+//                        .postId(dto.getPostId())
+//                        .nickname(dto.getNickname())
+//                        .profileImageUrl(dto.getProfileImageUrl())
+//                        .createdAt(dto.getCreatedAt())
+//                        .title(dto.getTitle())
+//                        .content(dto.getContent())
+//                        .tags(parseTags(dto.getTagName()))
+//                        .commentCount(dto.getCommentCount())
+//                        .build())
+//                .collect(Collectors.toList());
+//    }
 
     /**
      * 태그 문자열 → List<String> 변환
@@ -75,9 +98,9 @@ public class MatchingPageFacade {
                 .collect(Collectors.toList());
     }
 
-    public Page<CommunityQnAPostResponseDTO> getRecentQnAPostsByInterestPaged(String interest, int page, int size) {
+    public Page<CommunityQnAPostResponseDTO> getRecentQnAPostsByInterestPaged(List<String> tags, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<CommunityQnAPostDTO> rawResults = communityRepository.findRecentQnAPostsByInterestPaged(interest, pageable);
+        Page<CommunityQnAPostDTO> rawResults = communityRepository.findRecentQnAPostsByInterestPaged(tags, pageable);
 
         return rawResults.map(dto -> CommunityQnAPostResponseDTO.builder()
                 .postId(dto.getPostId())

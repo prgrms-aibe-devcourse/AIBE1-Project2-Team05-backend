@@ -32,25 +32,30 @@ public class CommunityRepositoryCustomImpl implements CommunityRepositoryCustom 
      * CommunityQnAPostDTO의 communityTag 필드에는 입력된 interestTagName 값을 채워줍니다.
      */
     @Override
-    public List<CommunityQnAPostDTO> findRecentQnAPostsByInterest(String interestTag, int limit) {
+    public List<CommunityQnAPostDTO> findRecentQnAPostsByTags(List<String> tags, int limit) {
         return queryFactory
                 .select(new QCommunityQnAPostDTO(
                         community.id,
                         user.nickname,
                         user.profileImageUrl,
-                        community.updatedAt.stringValue(), // ZonedDateTime → String
+                        community.updatedAt.stringValue(),
                         community.title,
                         community.content,
-                        Expressions.constant(interestTag),
-                        comment.id.count().intValue()     // 댓글 수 실시간 계산
+                        Expressions.constant(""),
+//                        // ✅ 태그 이름들을 쉼표로 묶은 문자열로 반환
+//                        Expressions.stringTemplate(
+//                                "(SELECT STRING_AGG(t.name, ',') FROM community_tag_join ctj JOIN tag t ON ctj.tag_id = t.id WHERE ctj.community_id = {0})",
+//                                community.id
+//                        ),
+                        comment.id.count().intValue()
                 ))
                 .from(community)
                 .join(community.user, user)
-                .leftJoin(community.tags, tag) // Community의 tags 컬렉션과 QTag 조인
-                .leftJoin(comment).on(comment.communityId.eq(community.id)) // 댓글 테이블과 연결
+                .leftJoin(community.tags, tag)
+                .leftJoin(comment).on(comment.communityId.eq(community.id))
                 .where(
-                        community.category.eq(CommunityCategory.QUESTION)
-                                .and(tag.name.eq(interestTag))
+                        community.category.eq(CommunityCategory.QUESTION),
+                        tag.name.in(tags)
                 )
                 .groupBy(
                         community.id,
@@ -65,12 +70,47 @@ public class CommunityRepositoryCustomImpl implements CommunityRepositoryCustom 
                 .fetch();
     }
 
+//    @Override
+//    public List<CommunityQnAPostDTO> findRecentQnAPostsByInterest(String interestTag, int limit) {
+//        return queryFactory
+//                .select(new QCommunityQnAPostDTO(
+//                        community.id,
+//                        user.nickname,
+//                        user.profileImageUrl,
+//                        community.updatedAt.stringValue(), // ZonedDateTime → String
+//                        community.title,
+//                        community.content,
+//                        Expressions.constant(interestTag),
+//                        comment.id.count().intValue()     // 댓글 수 실시간 계산
+//                ))
+//                .from(community)
+//                .join(community.user, user)
+//                .leftJoin(community.tags, tag) // Community의 tags 컬렉션과 QTag 조인
+//                .leftJoin(comment).on(comment.communityId.eq(community.id)) // 댓글 테이블과 연결
+//                .where(
+//                        community.category.eq(CommunityCategory.QUESTION)
+//                                .and(tag.name.containsIgnoreCase(interestTag))  // ✅ 부분 일치로 완화
+//                )
+//                .groupBy(
+//                        community.id,
+//                        user.nickname,
+//                        user.profileImageUrl,
+//                        community.updatedAt,
+//                        community.title,
+//                        community.content
+//                )
+//                .orderBy(community.updatedAt.desc())
+//                .limit(limit)
+//                .fetch();
+//    }
+
     /**
      * 멘토의 관심 태그 이름과 일치하는 QnA 게시글을 페이징하여 조회.
      * CommunityQnAPostDTO의 communityTag 필드에는 입력된 interestTagName 값을 채워줍니다.
      */
     @Override
-    public Page<CommunityQnAPostDTO> findRecentQnAPostsByInterestPaged(String interestTag, Pageable pageable) {
+    public Page<CommunityQnAPostDTO> findRecentQnAPostsByInterestPaged(List<String> interests, Pageable pageable)
+    {
 
         // 전체 게시글 조회 쿼리
         List<CommunityQnAPostDTO> content = queryFactory
@@ -81,7 +121,12 @@ public class CommunityRepositoryCustomImpl implements CommunityRepositoryCustom 
                         community.updatedAt.stringValue(),
                         community.title,
                         community.content,
-                        Expressions.constant(interestTag),
+                        Expressions.constant(""),
+//                        // ✅ 실제 태그 이름들을 ,로 묶어 반환
+//                        Expressions.stringTemplate(
+//                                "(SELECT STRING_AGG(t.name, ',') FROM community_tag_join ctj JOIN tag t ON ctj.tag_id = t.id WHERE ctj.community_id = {0})",
+//                                community.id
+//                        ),
                         comment.id.count().intValue()
                 ))
                 .from(community)
@@ -90,7 +135,7 @@ public class CommunityRepositoryCustomImpl implements CommunityRepositoryCustom 
                 .leftJoin(comment).on(comment.communityId.eq(community.id))
                 .where(
                         community.category.eq(CommunityCategory.QUESTION),
-                        tag.name.eq(interestTag)
+                        tag.name.in(interests)
                 )
                 .groupBy(
                         community.id,
@@ -107,12 +152,12 @@ public class CommunityRepositoryCustomImpl implements CommunityRepositoryCustom 
 
         // 총 개수 조회 쿼리
         Long count = queryFactory
-                .select(community.count())
+                .select(community.countDistinct())
                 .from(community)
                 .leftJoin(community.tags, tag)
                 .where(
                         community.category.eq(CommunityCategory.QUESTION),
-                        tag.name.eq(interestTag)
+                        tag.name.in(interests)
                 )
                 .fetchOne();
 
