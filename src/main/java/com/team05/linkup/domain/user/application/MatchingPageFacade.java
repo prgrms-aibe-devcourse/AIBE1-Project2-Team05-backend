@@ -71,22 +71,6 @@ public class MatchingPageFacade {
                         .build())
                 .collect(Collectors.toList());
     }
-//    private List<CommunityQnAPostResponseDTO> getRecentQnAByInterest(String interest, int limit) {
-//        List<CommunityQnAPostDTO> rawResults = communityRepository.findRecentQnAPostsByInterest(interest, limit);
-//
-//        return rawResults.stream()
-//                .map(dto -> CommunityQnAPostResponseDTO.builder()
-//                        .postId(dto.getPostId())
-//                        .nickname(dto.getNickname())
-//                        .profileImageUrl(dto.getProfileImageUrl())
-//                        .createdAt(dto.getCreatedAt())
-//                        .title(dto.getTitle())
-//                        .content(dto.getContent())
-//                        .tags(parseTags(dto.getTagName()))
-//                        .commentCount(dto.getCommentCount())
-//                        .build())
-//                .collect(Collectors.toList());
-//    }
 
     /**
      * 태그 문자열 → List<String> 변환
