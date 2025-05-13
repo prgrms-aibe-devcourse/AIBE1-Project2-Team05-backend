@@ -49,7 +49,7 @@ public class Community extends BaseEntity {
      * 게시글 내용 (긴 텍스트)
      */
     @Lob
-    @Column(nullable = false)
+    @Column(length = 65535, nullable = false)
     private String content;
 
     /**
