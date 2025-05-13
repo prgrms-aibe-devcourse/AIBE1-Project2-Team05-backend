@@ -103,7 +103,7 @@ public class SecurityConfig {
                 "https://frontend.linkup.o-r.kr",
                 "http://frontend.linkup.o-r.kr:3000"
         ));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",

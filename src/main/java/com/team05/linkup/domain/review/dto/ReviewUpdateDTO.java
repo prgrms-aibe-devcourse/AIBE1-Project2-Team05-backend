@@ -11,9 +11,8 @@ import java.math.BigDecimal;
 
 @Getter
 @Builder
-public class ReviewRequestDTO {
+public class ReviewUpdateDTO {
 
-    private String mentoringSessionId;  // 멘토링 세션 ID
     private String title;  // 리뷰 제목
     private String content;  // 리뷰 내용
 
@@ -24,9 +23,9 @@ public class ReviewRequestDTO {
     private Interest interest;  // 관심사 (ENUM)
 
     // 생성된 DTO 객체에서 엔티티로 변환할 수 있는 메소드
-    public static Review toEntity(ReviewRequestDTO dto) {
+    public static Review toEntity(ReviewUpdateDTO dto, String reviewId) {
         return Review.builder()
-                .mentoringSessionId(dto.getMentoringSessionId())
+                .id(reviewId)
                 .title(dto.getTitle())
                 .content(dto.getContent())
                 .star(dto.getStar())

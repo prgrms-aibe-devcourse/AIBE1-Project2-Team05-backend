@@ -15,8 +15,12 @@ public interface MentoringRepository extends JpaRepository<MentoringSessions, St
     @Query(value = "SELECT * FROM mentoring_sessions WHERE mentee_user_id = :userId ORDER BY created_at DESC LIMIT :limit", nativeQuery = true)
     List<MentoringSessions> findByMenteeUserIdWithLimit(@Param("userId") String userId, @Param("limit") int limit);
 
-    @Query("SELECT m FROM MentoringSessions m WHERE m.mentee.id = :menteeId AND m.status = :status")
-    List<MentoringSessions> findByMenteeIdAndStatus(@Param("menteeId") String menteeId, @Param("status") MentoringStatus status);
+    // 멘티의 완료된 멘토링 세션 중 리뷰가 작성되지 않은 세션만 조회합니다.
+    @Query("SELECT ms FROM MentoringSessions ms " +
+            "WHERE ms.mentee.id = :menteeId " +
+            "AND ms.status = 'COMPLETED' " +
+            "AND NOT EXISTS (SELECT r FROM Review r WHERE r.mentoringSessionId = ms.id)")
+    List<MentoringSessions> findCompletedSessionsWithoutReview(@Param("menteeId") String menteeId);
 
     @Query(value = "SELECT * FROM mentoring_sessions WHERE id = :id", nativeQuery = true)
     Optional<MentoringSessions> findMentoringSessionById(@org.springframework.data.repository.query.Param("id") String id);
