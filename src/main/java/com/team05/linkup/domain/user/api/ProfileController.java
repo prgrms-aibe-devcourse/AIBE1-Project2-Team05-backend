@@ -15,6 +15,7 @@ import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.dto.*;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +34,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/v1/users")
@@ -114,10 +117,31 @@ public class ProfileController {
     }
 
     @GetMapping("/{nickname}/activity/more-details")
-    @Operation(summary = "나의 활동 내역 조회 more-details [매칭/재능/게시글/댓글]", description = "내가 신청한 매칭(my-matches), 내가 등록한 재능 목록(my-talents), 내가 작성한 게시글(my-posts), 내가 작성한 댓글(my-comments) 타입에 따라 관련 데이터를 자세히 조회합니다.")
+    @Operation(
+            summary = "나의 활동 내역 조회 more-details",
+            description = """
+        활동 종류(type)에 따라 상세 조회가 가능합니다.
+        - type=my-posts: 내가 작성한 게시글 목록
+          - 이 경우 filter 파라미터를 추가로 사용할 수 있습니다.
+          - 허용값: all, QUESTION, INFO, REVIEW, FREE
+        - type=my-talents: 등록한 재능
+        - type=my-comments: 작성한 댓글
+        - type=my-matches: 신청한 매칭
+    """
+    )
     public ResponseEntity<ApiResponse<?>> getMoreDetails(
             @PathVariable String nickname,
             @RequestParam("type") String type,
+
+
+            @Parameter(
+                    name = "filter",
+                    description = "게시글 카테고리 필터 (type이 'my-posts'일 때만 사용)\n허용값: all, QUESTION, INFO, REVIEW, FREE",
+                    example = "REVIEW"
+            )
+
+            @RequestParam(value = "filter",  required = false) String filter,    // 필터 추가
+
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "status", required = false, defaultValue = "ALL") String status,
@@ -126,22 +150,33 @@ public class ProfileController {
         return switch (type) {
             // 재능 목록 more-details
             case "my-talents" -> {
-                ActivityMoreDetailsResponseDTO<CommunityTalentSummaryDTO> result =
-                        mentorProfileService.getMyTalentsMoreDetails(nickname, userPrincipal, page, size);
+                // ❗ filter 무시
+                var result = mentorProfileService.getMyTalentsMoreDetails(nickname, userPrincipal, page, size);
                 yield ResponseEntity.ok(ApiResponse.success(result));
             }
 
             // 내가 쓴 게시글 more-details
             case "my-posts" -> {
-                ActivityMoreDetailsResponseDTO<MyPostResponseDTO> dto =
-                        profileService.getMyPostsMoreDetails(nickname, userPrincipal, page, size);
+                // ✅ filter 유효성 검사
+                // ✅ 소문자로 통일
+                // ✅ null or 빈 값까지 안전하게 처리
+                String validatedFilter = (filter == null || filter.isBlank()) ? "all" : filter.toLowerCase().trim();
+                Set<String> allowedFilters = Set.of("all", "question", "info", "review", "free");
+
+                if (!allowedFilters.contains(validatedFilter)) {
+                    yield ResponseEntity.badRequest().body(ApiResponse.error(
+                            ResponseCode.INVALID_INPUT_VALUE,
+                            "유효하지 않은 filter 값입니다. 허용값: all, QUESTION, INFO, REVIEW, FREE"
+                    ));
+                }
+
+                var dto = profileService.getMyPostsMoreDetails(nickname, userPrincipal, page, size, validatedFilter);
                 yield ResponseEntity.ok(ApiResponse.success(dto));
             }
 
             // 내가 쓴 댓글 more-details
             case "my-comments" -> {
-                ActivityMoreDetailsResponseDTO<MyCommentResponseDTO> dto =
-                        profileService.getMyCommentsMoreDetails(nickname, userPrincipal, page, size);
+                var dto = profileService.getMyCommentsMoreDetails(nickname, userPrincipal, page, size);
                 yield ResponseEntity.ok(ApiResponse.success(dto));
             }
 
@@ -226,18 +261,21 @@ public class ProfileController {
             @PathVariable String nickname,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
+        System.out.println("🔎 [DEBUG] userPrincipal = " + userPrincipal);
+        System.out.println("🔎 [DEBUG] path nickname = " + nickname);
+
 //         여기부터 주석 또는 삭제
-//        if (userPrincipal == null) {
-//            logger.warn("⚠️ 인증 객체가 null입니다. Swagger 테스트 중일 수 있습니다.");
-//            Optional<User> fallbackUserOpt = userRepository.findByNickname(nickname);
-//            if (fallbackUserOpt.isEmpty()) {
-//                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-//                        .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "사용자를 찾을 수 없습니다."));
-//            }
-//
-//            User fallbackUser = fallbackUserOpt.get();
-//            userPrincipal = new UserPrincipal(fallbackUser.getProviderId(), fallbackUser.getProvider());
-//        }
+        if (userPrincipal == null) {
+            logger.warn("⚠️ 인증 객체가 null입니다. Swagger 테스트 중일 수 있습니다.");
+            Optional<User> fallbackUserOpt = userRepository.findByNickname(nickname);
+            if (fallbackUserOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "사용자를 찾을 수 없습니다."));
+            }
+
+            User fallbackUser = fallbackUserOpt.get();
+            userPrincipal = new UserPrincipal(fallbackUser.getProviderId(), fallbackUser.getProvider());
+        }
         // 여기까지
 
         Optional<User> userOpt = userRepository.findByProviderAndProviderId(
@@ -294,18 +332,52 @@ public class ProfileController {
         User user = userOpt.get();
         Pageable pageable = PageRequest.of(page, size);
 
-        return switch (type) {
-            case "interest-qna" -> {
-                String interest = String.valueOf(userRepository.findInterestByNickname(nickname));
-                if (interest == null) {
-                    yield ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "관심 태그 정보를 찾을 수 없습니다."));
-                }
-
-                Page<CommunityQnAPostResponseDTO> result =
-                        matchingPageFacade.getRecentQnAPostsByInterestPaged(interest, page, size);
-                yield ResponseEntity.ok(ApiResponse.success(result));
+        if (type.equals("interest-qna")) {
+            String profileTag = user.getProfileTag();
+            if (profileTag == null || profileTag.isBlank()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "관심 태그 정보가 없습니다."));
             }
+
+            List<String> userTags = Arrays.stream(profileTag.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isBlank())
+                    .toList();
+
+            Page<CommunityQnAPostResponseDTO> result =
+                    matchingPageFacade.getRecentQnAPostsByInterestPaged(userTags, page, size);
+            return ResponseEntity.ok(ApiResponse.success(result));
+        }
+
+        return switch (type) {
+
+//            case "interest-qna" -> {
+//                // 🔄 profileTag 기반으로 태그 리스트 추출
+//                String profileTag = user.getProfileTag(); // 예: "백엔드, Node.js, Django"
+//                if (profileTag == null || profileTag.isBlank()) {
+//                    yield ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                            .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "관심 태그 정보가 없습니다."));
+//                }
+//
+//                // 쉼표 기준으로 나눠서 리스트로 변환
+//                List<String> userTags = Arrays.stream(profileTag.split(","))
+//                        .map(String::trim)
+//                        .filter(s -> !s.isBlank())
+//                        .toList();
+//
+//                // ✅ 이제 userTags를 넘겨줘야 함!
+//                Page<CommunityQnAPostResponseDTO> result =
+//                        matchingPageFacade.getRecentQnAPostsByInterestPaged(userTags, page, size);
+////                String interest = String.valueOf(userRepository.findInterestByNickname(nickname));
+////                if (interest == null) {
+////                    yield ResponseEntity.status(HttpStatus.NOT_FOUND)
+////                            .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "관심 태그 정보를 찾을 수 없습니다."));
+////                }
+////
+////                Page<CommunityQnAPostResponseDTO> result =
+////                        matchingPageFacade.getRecentQnAPostsByInterestPaged(interest, page, size);
+////                yield ResponseEntity.ok(ApiResponse.success(result));
+//            }
 
             case "received-reviews" -> {
                 Page<ReceivedReviewDTO> result =

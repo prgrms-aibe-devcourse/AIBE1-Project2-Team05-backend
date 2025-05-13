@@ -1,6 +1,7 @@
 package com.team05.linkup.domain.user.application;
 
 import com.team05.linkup.common.dto.UserPrincipal;
+import com.team05.linkup.domain.community.domain.CommunityCategory;
 import com.team05.linkup.domain.community.infrastructure.CommunityRepository;
 import com.team05.linkup.domain.user.domain.Area;
 import com.team05.linkup.domain.user.domain.Sigungu;
@@ -147,12 +148,9 @@ public class ProfileService {
      * @return me + 게시글 리스트 래핑 DTO
      */
     public ActivityMoreDetailsResponseDTO<MyPostResponseDTO> getMyPostsMoreDetails(
-            String nickname, UserPrincipal principal, int page, int size) {
+            String nickname, UserPrincipal principal, int page, int size, String filter) {
 
-        // 1. 게시글 목록 페이징 조회
-        Page<MyPostResponseDTO> result = getMyPostsPaged(nickname, page, size);
-
-        // 2. me 여부 판단
+        // 1. me 여부 판단
         boolean isMe = false;
         if (principal != null) {
             Optional<User> loginUserOpt = userRepository.findByProviderAndProviderId(
@@ -163,12 +161,50 @@ public class ProfileService {
                     .orElse(false);
         }
 
-        // 3. 응답 래핑
+        // ✅ 대문자로 통일
+        List<String> validFilters = List.of("QUESTION", "INFO", "REVIEW", "FREE", "ALL");
+        String normalized = filter.toUpperCase();
+        if (!validFilters.contains(normalized)) {
+            throw new IllegalArgumentException("유효하지 않은 게시글 카테고리 필터입니다.");
+        }
+
+        // 2. 게시글 목록 필터링 + 페이징 조회
+        Page<MyPostResponseDTO> result;
+        Pageable pageable = PageRequest.of(page, size);
+
+        if (!normalized.equals("ALL")) {
+            try {
+                CommunityCategory category = CommunityCategory.valueOf(normalized);
+                Page<Object[]> resultPage = communityRepository.findMyPostsByCategoryPaged(
+                        nickname,
+                        category.name(),
+                        pageable
+                );
+
+                result = resultPage.map(obj -> new MyPostResponseDTO(
+                        (String) obj[0],
+                        ((Timestamp) obj[1]).toInstant().atZone(ZoneOffset.UTC),
+                        (String) obj[2],
+                        (String) obj[3],
+                        (String) obj[4],
+                        ((Number) obj[5]).intValue(),
+                        ((Number) obj[6]).intValue(),
+                        ((Number) obj[7]).intValue()
+                ));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("유효하지 않은 게시글 카테고리 필터입니다.");
+            }
+        } else {
+            result = getMyPostsPaged(nickname, page, size);
+        }
+
         return ActivityMoreDetailsResponseDTO.<MyPostResponseDTO>builder()
                 .me(isMe)
+                .type(normalized)
                 .content(result.getContent())
                 .build();
     }
+
 
 
 
@@ -353,15 +389,24 @@ public class ProfileService {
     private final UserRepository userRepository;
 
     public Page<CommunityQnAPostResponseDTO> getPopularQnAByInterest(String nickname, int page, int size) {
-        // 1. 관심 태그 조회
-        String interest = String.valueOf(userRepository.findInterestByNickname(nickname));
-        if (interest == null) {
+        // 1. 사용자 조회 + profile_tag 파싱
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new EntityNotFoundException("해당 사용자를 찾을 수 없습니다."));
+
+        String profileTag = user.getProfileTag(); // 예: "Spring, JPA, React"
+        if (profileTag == null || profileTag.isBlank()) {
             throw new IllegalArgumentException("해당 사용자의 관심 태그가 없습니다.");
         }
 
-        // 2. QnA 조회 (페이징)
+        List<String> userTags = Arrays.stream(profileTag.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+
+        // 2. QnA 조회 (페이징 + 관심 태그 기반)
         Pageable pageable = PageRequest.of(page, size);
-        Page<CommunityQnAPostDTO> rawResults = communityRepository.findRecentQnAPostsByInterestPaged(interest, pageable);
+        Page<CommunityQnAPostDTO> rawResults =
+                communityRepository.findRecentQnAPostsByInterestPaged(userTags, pageable);
 
         // 3. DTO 매핑
         return rawResults.map(dto -> CommunityQnAPostResponseDTO.builder()
@@ -374,6 +419,27 @@ public class ProfileService {
                 .tags(parseTags(dto.getTagName())) // comma-separated → List<String>
                 .commentCount(dto.getCommentCount())
                 .build());
+//        // 1. 관심 태그 조회
+//        String interest = String.valueOf(userRepository.findInterestByNickname(nickname));
+//        if (interest == null) {
+//            throw new IllegalArgumentException("해당 사용자의 관심 태그가 없습니다.");
+//        }
+//
+//        // 2. QnA 조회 (페이징)
+//        Pageable pageable = PageRequest.of(page, size);
+//        Page<CommunityQnAPostDTO> rawResults = communityRepository.findRecentQnAPostsByInterestPaged(interest, pageable);
+//
+//        // 3. DTO 매핑
+//        return rawResults.map(dto -> CommunityQnAPostResponseDTO.builder()
+//                .postId(dto.getPostId())
+//                .nickname(dto.getNickname())
+//                .profileImageUrl(dto.getProfileImageUrl())
+//                .createdAt(dto.getCreatedAt())
+//                .title(dto.getTitle())
+//                .content(dto.getContent())
+//                .tags(parseTags(dto.getTagName())) // comma-separated → List<String>
+//                .commentCount(dto.getCommentCount())
+//                .build());
     }
 
     // 태그 문자열을 리스트로 변환하는 메서드 (기존 MatchingPageFacade 참고)

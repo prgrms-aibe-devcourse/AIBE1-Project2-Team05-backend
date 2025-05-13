@@ -390,4 +390,43 @@ public interface CommunityRepository extends JpaRepository<Community, String>, C
         WHERE l.user_id = :userId
     """, nativeQuery = true)
     Page<Object[]> findLikesByUserId(@Param("userId") String userId, Pageable pageable);
+
+
+    @Query(
+            value = """
+        SELECT 
+            c.id,
+            c.updated_at,
+            c.category,
+            c.title,
+            c.content,
+            c.view_count,
+            c.like_count,
+            (
+                SELECT COUNT(*) 
+                FROM comments cm 
+                WHERE cm.community_id = c.id
+            ) AS comment_count
+        FROM community c
+        JOIN user u ON c.user_id = u.id
+        WHERE u.nickname = :nickname
+          AND c.category = :category
+        ORDER BY c.updated_at DESC
+        """,
+            countQuery = """
+        SELECT COUNT(*)
+        FROM community c
+        JOIN user u ON c.user_id = u.id
+        WHERE u.nickname = :nickname
+          AND c.category = :category
+        """,
+            nativeQuery = true
+    )
+    Page<Object[]> findMyPostsByCategoryPaged(
+            @Param("nickname") String nickname,
+            @Param("category") String category,
+            Pageable pageable
+    );
+
+
 }
