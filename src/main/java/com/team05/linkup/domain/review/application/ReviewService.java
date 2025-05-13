@@ -173,7 +173,7 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public List<ReviewResponseDTO> getReviewHistory(User user, UserPrincipal userPrincipal) {
+    public Page<ReviewResponseDTO> getReviewHistory(User user, UserPrincipal userPrincipal, int page, int size) {
         // 1. 현재 사용자가 요청한 사용자와 동일한지 확인
         if (!profileService.isCurrentUser(user, userPrincipal)) {
             throw new IllegalStateException("리뷰 조회 권한이 없습니다.");
@@ -183,22 +183,32 @@ public class ReviewService {
         List<MentoringSessions> sessions = mentoringRepository.findByMenteeIdWithMentorAndMentee(user.getId());
 
         // 3. 멘토링 세션 ID를 기준으로 리뷰 조회
-        List<Review> reviews = reviewRepository.findByMentoringSessionIdIn(
-                sessions.stream().map(MentoringSessions::getId).collect(Collectors.toList())
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Review> reviews = reviewRepository.findByMentoringSessionIdIn(
+                sessions.stream().map(MentoringSessions::getId).collect(Collectors.toList()),
+                pageable
         );
+        logger.debug(reviews);
+
 
         // 4. 리뷰 엔티티를 DTO로 변환
-        return reviews.stream()
-                .map(review -> ReviewResponseDTO.builder()
-                        .mentoringSessionId(review.getMentoringSessionId())
-                        .title(review.getTitle())
-                        .content(review.getContent())
-                        .star(review.getStar())
-                        .interest(review.getInterest())
-                        .build())
-                .collect(Collectors.toList());
-    }
+        return reviews.map(review -> {
+            MentoringSessions session = sessions.stream()
+                    .filter(s -> s.getId().equals(review.getMentoringSessionId()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("멘토링 세션을 찾을 수 없습니다."));
 
+            return ReviewResponseDTO.builder()
+                    .mentoringSessionId(review.getMentoringSessionId())
+                    .title(review.getTitle())
+                    .content(review.getContent())
+                    .star(review.getStar())
+                    .interest(review.getInterest())
+                    .mentorName(session.getMentor().getName()) // 멘토 이름 추가
+                    .profileImageUrl(session.getMentor().getProfileImageUrl()) // 멘토 프로필 이미지 URL 추가
+                    .build();
+        });
+    }
 
     // 받은 리뷰 조회 메서드 (멘토만 대상)
     public List<ReceivedReviewDTO> getReviewsForMentor(String mentorId, int limit) {

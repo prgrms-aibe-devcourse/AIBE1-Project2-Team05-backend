@@ -9,10 +9,15 @@ import com.team05.linkup.domain.review.dto.ReviewRequestDTO;
 import com.team05.linkup.domain.review.dto.ReviewResponseDTO;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,12 +29,14 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/v1/mentee")
 @RequiredArgsConstructor
+@Tag(name = "리뷰 API", description = "리뷰 관련 조회, 작성, 수정, 삭제 관련 API")
 public class MenteeReviewController {
     private static final Logger logger = LogManager.getLogger();
     private final ReviewService reviewService;
     private final UserRepository userRepository;
 
     @GetMapping("/review")
+    @Operation(summary = "리뷰 작성 가능한 멘토링 세션 조회", description = "멘토링 세션의 상태가 완료인 멘토링 세션 리스트 정보를 조회합니다.")
     public ResponseEntity<ApiResponse<List<MyCompletedMentoringDTO>>> getCompletedMentoringSessions(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         Optional<User> userOpt = userRepository.findByProviderAndProviderId(
                 userPrincipal.provider(), userPrincipal.providerId());
@@ -42,6 +49,7 @@ public class MenteeReviewController {
     }
 
     @PostMapping("/review")
+    @Operation(summary = "리뷰 작성", description = "완료된 멘토링 세션에 대해 리뷰를 작성합니다")
     public ResponseEntity<ApiResponse> createReview(@AuthenticationPrincipal UserPrincipal userPrincipal, @RequestBody ReviewRequestDTO reviewRequestDTO) {
         Optional<User> userOpt = userRepository.findByProviderAndProviderId(
                 userPrincipal.provider(), userPrincipal.providerId());
@@ -68,7 +76,9 @@ public class MenteeReviewController {
     }
 
     @GetMapping("/review/{reviewId}")
-    public ResponseEntity<ApiResponse<ReviewResponseDTO>> getReviewForUpdate(@AuthenticationPrincipal UserPrincipal userPrincipal, @PathVariable String reviewId) {
+    @Operation(summary = "리뷰 상세 조회", description = "리뷰 수정 화면에서 사용할 상세 데이터를 조회합니다.")
+    public ResponseEntity<ApiResponse<ReviewResponseDTO>> getReviewForUpdate(
+            @AuthenticationPrincipal UserPrincipal userPrincipal, @PathVariable String reviewId) {
         Optional<User> userOpt = userRepository.findByProviderAndProviderId(
                 userPrincipal.provider(), userPrincipal.providerId());
         if (userOpt.isEmpty())
@@ -90,6 +100,7 @@ public class MenteeReviewController {
     }
 
     @PatchMapping("/review/{reviewId}")
+    @Operation(summary = "리뷰 수정", description = "기존에 작성된 리뷰를 새로운 내용으로 업데이트합니다.")
     public ResponseEntity<ApiResponse> updateReview(@AuthenticationPrincipal UserPrincipal userPrincipal, @PathVariable String reviewId,@RequestBody ReviewRequestDTO reviewRequestDTO) {
         Optional<User> userOpt = userRepository.findByProviderAndProviderId(
                 userPrincipal.provider(), userPrincipal.providerId());
@@ -116,6 +127,7 @@ public class MenteeReviewController {
     }
 
     @DeleteMapping("/review/{reviewId}")
+    @Operation(summary = "리뷰 삭제", description = "작성된 리뷰를 삭제합니다.")
     public ResponseEntity<ApiResponse> deleteReview(@AuthenticationPrincipal UserPrincipal userPrincipal, @PathVariable String reviewId) {
         Optional<User> userOpt = userRepository.findByProviderAndProviderId(
                 userPrincipal.provider(), userPrincipal.providerId());
@@ -138,15 +150,18 @@ public class MenteeReviewController {
     }
 
     @GetMapping("/review/list/{nickname}")
-    public ResponseEntity<ApiResponse<List<ReviewResponseDTO>>> getReviewHistory(@AuthenticationPrincipal UserPrincipal userPrincipal, @PathVariable String nickname) {
-        Optional<User> userOpt = userRepository.findByProviderAndProviderId(
-                userPrincipal.provider(), userPrincipal.providerId());
+    @Operation(summary = "작성된 리뷰 내역", description = "멘티가 작성한 리뷰 목록을 조회합니다.")
+    public ResponseEntity<ApiResponse<Page<ReviewResponseDTO>>> getReviewHistory(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable String nickname,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "3") int size) {
+        Optional<User> userOpt = userRepository.findByNickname(nickname);
         if (userOpt.isEmpty())
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다."));
-
         try {
-            List<ReviewResponseDTO> reviews = reviewService.getReviewHistory(userOpt.get(), userPrincipal);
+            Page<ReviewResponseDTO> reviews = reviewService.getReviewHistory(userOpt.get(), userPrincipal, page, size);
             return ResponseEntity.ok(ApiResponse.success(reviews));
         } catch (IllegalArgumentException e) {
             // 리뷰 조회 권환이 업을 때
