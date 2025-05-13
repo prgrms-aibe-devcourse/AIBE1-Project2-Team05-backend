@@ -205,10 +205,6 @@ public class ProfileService {
                 .build();
     }
 
-
-
-
-
     /**
      * 마이페이지 - 내가 작성한 댓글 목록 조회 (미리보기)
      *
@@ -419,27 +415,6 @@ public class ProfileService {
                 .tags(parseTags(dto.getTagName())) // comma-separated → List<String>
                 .commentCount(dto.getCommentCount())
                 .build());
-//        // 1. 관심 태그 조회
-//        String interest = String.valueOf(userRepository.findInterestByNickname(nickname));
-//        if (interest == null) {
-//            throw new IllegalArgumentException("해당 사용자의 관심 태그가 없습니다.");
-//        }
-//
-//        // 2. QnA 조회 (페이징)
-//        Pageable pageable = PageRequest.of(page, size);
-//        Page<CommunityQnAPostDTO> rawResults = communityRepository.findRecentQnAPostsByInterestPaged(interest, pageable);
-//
-//        // 3. DTO 매핑
-//        return rawResults.map(dto -> CommunityQnAPostResponseDTO.builder()
-//                .postId(dto.getPostId())
-//                .nickname(dto.getNickname())
-//                .profileImageUrl(dto.getProfileImageUrl())
-//                .createdAt(dto.getCreatedAt())
-//                .title(dto.getTitle())
-//                .content(dto.getContent())
-//                .tags(parseTags(dto.getTagName())) // comma-separated → List<String>
-//                .commentCount(dto.getCommentCount())
-//                .build());
     }
 
     // 태그 문자열을 리스트로 변환하는 메서드 (기존 MatchingPageFacade 참고)

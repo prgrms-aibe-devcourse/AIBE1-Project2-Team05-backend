@@ -195,28 +195,6 @@ public class ProfileController {
 
     private final InterestMoreDetailsService interestMoreDetailsService;
 
-//    // 관심 목록 더보기 API
-//    @GetMapping("/{nickname}/activity/more-details/interests")
-//    @Operation(summary = "나의 활동 내역 조회 more-details [관심 목록(북마크/좋아요)]", description = "북마크(bookmarked), 좋아요(liked), 전체(all) 옵션에 따라 관련 데이터를 자세히 조회합니다.")
-//    public ResponseEntity<ApiResponse<?>> getInterestMoreDetails(
-//            @PathVariable String nickname,
-//            @RequestParam("filter") String filter, // bookmarked | liked | all
-//            @RequestParam(value = "page", defaultValue = "0") int page,
-//            @RequestParam(value = "size", defaultValue = "10") int size
-//    ) {
-//        // 유효하지 않은 filter 처리
-//        if (!filter.equals("bookmarked") && !filter.equals("liked") && !filter.equals("all")) {
-//            return ResponseEntity
-//                    .status(HttpStatus.BAD_REQUEST)
-//                    .body(ApiResponse.error(ResponseCode.INVALID_INPUT_VALUE, "유효하지 않은 filter 파라미터입니다."));
-//        }
-//
-//        // 서비스 호출
-//        Page<?> result = interestMoreDetailsService.getInterestPosts(nickname, filter, page, size);
-//
-//        // 성공 응답 반환
-//        return ResponseEntity.ok(ApiResponse.success(result));
-//    }
 // 관심 목록 더보기 API
     @GetMapping("/{nickname}/activity/more-details/interests")
     @Operation(summary = "나의 활동 내역 조회 more-details [관심 목록(북마크/좋아요)]", description = "북마크(bookmarked), 좋아요(liked), 전체(all) 옵션에 따라 관련 데이터를 자세히 조회합니다.")
@@ -350,34 +328,6 @@ public class ProfileController {
         }
 
         return switch (type) {
-
-//            case "interest-qna" -> {
-//                // 🔄 profileTag 기반으로 태그 리스트 추출
-//                String profileTag = user.getProfileTag(); // 예: "백엔드, Node.js, Django"
-//                if (profileTag == null || profileTag.isBlank()) {
-//                    yield ResponseEntity.status(HttpStatus.NOT_FOUND)
-//                            .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "관심 태그 정보가 없습니다."));
-//                }
-//
-//                // 쉼표 기준으로 나눠서 리스트로 변환
-//                List<String> userTags = Arrays.stream(profileTag.split(","))
-//                        .map(String::trim)
-//                        .filter(s -> !s.isBlank())
-//                        .toList();
-//
-//                // ✅ 이제 userTags를 넘겨줘야 함!
-//                Page<CommunityQnAPostResponseDTO> result =
-//                        matchingPageFacade.getRecentQnAPostsByInterestPaged(userTags, page, size);
-////                String interest = String.valueOf(userRepository.findInterestByNickname(nickname));
-////                if (interest == null) {
-////                    yield ResponseEntity.status(HttpStatus.NOT_FOUND)
-////                            .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "관심 태그 정보를 찾을 수 없습니다."));
-////                }
-////
-////                Page<CommunityQnAPostResponseDTO> result =
-////                        matchingPageFacade.getRecentQnAPostsByInterestPaged(interest, page, size);
-////                yield ResponseEntity.ok(ApiResponse.success(result));
-//            }
 
             case "received-reviews" -> {
                 Page<ReceivedReviewDTO> result =
