@@ -144,6 +144,7 @@ public class ProfileController {
 
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "status", required = false, defaultValue = "ALL") String status,
             @AuthenticationPrincipal UserPrincipal userPrincipal // ✅ 여기서 닫기
     ) {
         return switch (type) {
@@ -182,7 +183,7 @@ public class ProfileController {
             // 내가 신청한 매칭 more-details
             case "my-matches" -> {
                 Page<MatchedMentorProfileDto> result =
-                        menteeProfileService.getMyMatchesPaged(nickname, page, size);
+                        menteeProfileService.getMyMatchesPaged(nickname, page, size, status);
                 yield ResponseEntity.ok(ApiResponse.success(result));
             }
 

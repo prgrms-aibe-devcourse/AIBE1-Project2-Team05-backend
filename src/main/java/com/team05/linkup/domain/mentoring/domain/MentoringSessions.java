@@ -37,5 +37,6 @@ public class MentoringSessions extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Setter
     private MentoringStatus status;  // 멘토링 진행 상태 (ex: '진행중', '완료')
 }
