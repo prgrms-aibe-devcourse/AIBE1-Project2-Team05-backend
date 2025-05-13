@@ -103,8 +103,4 @@ public class User extends BaseEntity {
     public void updateProfileImage(String imageUrl) {
         this.profileImageUrl = imageUrl;
     }
-
-    public void setMatchStatus(Boolean status) {
-        this.matchStatus = status;
-    }
 }
