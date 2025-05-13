@@ -36,8 +36,8 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
             @Param("limit") int limit
     );
 
-    @Query("SELECT r FROM Review r WHERE r.mentoringSessionId IN :sessionIds")
-    List<Review> findByMentoringSessionIdIn(@Param("sessionIds") List<String> sessionIds);
+    @Query("SELECT r FROM Review r WHERE r.mentoringSessionId IN :sessionIds ORDER BY r.createdAt DESC")
+    Page<Review> findByMentoringSessionIdIn(@Param("sessionIds") List<String> sessionIds, Pageable pageable);
 
     @Query(value = """
         SELECT 
