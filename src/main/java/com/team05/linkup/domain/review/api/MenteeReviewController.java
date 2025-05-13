@@ -7,6 +7,7 @@ import com.team05.linkup.domain.review.application.ReviewService;
 import com.team05.linkup.domain.review.dto.MyCompletedMentoringDTO;
 import com.team05.linkup.domain.review.dto.ReviewRequestDTO;
 import com.team05.linkup.domain.review.dto.ReviewResponseDTO;
+import com.team05.linkup.domain.review.dto.ReviewUpdateDTO;
 import com.team05.linkup.domain.user.domain.User;
 import com.team05.linkup.domain.user.infrastructure.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,8 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -101,7 +100,7 @@ public class MenteeReviewController {
 
     @PatchMapping("/review/{reviewId}")
     @Operation(summary = "리뷰 수정", description = "기존에 작성된 리뷰를 새로운 내용으로 업데이트합니다.")
-    public ResponseEntity<ApiResponse> updateReview(@AuthenticationPrincipal UserPrincipal userPrincipal, @PathVariable String reviewId,@RequestBody ReviewRequestDTO reviewRequestDTO) {
+    public ResponseEntity<ApiResponse> updateReview(@AuthenticationPrincipal UserPrincipal userPrincipal, @PathVariable String reviewId, @RequestBody ReviewUpdateDTO reviewUpdateDTO) {
         Optional<User> userOpt = userRepository.findByProviderAndProviderId(
                 userPrincipal.provider(), userPrincipal.providerId());
         if (userOpt.isEmpty())
@@ -109,7 +108,7 @@ public class MenteeReviewController {
                     .body(ApiResponse.error(ResponseCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다."));
 
         try {
-            reviewService.updateReview(userOpt.get(), reviewId, reviewRequestDTO);
+            reviewService.updateReview(userOpt.get(), reviewId, reviewUpdateDTO);
             return ResponseEntity.ok(ApiResponse.created("리뷰가 성공적으로 수정되었습니다."));
         } catch (ConstraintViolationException ex) {
             // 유효성 검증 실패 처리

@@ -5,10 +5,7 @@ import com.team05.linkup.domain.enums.MentoringStatus;
 import com.team05.linkup.domain.mentoring.domain.MentoringSessions;
 import com.team05.linkup.domain.mentoring.infrastructure.MentoringRepository;
 import com.team05.linkup.domain.review.domain.Review;
-import com.team05.linkup.domain.review.dto.MyCompletedMentoringDTO;
-import com.team05.linkup.domain.review.dto.ReceivedReviewDTO;
-import com.team05.linkup.domain.review.dto.ReviewRequestDTO;
-import com.team05.linkup.domain.review.dto.ReviewResponseDTO;
+import com.team05.linkup.domain.review.dto.*;
 import com.team05.linkup.domain.review.infrastructure.ReviewRepository;
 import com.team05.linkup.domain.user.application.ProfileService;
 import com.team05.linkup.domain.user.domain.User;
@@ -43,18 +40,18 @@ public class ReviewService {
     private final Validator validator;
 
     public List<MyCompletedMentoringDTO> getCompletedMentoringSessions(User user) {
-
         // userId와 상태가 COMPLETED인 멘토링 세션 조회
-        List<MentoringSessions> completedSessions = mentoringRepository.findByMenteeIdAndStatus(user.getId(), MentoringStatus.COMPLETED);
+        List<MentoringSessions> completedSessionsWithoutReview = mentoringRepository.findCompletedSessionsWithoutReview(user.getId());
 
-        logger.debug(completedSessions);
-        completedSessions.forEach(session -> {
+        // 디버그용
+        logger.debug(completedSessionsWithoutReview);
+        completedSessionsWithoutReview.forEach(session -> {
             logger.debug("Mentoring Session ID: " + session.getId());
             logger.debug("Mentor Name: " + session.getMentor().getName());
         });
 
         // DTO로 변환
-        return completedSessions.stream()
+        return completedSessionsWithoutReview.stream()
                 .map(session -> MyCompletedMentoringDTO.builder()
                         .sessionId(session.getId())
                         .mentorName(session.getMentor().getName())
@@ -110,15 +107,18 @@ public class ReviewService {
 
         // 4. DTO 변환 및 반환
         return ReviewResponseDTO.builder()
-                .mentoringSessionId(review.getMentoringSessionId())
+                .reviewId(review.getId())
                 .title(review.getTitle())
                 .content(review.getContent())
                 .star(review.getStar())
                 .interest(review.getInterest())
+                .mentorName(session.getMentor().getName())
+                .profileImageUrl(session.getMentor().getProfileImageUrl())
+                .createdAt(review.getCreatedAt().toInstant().atZone(ZoneOffset.UTC).toString())
                 .build();
     }
 
-    public void updateReview(User user, String reviewId, ReviewRequestDTO reviewRequestDTO) {
+    public void updateReview(User user, String reviewId, ReviewUpdateDTO reviewUpdateDTO) {
         // 1. 리뷰 존재 여부 확인
         Review existingReview = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
@@ -133,7 +133,7 @@ public class ReviewService {
         }
 
         // 4. 유효성 검사 수행 (Bean Validation 수동 호출)
-        Set<ConstraintViolation<ReviewRequestDTO>> violations = validator.validate(reviewRequestDTO);
+        Set<ConstraintViolation<ReviewUpdateDTO>> violations = validator.validate(reviewUpdateDTO);
         if (!violations.isEmpty()) {
             // 첫 번째 유효성 위반 메시지를 추출
             String message = violations.iterator().next().getMessage();
@@ -145,10 +145,10 @@ public class ReviewService {
         Review updatedReview = Review.builder()
                 .id(existingReview.getId()) // 기존 ID 유지
                 .mentoringSessionId(existingReview.getMentoringSessionId()) // 기존 멘토링 세션 ID 유지
-                .title(reviewRequestDTO.getTitle()) // 제목 업데이트
-                .content(reviewRequestDTO.getContent()) // 내용 업데이트
-                .star(reviewRequestDTO.getStar()) // 별점 업데이트
-                .interest(reviewRequestDTO.getInterest()) // 관심사 업데이트
+                .title(reviewUpdateDTO.getTitle()) // 제목 업데이트
+                .content(reviewUpdateDTO.getContent()) // 내용 업데이트
+                .star(reviewUpdateDTO.getStar()) // 별점 업데이트
+                .interest(reviewUpdateDTO.getInterest()) // 관심사 업데이트
                 .build();
 
         reviewRepository.save(updatedReview);
@@ -199,13 +199,14 @@ public class ReviewService {
                     .orElseThrow(() -> new IllegalArgumentException("멘토링 세션을 찾을 수 없습니다."));
 
             return ReviewResponseDTO.builder()
-                    .mentoringSessionId(review.getMentoringSessionId())
+                    .reviewId(review.getId())
                     .title(review.getTitle())
                     .content(review.getContent())
                     .star(review.getStar())
                     .interest(review.getInterest())
                     .mentorName(session.getMentor().getName()) // 멘토 이름 추가
                     .profileImageUrl(session.getMentor().getProfileImageUrl()) // 멘토 프로필 이미지 URL 추가
+                    .createdAt(review.getCreatedAt().toInstant().atZone(ZoneOffset.UTC).toString()) // 리뷰 작성일을 문자열로 변환
                     .build();
         });
     }
