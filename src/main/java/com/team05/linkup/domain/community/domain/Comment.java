@@ -1,22 +1,22 @@
 package com.team05.linkup.domain.community.domain;
 
-import com.team05.linkup.domain.baseEntity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-/**
- * 커뮤니티 기능에서 comment entity
- * comment는 community(게시글) 및 잠재적으로 parent comment(답글)과 관련 될 수 있습니다.
- */
+import java.time.ZonedDateTime;
+
 @Entity
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Builder
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "comments")
-public class Comment extends BaseEntity {
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+public class Comment {
+
     @Id
-    @Column(length = 36)
     private String id;
 
     @Column(name = "user_id", nullable = false)
@@ -25,35 +25,33 @@ public class Comment extends BaseEntity {
     @Column(name = "community_id", nullable = false)
     private String communityId;
 
-    @Column(nullable = false, length = 300)
+    @Column(name = "comment_content", nullable = false, length = 300)
     private String commentContent;
 
-    @Column(name = "order_number") // For sorting replies if needed
+    @Column(name = "order_number")
     private Long orderNumber;
 
-    @Column(name = "total_like_count", columnDefinition = "INT default 0")
-    private int totalLikeCount = 0;
+    @Column(name = "is_parent", nullable = false)
+    private boolean isParent;
 
-    @Column(length = 100) // Denormalized user name for easy retrieval
+    @Column(name = "total_like_count", columnDefinition = "int default 0")
+    private int totalLikeCount;
+
+    @Column(name = "name", length = 100)
     private String name;
 
     @Column(name = "parent_comment_id")
     private String parentCommentId;
 
-    // 댓글 내용 수정
-    public void updateContent(String content) {
-        this.commentContent = content;
-    }
+    @CreationTimestamp
+    @Column(name = "created_at")
+    private ZonedDateTime createdAt;
 
-    // 댓글 좋아요 수 증가
-    public void incrementLikeCount() {
-        this.totalLikeCount++;
-    }
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private ZonedDateTime updatedAt;
 
-    // 댓글 좋아요 수 감소
-    public void decrementLikeCount() {
-        if (this.totalLikeCount > 0) {
-            this.totalLikeCount--;
-        }
+    public void updateContent(String commentContent) {
+        this.commentContent = commentContent;
     }
 }
