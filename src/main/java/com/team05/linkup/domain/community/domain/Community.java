@@ -66,8 +66,13 @@ public class Community extends BaseEntity {
 
     /**
      * AI 자동 생성 댓글 (Community와 일대일 관계)
+     * Community가 삭제될 때 연관된 AiComment도 함께 삭제되도록 CascadeType.ALL 설정.
+     * Community와의 연결이 끊어지면 AiComment가 고아가 되어 삭제되도록 orphanRemoval=true 설정.
      */
-    @OneToOne(mappedBy = "community")
+    @OneToOne(mappedBy = "community",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true,      // 관계가 끊어지면 AiComment 삭제
+            fetch = FetchType.LAZY)
     private AiComment aiComment;
 
 
@@ -152,4 +157,12 @@ public class Community extends BaseEntity {
         }
     }
 
+    // AiComment를 설정하는 setter (양방향 관계 편의 메소드 - 필요시)
+    // cascade 설정을 사용하면 이 setter가 직접적으로 삭제 로직에 관여하지 않을 수 있습니다.
+    public void setAiComment(AiComment aiComment) {
+        this.aiComment = aiComment;
+        if (aiComment != null && aiComment.getCommunity() != this) {
+            aiComment.setCommunityInternal(this); // AiComment 쪽에 Community를 설정하는 package-private 메소드 가정
+        }
+    }
 }
