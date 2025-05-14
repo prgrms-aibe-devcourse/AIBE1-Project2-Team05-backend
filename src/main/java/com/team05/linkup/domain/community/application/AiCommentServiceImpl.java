@@ -1,7 +1,6 @@
 package com.team05.linkup.domain.community.application;
 
 import com.team05.linkup.domain.community.domain.AiComment;
-import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.community.domain.CommunityCategory;
 import com.team05.linkup.domain.community.dto.CommunityCreatedEventDTO;
 import com.team05.linkup.domain.community.infrastructure.AiCommentRepository;
@@ -9,9 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.event.TransactionalEventListener;
-
-import static org.springframework.transaction.event.TransactionPhase.AFTER_COMMIT;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +17,6 @@ public class AiCommentServiceImpl implements AiCommentService{
 
     @Override
     @EventListener
-    @TransactionalEventListener(phase = AFTER_COMMIT)
     @Async
     public void handleCommunityCreated(CommunityCreatedEventDTO event) throws Exception {
         try {
