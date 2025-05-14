@@ -54,7 +54,7 @@ public class ReviewService {
         return completedSessionsWithoutReview.stream()
                 .map(session -> MyCompletedMentoringDTO.builder()
                         .sessionId(session.getId())
-                        .mentorName(session.getMentor().getName())
+                        .mentorNickname(session.getMentor().getNickname())
                         .build())
                 .collect(Collectors.toList());
     }
@@ -112,7 +112,7 @@ public class ReviewService {
                 .content(review.getContent())
                 .star(review.getStar())
                 .interest(review.getInterest())
-                .mentorName(session.getMentor().getName())
+                .mentorNickname(session.getMentor().getNickname())
                 .profileImageUrl(session.getMentor().getProfileImageUrl())
                 .createdAt(review.getCreatedAt().toInstant().atZone(ZoneOffset.UTC).toString())
                 .build();
@@ -204,7 +204,7 @@ public class ReviewService {
                     .content(review.getContent())
                     .star(review.getStar())
                     .interest(review.getInterest())
-                    .mentorName(session.getMentor().getName()) // 멘토 이름 추가
+                    .mentorNickname(session.getMentor().getNickname()) // 멘토 이름 추가
                     .profileImageUrl(session.getMentor().getProfileImageUrl()) // 멘토 프로필 이미지 URL 추가
                     .createdAt(review.getCreatedAt().toInstant().atZone(ZoneOffset.UTC).toString()) // 리뷰 작성일을 문자열로 변환
                     .build();

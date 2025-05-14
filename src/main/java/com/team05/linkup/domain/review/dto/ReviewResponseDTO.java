@@ -19,7 +19,7 @@ public class ReviewResponseDTO {
     private BigDecimal star;  // 리뷰 별점 (0.0 ~ 5.0)
     private Interest interest;  // 관심사 (ENUM)
 
-    private String mentorName; // 멘토 이름
+    private String mentorNickname; // 멘토 이름
     private String profileImageUrl; // 멘토 프로필 이미지 URL
     private String createdAt; // 리뷰 작성일
 
