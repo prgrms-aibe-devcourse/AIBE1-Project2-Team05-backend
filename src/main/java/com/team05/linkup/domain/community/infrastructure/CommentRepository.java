@@ -4,6 +4,7 @@ import com.team05.linkup.domain.community.domain.Comment;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -37,6 +38,15 @@ public interface CommentRepository extends JpaRepository<Comment, String> {
 
     // 게시글에 달린 모든 댓글 조회
     List<Comment> findByCommunityId(String communityId);
+
+    /**
+     * 특정 communityId에 해당하는 모든 댓글을 삭제합니다.
+     * @Modifying 어노테이션은 이 쿼리가 데이터베이스 상태를 변경함을 나타냅니다.
+     * @param communityId 삭제할 댓글들이 참조하는 게시글의 ID
+     */
+    @Modifying
+    @Query("DELETE FROM Comment c WHERE c.communityId = :communityId")
+    void deleteAllByCommunityId(@Param("communityId") String communityId);
 
     /**
      * 단일 게시글, 특정 게시글의 댓글 수를 계산합니다.

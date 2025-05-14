@@ -1,8 +1,12 @@
 package com.team05.linkup.domain.community.infrastructure;
 
 import com.team05.linkup.domain.community.domain.Bookmark;
+import com.team05.linkup.domain.community.domain.Community;
 import com.team05.linkup.domain.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
@@ -30,4 +34,12 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, String> {
      */
     Optional<Bookmark> findByUserAndCommunityId(User user, String communityId); // 사용자 객체 기반 조회
 
+    /**
+     * 특정 커뮤니티 게시글에 연결된 모든 '북마크' 레코드를 삭제합니다.
+     * Community 엔티티를 직접 참조하여 삭제를 수행합니다.
+     * @param community 삭제할 '북마크'들이 참조하는 Community 엔티티
+     */
+    @Modifying
+    @Query("DELETE FROM Bookmark b WHERE b.community = :community")
+    void deleteAllByCommunity(@Param("community") Community community);
 }

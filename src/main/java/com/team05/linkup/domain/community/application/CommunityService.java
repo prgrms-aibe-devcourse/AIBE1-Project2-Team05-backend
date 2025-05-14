@@ -1,10 +1,7 @@
 package com.team05.linkup.domain.community.application;
 
 import com.team05.linkup.common.dto.UserPrincipal;
-import com.team05.linkup.domain.community.domain.Community;
-import com.team05.linkup.domain.community.domain.CommunityCategory;
-import com.team05.linkup.domain.community.domain.Image;
-import com.team05.linkup.domain.community.domain.Tag;
+import com.team05.linkup.domain.community.domain.*;
 import com.team05.linkup.domain.community.dto.*;
 import com.team05.linkup.domain.community.infrastructure.*;
 import com.team05.linkup.domain.user.domain.User;
@@ -46,7 +43,6 @@ public class CommunityService {
      private final LikeRepository likeRepository;
      private final BookmarkRepository bookmarkRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final CommunityImageService communityImageService;
     private final TagRepository tagRepository;
 
     private CommunityCategory parseCategory(String raw) {
@@ -347,6 +343,10 @@ public class CommunityService {
 
     /**
      * 지정된 ID의 커뮤니티 게시글을 삭제합니다.
+     * 게시글 삭제 시, 해당 게시글을 참조하는 모든 '좋아요', '북마크', 'AI 댓글' 등의
+     * 연관 데이터를 먼저 삭제하여 데이터 무결성을 유지합니다.
+     * 이미지의 경우, Community 엔티티의 images 필드에 CascadeType.ALL, orphanRemoval=true 설정이
+     * 되어 있다면 JPA에 의해 자동으로 함께 삭제됩니다.
      *
      * @param userPrincipal 삭제 요청을 한 사용자의 인증 정보 (권한 확인용).
      * @param communityId 삭제할 게시글의 ID.
@@ -355,17 +355,47 @@ public class CommunityService {
      */
     @Transactional
     public void deleteCommunity(UserPrincipal userPrincipal, String communityId) {
+        // 1. 게시글 조회
+        // findById를 통해 게시글을 가져오고, 없다면 EntityNotFoundException을 발생시킵니다.
         Community community = communityRepository.findById(communityId)
                 .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
 
-        User user = community.getUser();
+        // 2. 게시글 작성자 확인 및 삭제 권한 검사
+        // 게시글(Community)에 연결된 User 엔티티를 가져옵니다.
+        User author = community.getUser();
 
-        // 게시글 작성자만 삭제 가능
-        if (!user.getProvider().equals(userPrincipal.provider()) || !user.getProviderId().equals(userPrincipal.providerId())) {
-            throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
+        if (author == null) {
+            throw new EntityNotFoundException("게시글 작성자 정보를 찾을 수 없습니다. 게시글 ID: " + communityId);
         }
 
+        // 현재 요청을 보낸 사용자와 게시글 작성자가 동일한지 확인합니다.
+        // UserPrincipal에 저장된 provider와 providerId를 사용하여 비교합니다.
+        if (!author.getProvider().equals(userPrincipal.provider()) ||
+                !author.getProviderId().equals(userPrincipal.providerId())) {
+            throw new IllegalArgumentException("게시글 삭제 권한이 없습니다. 게시글 ID: " + communityId);
+        }
+
+        // --- 연관 데이터 삭제 시작 ---
+        // 데이터베이스 외래 키 제약조건 위반을 방지하기 위해,
+        // Community 엔티티를 삭제하기 전에 이를 참조하는 다른 엔티티들을 먼저 삭제해야 합니다.
+
+        // 3. 연관된 '좋아요(Like)' 레코드 삭제
+        // 이 게시글(community)을 참조하는 모든 Like 엔티티를 삭제합니다.
+        likeRepository.deleteAllByCommunity(community);
+
+        // 4. 연관된 '북마크(Bookmark)' 레코드 삭제
+        // 이 게시글(community)을 참조하는 모든 Bookmark 엔티티를 삭제합니다.
+        bookmarkRepository.deleteAllByCommunity(community);
+
+        // 6. (만약 있다면) 연관된 일반 댓글(Comment) 레코드 삭제
+        commentRepository.deleteAllByCommunityId(community.getId());
+
+        // --- 연관 데이터 삭제 완료 ---
+
+        // 8. 게시글(Community) 최종 삭제
+        // 모든 연관 데이터가 정리된 후, 게시글 자체를 삭제합니다.
         communityRepository.delete(community);
+
     }
 
     /**
